@@ -2292,11 +2292,11 @@ $cost_meta_key     = '_cf_cost';
 			return;
 		}
 
-		// Legacy community-template branch removed - using standard WP templates only
-		// if ( file_exists( $result ) && $this->bp_active ){
-		//		include($result);
-		//		return;
-		// }
+		$result = "{$this->plugin_dir}ui-front/buddypress/members/single/classifieds/{$name}.php";
+		if ( file_exists( $result ) && $this->bp_active ){
+			include($result);
+			return;
+		}
 
 		$result = "{$this->plugin_dir}ui-front/general/{$name}.php";
 
@@ -2684,7 +2684,7 @@ $cost_meta_key     = '_cf_cost';
 		}
 
 		/**
-	 * Custom Template path - simplified for v2.0.0
+	 * Custom Template path - Simplified for v2.0.0 (BuddyPress removed)
 	 *
 	 * @param string $template The template to find.
 	 *
@@ -2700,7 +2700,7 @@ $cost_meta_key     = '_cf_cost';
 		$tpldir = get_stylesheet_directory();
 		$subdir = apply_filters( 'classifieds_custom_templates_dir', $tpldir . '/classifieds' );
 
-		// Simple template priority without legacy network-specific template paths
+		// Simple template priority without BuddyPress/Community-specific templates
 		$candidates = array(
 			$tpldir . '/' . $template . '.php',
 			$tpldir . '/page-' . $template . '.php',
@@ -2994,13 +2994,11 @@ function cf_flag_activation( $plugin = '' ) {
 	}
 }
 
-endif; // end if ( ! class_exists( 'Classifieds_Core' ) )
-
 // Entscheide welche Version geladen wird
 add_action( 'plugins_loaded', 'cf_on_plugins_loaded' );
 function cf_on_plugins_loaded() {
 
-	// Note: Legacy network integration removed in v2.0.0
+	// Note: BuddyPress integration removed in v2.0.0
 	// Replaced with ps-community integration in class-native-community.php
 
 	if ( is_admin() ) {

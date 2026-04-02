@@ -2,7 +2,7 @@
 /*
 Plugin Name: Kleinanzeigen
 Plugin URI: https://cp-psource.github.io/classifieds/
-Description: Füge Kleinanzeigen zu Deinem Blog, Netzwerk oder Deiner BuddyPress-Seite hinzu. Erstelle und verwalte Anzeigen, lade Bilder hoch, sende E-Mails, aktiviere das Kreditsystem und berechne Deinen Benutzern die Platzierung von Anzeigen in Deinem Netzwerk oder auf der BuddyPress-Seite.
+Description: Vollständiges Kleinanzeigen-Plugin mit nativen WordPress APIs. Beste Integration mit ps-community für Member- und Vertrauenssystem.
 Version: 1.0.0
 Author: PSOURCE
 Author URI: https://github.com/cp-psource
@@ -13,7 +13,7 @@ Network: false
 */
 
 $plugin_header_translate = array(
-__('Kleinanzeigen - Füge Kleinanzeigen zu Deinem Blog, Netzwerk oder Deiner BuddyPress-Seite hinzu. Erstelle und verwalte Anzeigen, lade Bilder hoch, sende E-Mails, aktiviere das Kreditsystem und berechne Deinen Benutzern die Platzierung von Anzeigen in Deinem Netzwerk oder auf der BuddyPress-Seite.', 'classifieds'),
+__('Kleinanzeigen - Füge Kleinanzeigen zu Deinem Blog oder Netzwerk hinzu. Erstelle und verwalte Anzeigen, lade Bilder hoch, sende E-Mails, aktiviere das Kreditsystem und berechne Deinen Benutzern die Platzierung von Anzeigen in Deinem Netzwerk.', 'classifieds'),
 __('PSOURCE', 'classifieds'),
 __('https://cp-psource.github.io/classifieds', 'classifieds'),
 __('Kleinanzeigen', 'classifieds'),
@@ -73,6 +73,10 @@ include_once 'core/class-cf-transactions.php';
 // Handle custom fields (meta)
 include_once 'core/class-native-custom-fields.php';
 new PS_Native_Custom_Fields();
+
+// ps-community Integration (replaces BuddyPress)
+include_once 'core/class-native-community.php';
+new PS_Native_Community();
 
 // Load core plugin data
 include_once 'core/data.php';

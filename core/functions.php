@@ -150,42 +150,35 @@ function the_cf_breadcrumbs()
  */
 function get_author_classifieds_url($author_id, $author_nicename = '')
 {
-    global $wp_rewrite, $bp, $blog_id;
+    global $wp_rewrite;
     $auth_ID = (int)$author_id;
-    $link = $wp_rewrite->get_author_permastruct();
-
+    
+    // Get the post type object for slug
     $classifieds_obj = get_post_type_object('classifieds');
-
-    if (is_object($classifieds_obj)) {
+    $slug = 'classifieds';
+    if (is_object($classifieds_obj) && is_string($classifieds_obj->has_archive)) {
         $slug = $classifieds_obj->has_archive;
-        if (!is_string($slug)) $slug = 'classifieds';
     }
 
-    if (isset($bp) && $bp->root_blog_id == $blog_id) {
-        $link = trailingslashit(bp_core_get_user_domain($author_id) . $slug);
-        $link .= ($author_id == bp_loggedin_user_id()) ? 'my-classifieds' : 'all';
-    } else {
-        if (empty($link)) {
-            $file = home_url('/');
-            $link = $file . "?post_type={$slug}&author=" . $auth_ID;
-        } else {
-            $link = $link . "/{$slug}";
-            if ('' == $author_nicename) {
-                $user = get_userdata($author_id);
-                if (!empty($user->user_nicename))
-                    $author_nicename = $user->user_nicename;
-            }
-            $link = str_replace('%author%', $author_nicename, $link);
-            $link = home_url(user_trailingslashit($link));
+    // v2.0.0: Using standard WordPress (BuddyPress removed)
+    $user = get_user_by('id', $author_id);
+    if ($user) {
+        $link = get_author_posts_url($author_id, $user->user_nicename);
+        if ($link) {
+            $link = trailingslashit($link) . $slug;
         }
+    } else {
+        // Fallback: query string URL
+        $file = home_url('/');
+        $link = $file . "?post_type={$slug}&author=" . $auth_ID;
     }
 
     /**
-     * Filter the URL to the author's page.
+     * Filter the URL to the author's classifieds page.
      *
-     * @since 2.1.0
+     * @since 2.0.0
      *
-     * @param string $link The URL to the author's page.
+     * @param string $link The URL to the author's classifieds page.
      * @param int $author_id The author's id.
      * @param string $author_nicename The author's nice name.
      */

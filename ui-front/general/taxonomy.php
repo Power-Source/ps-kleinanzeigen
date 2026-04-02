@@ -16,7 +16,7 @@ get_header();
 <div id="container">
 	<div id="content" role="main">
 
-		<?php /* For BuddyPress compatibility */ ?>
+		<?php /* Legacy compatibility marker */ ?>
 		<?php global $bp; if ( isset( $bp ) ): ?>
 		<div class="cf-padder">
 			<?php endif; ?>
@@ -45,21 +45,21 @@ get_header();
 			*/
 			load_template( $this->custom_classifieds_template( 'loop-taxonomy' ) );?>
 
-			<?php /* For BuddyPress compatibility */ ?>
+			<?php /* Legacy compatibility marker */ ?>
 			<?php if ( isset( $bp ) ): ?>
 		</div>
 		<?php endif; ?>
 
 	</div><!-- #content -->
 
-	<?php /* For BuddyPress compatibility */ ?>
+	<?php /* Legacy compatibility marker */ ?>
 	<?php if ( isset( $bp ) ): ?>
 	<?php locate_template( array( 'sidebar.php' ), true ); ?>
 	<?php endif; ?>
 
 </div><!-- #container -->
 
-<?php /* For BuddyPress compatibility */ ?>
+<?php /* Legacy compatibility marker */ ?>
 <?php if ( !isset( $bp ) ): ?>
 <?php get_sidebar(); ?>
 <?php endif; ?>
