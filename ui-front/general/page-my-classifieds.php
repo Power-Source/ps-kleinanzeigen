@@ -90,7 +90,14 @@ echo do_shortcode('[cf_checkout_btn text="' . __('Kleinanzeigen kaufen', $this->
 	<div id="post-<?php the_ID(); ?>" <?php post_class(); ?> >
 		<div class="cf-ad">
 			<div class="cf-pad">
+				<?php
+				$gallery_ids   = get_post_meta( get_the_ID(), '_cf_gallery_ids', true );
+				$gallery_count = is_array( $gallery_ids ) ? count( array_filter( $gallery_ids ) ) : 0;
+				?>
 				<div class="cf-image">
+					<?php if ( $gallery_count > 0 ) : ?>
+						<span class="cf-gallery-badge"><?php echo esc_html( sprintf( _n( '%d Bild', '%d Bilder', $gallery_count, $this->text_domain ), $gallery_count ) ); ?></span>
+					<?php endif; ?>
 					<?php
 					if ( '' == get_post_meta( get_the_ID(), '_thumbnail_id', true ) ) {
 						if ( ! empty( $options_general['field_image_def'] ) )

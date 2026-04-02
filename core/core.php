@@ -182,6 +182,10 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 
 			add_filter( 'wp_ajax_cf-captcha', array( &$this, 'on_captcha' ) );
 			add_filter( 'wp_ajax_nopriv_cf-captcha', array( &$this, 'on_captcha' ) );
+			add_action( 'wp_ajax_cf_toggle_favorite', array( &$this, 'ajax_toggle_favorite' ) );
+			add_action( 'wp_ajax_nopriv_cf_toggle_favorite', array( &$this, 'ajax_toggle_favorite' ) );
+			add_action( 'wp_ajax_cf_quick_view', array( &$this, 'ajax_quick_view' ) );
+			add_action( 'wp_ajax_nopriv_cf_quick_view', array( &$this, 'ajax_quick_view' ) );
 
 
 			//Shortcodes
@@ -319,8 +323,261 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
                                 update_post_meta( $post_id, '_cf_duration', sanitize_text_field( $post_data['_cf_duration'] ) );
                         }
                         if ( isset( $post_data['_cf_cost'] ) ) {
-                                update_post_meta( $post_id, '_cf_cost', sanitize_text_field( $post_data['_cf_cost'] ) );
+								$normalized_cost = $this->normalize_price_value( $post_data['_cf_cost'] );
+								update_post_meta( $post_id, '_cf_cost', $normalized_cost );
+								update_post_meta( $post_id, '_cf_cost_num', ( '' === $normalized_cost ) ? '' : (float) $normalized_cost );
 			}
+		}
+
+		/**
+		 * Normalize price values to a decimal string for reliable filtering/sorting.
+		 *
+		 * @param mixed $raw_price Raw user input.
+		 *
+		 * @return string
+		 */
+		function normalize_price_value( $raw_price ) {
+			$price = (string) $raw_price;
+			$price = preg_replace( '/[^0-9,\.]/', '', $price );
+
+			if ( false !== strpos( $price, ',' ) && false !== strpos( $price, '.' ) ) {
+				if ( strrpos( $price, ',' ) > strrpos( $price, '.' ) ) {
+					$price = str_replace( '.', '', $price );
+					$price = str_replace( ',', '.', $price );
+				} else {
+					$price = str_replace( ',', '', $price );
+				}
+			} elseif ( false !== strpos( $price, ',' ) ) {
+				$price = str_replace( ',', '.', $price );
+			}
+
+			$price = trim( $price );
+
+			if ( '' === $price || ! is_numeric( $price ) ) {
+				return '';
+			}
+
+			return number_format( (float) $price, 2, '.', '' );
+		}
+
+		/**
+		 * Backfill numeric price meta for legacy ads.
+		 *
+		 * @return void
+		 */
+		function ensure_cost_numeric_index() {
+			$transient_key = 'cf_cost_num_indexed';
+
+			if ( get_transient( $transient_key ) ) {
+				return;
+			}
+
+			$post_ids = get_posts(
+				array(
+					'post_type'      => 'classifieds',
+					'post_status'    => 'any',
+					'fields'         => 'ids',
+					'numberposts'    => 200,
+					'suppress_filters' => true,
+					'meta_query'     => array(
+						'relation' => 'AND',
+						array(
+							'key'     => '_cf_cost',
+							'compare' => 'EXISTS',
+						),
+						array(
+							'key'     => '_cf_cost_num',
+							'compare' => 'NOT EXISTS',
+						),
+					),
+				)
+			);
+
+			if ( ! empty( $post_ids ) ) {
+				foreach ( $post_ids as $post_id ) {
+					$raw_cost        = get_post_meta( $post_id, '_cf_cost', true );
+					$normalized_cost = $this->normalize_price_value( $raw_cost );
+
+					if ( '' !== $normalized_cost ) {
+						update_post_meta( $post_id, '_cf_cost', $normalized_cost );
+						update_post_meta( $post_id, '_cf_cost_num', (float) $normalized_cost );
+					}
+				}
+			}
+
+			set_transient( $transient_key, 1, 30 * MINUTE_IN_SECONDS );
+		}
+
+		/**
+		 * Get current user's or guest's favorite classifieds.
+		 *
+		 * @return array<int>
+		 */
+		function get_favorite_ids() {
+			$favorites = array();
+
+			if ( is_user_logged_in() ) {
+				$favorites = get_user_meta( get_current_user_id(), '_cf_favorites', true );
+			} elseif ( ! empty( $_COOKIE['cf_favorites'] ) ) {
+				$favorites = json_decode( wp_unslash( $_COOKIE['cf_favorites'] ), true );
+			}
+
+			if ( ! is_array( $favorites ) ) {
+				$favorites = array();
+			}
+
+			$favorites = array_map( 'absint', $favorites );
+			$favorites = array_filter( $favorites );
+
+			return array_values( array_unique( $favorites ) );
+		}
+
+		/**
+		 * Persist favorite classifieds for logged-in users or guests.
+		 *
+		 * @param array<int> $favorites Favorite post ids.
+		 * @return void
+		 */
+		function persist_favorite_ids( $favorites ) {
+			$favorites = array_map( 'absint', (array) $favorites );
+			$favorites = array_values( array_unique( array_filter( $favorites ) ) );
+
+			if ( is_user_logged_in() ) {
+				update_user_meta( get_current_user_id(), '_cf_favorites', $favorites );
+				return;
+			}
+
+			setcookie(
+				'cf_favorites',
+				wp_json_encode( $favorites ),
+				time() + MONTH_IN_SECONDS,
+				COOKIEPATH ? COOKIEPATH : '/',
+				COOKIE_DOMAIN,
+				is_ssl(),
+				true
+			);
+
+			$_COOKIE['cf_favorites'] = wp_json_encode( $favorites );
+		}
+
+		/**
+		 * Check if a classifieds post is currently favorited.
+		 *
+		 * @param int $post_id Post id.
+		 * @return bool
+		 */
+		function is_favorite_post( $post_id ) {
+			return in_array( absint( $post_id ), $this->get_favorite_ids(), true );
+		}
+
+		/**
+		 * Toggle favorites for the current visitor.
+		 *
+		 * @return void
+		 */
+		function ajax_toggle_favorite() {
+			check_ajax_referer( 'cf_frontend_actions', 'nonce' );
+
+			$post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+
+			if ( ! $post_id || 'classifieds' !== get_post_type( $post_id ) ) {
+				wp_send_json_error( array( 'message' => __( 'Die Anzeige konnten wir nicht finden.', $this->text_domain ) ), 400 );
+			}
+
+			$favorites = $this->get_favorite_ids();
+			$active    = false;
+
+			if ( in_array( $post_id, $favorites, true ) ) {
+				$favorites = array_values( array_diff( $favorites, array( $post_id ) ) );
+			} else {
+				$favorites[] = $post_id;
+				$active      = true;
+			}
+
+			$this->persist_favorite_ids( $favorites );
+
+			wp_send_json_success(
+				array(
+					'active' => $active,
+					'count'  => count( $favorites ),
+				)
+			);
+		}
+
+		/**
+		 * Return quick-view markup for a classifieds post.
+		 *
+		 * @return void
+		 */
+		function ajax_quick_view() {
+			check_ajax_referer( 'cf_frontend_actions', 'nonce' );
+
+			$post_id = isset( $_REQUEST['post_id'] ) ? absint( $_REQUEST['post_id'] ) : 0;
+
+			if ( ! $post_id || 'classifieds' !== get_post_type( $post_id ) ) {
+				wp_send_json_error( array( 'message' => __( 'Die Anzeige konnten wir nicht finden.', $this->text_domain ) ), 400 );
+			}
+
+			wp_send_json_success(
+				array(
+					'html' => $this->get_quick_view_markup( $post_id ),
+				)
+			);
+		}
+
+		/**
+		 * Build quick-view markup.
+		 *
+		 * @param int $post_id Post id.
+		 * @return string
+		 */
+		function get_quick_view_markup( $post_id ) {
+			$post = get_post( $post_id );
+
+			if ( ! $post || 'classifieds' !== $post->post_type ) {
+				return '';
+			}
+
+			$cost        = get_post_meta( $post_id, '_cf_cost', true );
+			$cost_display = is_numeric( $cost ) ? number_format_i18n( (float) $cost, 2 ) : $cost;
+			$duration    = get_post_meta( $post_id, '_cf_duration', true );
+			$gallery_ids = get_post_meta( $post_id, '_cf_gallery_ids', true );
+			$image_html  = has_post_thumbnail( $post_id ) ? get_the_post_thumbnail( $post_id, 'large' ) : '';
+			$excerpt     = has_excerpt( $post_id ) ? $post->post_excerpt : wp_trim_words( wp_strip_all_tags( $post->post_content ), 30 );
+
+			if ( empty( $image_html ) && is_array( $gallery_ids ) && ! empty( $gallery_ids[0] ) ) {
+				$image_html = wp_get_attachment_image( (int) $gallery_ids[0], 'large' );
+			}
+
+			ob_start();
+			?>
+			<div class="cf-quickview-card">
+				<div class="cf-quickview-media"><?php echo $image_html ? $image_html : '<div class="cf-quickview-placeholder">' . esc_html__( 'Kein Bild', $this->text_domain ) . '</div>'; ?></div>
+				<div class="cf-quickview-body">
+					<p class="cf-quickview-kicker"><?php esc_html_e( 'Schnellansicht', $this->text_domain ); ?></p>
+					<h3><?php echo esc_html( get_the_title( $post_id ) ); ?></h3>
+					<div class="cf-quickview-meta">
+						<?php if ( '' !== $cost_display ) : ?>
+							<span class="cf-meta-chip"><?php esc_html_e( 'Preis:', $this->text_domain ); ?> <?php echo esc_html( $cost_display ); ?></span>
+						<?php endif; ?>
+						<?php if ( '' !== $duration ) : ?>
+							<span class="cf-meta-chip"><?php esc_html_e( 'Laufzeit:', $this->text_domain ); ?> <?php echo esc_html( $duration ); ?></span>
+						<?php endif; ?>
+					</div>
+					<p class="cf-quickview-excerpt"><?php echo esc_html( $excerpt ); ?></p>
+					<div class="cf-quickview-actions">
+						<a class="button cf-card-secondary cf-card-contact" href="<?php echo esc_url( add_query_arg( 'cf_contact', '1', get_permalink( $post_id ) ) . '#confirm-form' ); ?>"><?php esc_html_e( 'Kontakt', $this->text_domain ); ?></a>
+						<a class="button button-primary cf-card-cta" href="<?php echo esc_url( get_permalink( $post_id ) ); ?>"><?php esc_html_e( 'Anzeige öffnen', $this->text_domain ); ?></a>
+						<button type="button" class="button cf-favorite-toggle <?php echo $this->is_favorite_post( $post_id ) ? 'is-active' : ''; ?>" data-post-id="<?php echo esc_attr( $post_id ); ?>">
+							<span class="cf-favorite-label-default"><?php esc_html_e( 'Merken', $this->text_domain ); ?></span>
+							<span class="cf-favorite-label-active"><?php esc_html_e( 'Gemerkt', $this->text_domain ); ?></span>
+						</button>
+					</div>
+				</div>
+			</div>
+			<?php
+
+			return (string) ob_get_clean();
 		}
 
 		/**
@@ -784,6 +1041,27 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 			echo "cf_credits = '" . esc_attr( get_permalink( $this->my_credits_page_id ) ) . "';\n";
 			echo "cf_checkout = '" . esc_attr( get_permalink( $this->checkout_page_id ) ) . "';\n";
 			echo "cf_signin = '" . esc_attr( get_permalink( $this->signin_page_id ) ) . "';\n";
+			echo 'window.cfFrontend = ' . wp_json_encode(
+				array(
+					'ajaxUrl'  => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( 'cf_frontend_actions' ),
+					'i18n'     => array(
+						'favorite'        => __( 'Merken', $this->text_domain ),
+						'favorited'       => __( 'Gemerkt', $this->text_domain ),
+						'quickView'       => __( 'Schnellansicht', $this->text_domain ),
+						'loading'         => __( 'Wird geladen ...', $this->text_domain ),
+						'loadError'       => __( 'Die Schnellansicht konnte gerade nicht geladen werden.', $this->text_domain ),
+						'copySuccess'     => __( 'Link kopiert', $this->text_domain ),
+						'copyDefault'     => __( 'Link teilen', $this->text_domain ),
+						'saveFilterPrompt'=> __( 'Wie willst du diesen Filter nennen?', $this->text_domain ),
+						'saveFilterEmpty' => __( 'Gib erst einen Namen fuer den Filter ein.', $this->text_domain ),
+						'saveFilterDone'  => __( 'Filter wurde gemerkt.', $this->text_domain ),
+						'deleteFilterDone'=> __( 'Filter wurde geloescht.', $this->text_domain ),
+						'deleteFilterAsk' => __( 'Willst du diesen gespeicherten Filter wirklich loeschen?', $this->text_domain ),
+						'loadFilterEmpty' => __( 'Waehle erst einen gespeicherten Filter aus.', $this->text_domain ),
+					),
+				)
+			) . ';';
 			echo "</script>\n";
 		}
 
@@ -962,19 +1240,19 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 
 			if ( ! empty( $post_id ) ) {
 				//Save custom tags
-				if ( is_array( $params['tag_input'] ) ) {
+				if ( isset( $params['tag_input'] ) && is_array( $params['tag_input'] ) ) {
 					foreach ( $params['tag_input'] as $key => $tags ) {
 						wp_set_post_terms( $post_id, $params['tag_input'][ $key ], $key );
 					}
 				}
 
 				//Save categories
-				if ( is_array( $params['post_category'] ) ) {
+				if ( isset( $params['post_category'] ) && is_array( $params['post_category'] ) ) {
 					wp_set_post_terms( $post_id, $params['post_category'], 'category' );
 				}
 
 				//Save custom terms
-				if ( is_array( $params['tax_input'] ) ) {
+				if ( isset( $params['tax_input'] ) && is_array( $params['tax_input'] ) ) {
 					foreach ( $params['tax_input'] as $key => $term_ids ) {
 						if ( is_array( $params['tax_input'][ $key ] ) ) {
 							wp_set_post_terms( $post_id, $params['tax_input'][ $key ], $key );
@@ -997,7 +1275,15 @@ $cost_meta_key     = '_cf_cost';
 				}
 
 				if ( isset( $params[ $cost_meta_key ] ) ) {
-					update_post_meta( $post_id, $cost_meta_key, sanitize_text_field( $params[ $cost_meta_key ] ) );
+					$normalized_cost = $this->normalize_price_value( $params[ $cost_meta_key ] );
+					update_post_meta( $post_id, $cost_meta_key, $normalized_cost );
+					update_post_meta( $post_id, '_cf_cost_num', ( '' === $normalized_cost ) ? '' : (float) $normalized_cost );
+				}
+
+				if ( isset( $params['cost'] ) ) {
+					$normalized_cost = $this->normalize_price_value( $params['cost'] );
+					update_post_meta( $post_id, $cost_meta_key, $normalized_cost );
+					update_post_meta( $post_id, '_cf_cost_num', ( '' === $normalized_cost ) ? '' : (float) $normalized_cost );
 				}
 
 
@@ -1009,6 +1295,40 @@ $cost_meta_key     = '_cf_cost';
 					/* Upload the image ( handles creation of thumbnails etc. ), set featured image  */
 					$thumbnail_id = media_handle_upload( 'feature_image', $post_id );
 					set_post_thumbnail( $post_id, $thumbnail_id );
+				}
+
+				if ( isset( $_FILES['feature_gallery'] ) && ! empty( $_FILES['feature_gallery']['name'] ) && is_array( $_FILES['feature_gallery']['name'] ) ) {
+					require_once( ABSPATH . '/wp-admin/includes/media.php' );
+					require_once( ABSPATH . '/wp-admin/includes/image.php' );
+					require_once( ABSPATH . '/wp-admin/includes/file.php' );
+
+					$gallery_ids = array();
+					$files_count = count( $_FILES['feature_gallery']['name'] );
+
+					for ( $i = 0; $i < $files_count; $i ++ ) {
+						if ( empty( $_FILES['feature_gallery']['name'][ $i ] ) || ! empty( $_FILES['feature_gallery']['error'][ $i ] ) ) {
+							continue;
+						}
+
+						$_FILES['cf_gallery_upload'] = array(
+							'name'     => $_FILES['feature_gallery']['name'][ $i ],
+							'type'     => $_FILES['feature_gallery']['type'][ $i ],
+							'tmp_name' => $_FILES['feature_gallery']['tmp_name'][ $i ],
+							'error'    => $_FILES['feature_gallery']['error'][ $i ],
+							'size'     => $_FILES['feature_gallery']['size'][ $i ],
+						);
+
+						$attachment_id = media_handle_upload( 'cf_gallery_upload', $post_id );
+						if ( ! is_wp_error( $attachment_id ) ) {
+							$gallery_ids[] = (int) $attachment_id;
+						}
+					}
+
+					unset( $_FILES['cf_gallery_upload'] );
+
+					if ( ! empty( $gallery_ids ) ) {
+						update_post_meta( $post_id, '_cf_gallery_ids', $gallery_ids );
+					}
 				}
 
 				return $post_id;

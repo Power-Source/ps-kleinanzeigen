@@ -15,6 +15,12 @@ $field_image = (empty($options['field_image_def'])) ? $this->plugin_url . 'ui-fr
 $duration = get_post_meta( $post->ID, '_cf_duration', true );
 $cost     = get_post_meta( $post->ID, '_cf_cost', true );
 $cost_display = is_numeric( $cost ) ? number_format_i18n( (float) $cost, 2 ) : $cost;
+$gallery_ids = get_post_meta( $post->ID, '_cf_gallery_ids', true );
+if ( ! is_array( $gallery_ids ) ) {
+	$gallery_ids = array();
+}
+$featured_image_url = has_post_thumbnail() ? wp_get_attachment_image_url( get_post_thumbnail_id( $post->ID ), 'large' ) : '';
+$is_favorite = method_exists( $this, 'is_favorite_post' ) ? $this->is_favorite_post( $post->ID ) : false;
 
 /**
 * $content is already filled with the database html.
@@ -24,6 +30,8 @@ $cost_display = is_numeric( $cost ) ? number_format_i18n( (float) $cost, 2 ) : $
 
 <script type="text/javascript" src="<?php echo $this->plugin_url . 'ui-front/js/ui-front.js'; ?>" >
 </script>
+
+<?php $open_contact_form = isset( $_GET['cf_contact'] ) && '1' === wp_unslash( $_GET['cf_contact'] ); ?>
 
 <?php if ( isset( $_POST['_wpnonce'] ) ): ?>
 <br clear="all" />
@@ -56,8 +64,24 @@ $cost_display = is_numeric( $cost ) ? number_format_i18n( (float) $cost, 2 ) : $
 			$thumbnail = '<img title="no image" alt="no image" class="cf-no-image wp-post-image" src="' . $field_image . '">';
 		}
 		?>
-		<a href="<?php the_permalink(); ?>" ><?php echo $thumbnail; ?></a>
+		<?php if ( ! empty( $featured_image_url ) ) : ?>
+			<a href="<?php echo esc_url( $featured_image_url ); ?>" class="cf-lightbox-trigger" data-lightbox-group="classifieds-gallery" data-lightbox-caption="<?php echo esc_attr( get_the_title() ); ?>"><?php echo $thumbnail; ?></a>
+		<?php else : ?>
+			<?php echo $thumbnail; ?>
+		<?php endif; ?>
 	</div>
+	<?php if ( ! empty( $gallery_ids ) ) : ?>
+	<div class="cf-gallery-grid">
+		<?php foreach ( $gallery_ids as $gallery_id ) : ?>
+			<?php $gallery_image = wp_get_attachment_image_src( (int) $gallery_id, 'thumbnail' ); ?>
+			<?php if ( ! empty( $gallery_image[0] ) ) : ?>
+				<a class="cf-gallery-item cf-lightbox-trigger" href="<?php echo esc_url( wp_get_attachment_url( (int) $gallery_id ) ); ?>" data-lightbox-group="classifieds-gallery" data-lightbox-caption="<?php echo esc_attr( get_the_title() ); ?>">
+					<img src="<?php echo esc_url( $gallery_image[0] ); ?>" alt="<?php esc_attr_e( 'Galeriebild', $this->text_domain ); ?>" />
+				</a>
+			<?php endif; ?>
+		<?php endforeach; ?>
+	</div>
+	<?php endif; ?>
 	<div class="clear"></div>
 	<div class="cf-ad-info">
 		<table>
@@ -103,6 +127,27 @@ $cost_display = is_numeric( $cost ) ? number_format_i18n( (float) $cost, 2 ) : $
 			</table>
 		</div>
 	</div>
+
+	<div class="cf-quick-actions">
+		<div class="cf-quick-actions-main">
+			<?php if ( empty( $options['disable_contact_form'] ) ) : ?>
+			<button type="button" class="button button-primary cf-cta-contact" onclick="classifieds.toggle_contact_form(); return false;"><?php _e( 'Jetzt Anbieter kontaktieren', $this->text_domain ); ?></button>
+			<?php endif; ?>
+			<button type="button" class="button cf-favorite-toggle <?php echo $is_favorite ? 'is-active' : ''; ?>" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
+				<span class="cf-favorite-label-default"><?php _e( 'Merken', $this->text_domain ); ?></span>
+				<span class="cf-favorite-label-active"><?php _e( 'Gemerkt', $this->text_domain ); ?></span>
+			</button>
+			<button type="button" class="button cf-cta-share" data-copy-url="<?php echo esc_url( get_permalink() ); ?>"><?php _e( 'Link teilen', $this->text_domain ); ?></button>
+		</div>
+		<div class="cf-quick-meta">
+			<?php if ( '' !== $cost_display ) : ?>
+				<span class="cf-meta-chip"><?php _e( 'Preis:', $this->text_domain ); ?> <?php echo esc_html( $cost_display ); ?></span>
+			<?php endif; ?>
+			<?php if ( '' !== $duration ) : ?>
+				<span class="cf-meta-chip"><?php _e( 'Laufzeit:', $this->text_domain ); ?> <?php echo esc_html( $duration ); ?></span>
+			<?php endif; ?>
+		</div>
+	</div>
 	<div class="clear"></div>
 
 	<?php if( empty( $options['disable_contact_form'] ) ): ?>
@@ -111,7 +156,7 @@ $cost_display = is_numeric( $cost ) ? number_format_i18n( (float) $cost, 2 ) : $
 	</form>
 	<div class="clear"></div>
 
-	<form method="post" action="#" class="standard-form base cf-contact-form" id="confirm-form">
+	<form method="post" action="#" class="standard-form base cf-contact-form" id="confirm-form"<?php echo $open_contact_form ? ' data-open-on-load="1"' : ''; ?>>
 		<?php
 		global $current_user;
 
@@ -180,4 +225,25 @@ $cost_display = is_numeric( $cost ) ? number_format_i18n( (float) $cost, 2 ) : $
 			</tr>
 		</tbody>
 	</table>
+</div>
+
+<div class="cf-sticky-mobile-actions">
+	<?php if ( empty( $options['disable_contact_form'] ) ) : ?>
+	<button type="button" class="button button-primary cf-cta-contact" onclick="classifieds.toggle_contact_form(); return false;"><?php _e( 'Kontakt', $this->text_domain ); ?></button>
+	<?php endif; ?>
+	<button type="button" class="button cf-favorite-toggle <?php echo $is_favorite ? 'is-active' : ''; ?>" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
+		<span class="cf-favorite-label-default"><?php _e( 'Merken', $this->text_domain ); ?></span>
+		<span class="cf-favorite-label-active"><?php _e( 'Gemerkt', $this->text_domain ); ?></span>
+	</button>
+	<button type="button" class="button cf-cta-share" data-copy-url="<?php echo esc_url( get_permalink() ); ?>"><?php _e( 'Teilen', $this->text_domain ); ?></button>
+</div>
+
+<div class="cf-lightbox" id="cf-lightbox" aria-hidden="true">
+	<button type="button" class="cf-lightbox-close" aria-label="<?php esc_attr_e( 'Schliessen', $this->text_domain ); ?>">&times;</button>
+	<button type="button" class="cf-lightbox-nav cf-lightbox-prev" aria-label="<?php esc_attr_e( 'Vorheriges Bild', $this->text_domain ); ?>">&#10094;</button>
+	<div class="cf-lightbox-stage">
+		<img src="" alt="" class="cf-lightbox-image" />
+		<p class="cf-lightbox-caption"></p>
+	</div>
+	<button type="button" class="cf-lightbox-nav cf-lightbox-next" aria-label="<?php esc_attr_e( 'Naechstes Bild', $this->text_domain ); ?>">&#10095;</button>
 </div>

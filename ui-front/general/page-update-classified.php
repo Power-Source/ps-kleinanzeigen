@@ -95,18 +95,28 @@ wp_enqueue_script('set-post-thumbnail');
 
 		<?php if(post_type_supports('classifieds','thumbnail') && current_theme_supports('post-thumbnails') ): ?>
 		<div class="editfield">
+			<label for="image"><?php _e( 'Beitragsbild', $this->text_domain ); ?></label>
 
 			<?php if(empty($options['media_manager']) ): ?>
 
 			<?php if(has_post_thumbnail()) the_post_thumbnail('thumbnail'); ?><br />
 			<script type="text/javascript">js_translate.image_chosen = '<?php _e("Kleinanzeigen-Bild ausgewählt", $this->text_domain); ?>';</script>
+			<script type="text/javascript">js_translate.image_preview_ready = '<?php _e("Vorschau aktualisiert", $this->text_domain); ?>';</script>
 			<span class="upload-button">
 
 				<?php $class = ( empty($options['field_image_req']) && !has_post_thumbnail() ) ? 'required' : ''; ?>
 
-				<input type="file" name="feature_image" size="1" id="image" class="<?php echo $class; ?>" />
+				<input type="file" name="feature_image" size="1" id="image" class="<?php echo $class; ?>" accept="image/*" />
 				<button type="button" class="button"><?php _e('Kleinanzeigen-Bild festlegen', $this->text_domain); ?></button>
 			</span>
+			<p class="description"><?php _e( 'Zieh ein Bild hier rein oder wähle eins aus. Formate: JPG, PNG, WebP.', $this->text_domain ); ?></p>
+			<div class="cf-image-preview" data-for="image"></div>
+			<div class="cf-gallery-upload">
+				<label for="feature_gallery"><?php _e( 'Weitere Bilder', $this->text_domain ); ?></label>
+				<input type="file" id="feature_gallery" name="feature_gallery[]" accept="image/*" multiple />
+				<p class="description"><?php _e( 'Du kannst mehrere Bilder auswählen. Das macht Deine Anzeige deutlich attraktiver.', $this->text_domain ); ?></p>
+				<div class="cf-gallery-preview" data-for="feature_gallery"></div>
+			</div>
 			<br />
 
 			<?php else: ?>
