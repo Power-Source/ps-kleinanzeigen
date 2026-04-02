@@ -1,235 +1,104 @@
 <?php
 /**
-* The template for displaying My Classifieds page.
-* You can override this file in your active theme.
-*
-* @package Classifieds
-* @subpackage UI Front
-* @since Classifieds 2.0
-*/
+ * Dashboard: Meine Anzeigen, Nachrichten, Gemerkte Anzeigen (AJAX-Version)
+ */
 
 global $current_user, $wp_query;
-
 $current_user = wp_get_current_user();
-$error = get_query_var('cf_error');
 
-$paged = ( get_query_var( 'paged' ) ) ? get_query_var( 'paged' ) : 1;
-
-$options_general = $this->get_options( 'general' );
 $options_frontend = $this->get_options( 'frontend' );
 $user_intro = isset( $options_frontend['user_intro'] ) ? trim( $options_frontend['user_intro'] ) : '';
 $user_show_favorites_tab = ! isset( $options_frontend['user_show_favorites_tab'] ) || 1 === (int) $options_frontend['user_show_favorites_tab'];
-$user_allow_reserve_toggle = ! isset( $options_frontend['user_allow_reserve_toggle'] ) || 1 === (int) $options_frontend['user_allow_reserve_toggle'];
+$unread_count = method_exists( $this, 'get_unread_message_count' ) ? $this->get_unread_message_count( $current_user->ID ) : 0;
 
-$favorite_ids = method_exists( $this, 'get_favorite_ids' ) ? $this->get_favorite_ids() : array();
+$cf_path = get_permalink( $this->my_classifieds_page_id );
+$error = get_query_var( 'cf_error' );
 
-$query_args = array(
-'paged' => $paged,
-'post_type' => 'classifieds',
-'author' => $current_user->ID,
-//'posts_per_page' => 1000,
-);
+// Startseite als "active"
+$active_tab = isset( $_GET['messages'] ) ? 'messages' : ( isset( $_GET['favorites'] ) ? 'favorites' : ( isset( $_GET['saved'] ) ? 'saved' : ( isset( $_GET['ended'] ) ? 'ended' : 'active' ) ) );
 
-if ( $user_show_favorites_tab && isset( $_GET['favorites'] ) ) {
-	$sub = 'favorites';
-	$query_args['post_status'] = 'publish';
-	unset( $query_args['author'] );
-	$query_args['post__in'] = ! empty( $favorite_ids ) ? array_map( 'absint', $favorite_ids ) : array( 0 );
-} elseif(isset($_GET['saved']) ) {
-	$query_args['post_status'] = array('draft', 'pending');
-	$sub = 'saved';
-}elseif(isset($_GET['ended'])){
-	$query_args['post_status'] = 'private';
-	$sub = 'ended';
-}else{
-	$query_args['post_status'] = 'publish';
-	$sub = 'active';
-}
+remove_filter( 'the_content', array( &$this, 'my_classifieds_content' ) );
 
-query_posts($query_args);
-
-$cf_path = get_permalink($this->my_classifieds_page_id);
-
-remove_filter('the_content', array(&$this, 'my_classifieds_content'));
-
+wp_enqueue_script( 'cf-frontend', $this->plugin_url . 'ui-front/js/ui-front.js', array( 'jquery' ), false, true );
+wp_localize_script( 'cf-frontend', 'cfFrontend', array(
+	'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
+	'nonce'            => wp_create_nonce( 'cf_send_message' ),
+	'dashboardNonce'   => wp_create_nonce( 'cf_dashboard_nonce' ),
+	'textDomain'       => $this->text_domain,
+	'strings'          => array(
+		'sending'    => __( 'Wird gesendet...', $this->text_domain ),
+		'sent'       => __( 'Nachricht gesendet!', $this->text_domain ),
+		'error'      => __( 'Ups, da ist was schiefgelaufen.', $this->text_domain ),
+		'noMessages' => __( 'Noch keine Nachrichten.', $this->text_domain ),
+	),
+) );
 ?>
 
-<script type="text/javascript" src="<?php echo $this->plugin_url . 'ui-front/js/ui-front.js'; ?>" >
-</script>
+<div class="cf-dashboard">
 
-
-<?php if ( !empty( $error ) ): ?>
-<br /><div class="error"><?php echo $error . '<br />'; ?></div>
+<?php if ( ! empty( $error ) ) : ?>
+<div class="cf-notice cf-notice-error"><?php echo esc_html( $error ); ?></div>
 <?php endif; ?>
 
-<div class="clear"></div>
 <?php if ( '' !== $user_intro ) : ?>
 <div class="cf-user-intro"><?php echo wp_kses_post( wpautop( $user_intro ) ); ?></div>
 <?php endif; ?>
 
-<?php if ( $this->is_full_access() ): ?>
-<div class="av-credits"><?php _e( 'Du hast die Möglichkeit, neue Kleinanzeigen zu erstellen', $this->text_domain ); ?></div>
-<?php elseif($this->use_credits): ?>
-<div class="av-credits"><?php _e( 'Verfügbare Credits:', $this->text_domain ); ?> <?php echo $this->transactions->credits; ?></div>
-<?php else:
-echo do_shortcode('[cf_checkout_btn text="' . __('Kleinanzeigen kaufen', $this->text_domain) . '" view="loggedin"]');
-?>
+<aside class="cf-dashboard-sidebar">
+<div class="cf-dashboard-user">
+<?php echo get_avatar( $current_user->ID, 64, '', '', array( 'class' => 'cf-avatar' ) ); ?>
+<div class="cf-dashboard-user-info">
+<strong><?php echo esc_html( $current_user->display_name ); ?></strong>
+<?php if ( $this->is_full_access() ) : ?>
+<span class="cf-user-badge"><?php _e( 'Voller Zugriff', $this->text_domain ); ?></span>
+<?php elseif ( $this->use_credits ) : ?>
+<span class="cf-credit-count"><?php echo esc_html( $this->transactions->credits ); ?> <?php _e( 'Credits', $this->text_domain ); ?></span>
 <?php endif; ?>
-
-<div >
-	<?php echo do_shortcode('[cf_add_classified_btn text="' . __('Neue Kleinanzeige erstellen', $this->text_domain) . '" view="loggedin"]'); ?>
-	<?php echo do_shortcode('[cf_my_credits_btn text="' . __('Meine Credits', $this->text_domain) . '" view="loggedin"]'); ?>
+</div>
 </div>
 
-<ul class="cf_tabs">
-	<li class="<?php if ( $sub == 'active') echo 'cf_active'; ?>"><a href="<?php echo $cf_path . '/?active'; ?>"><?php _e( 'Aktive Anzeigen', $this->text_domain ); ?></a></li>
-	<?php if ( $user_show_favorites_tab ) : ?>
-	<li class="<?php if (  $sub == 'favorites') echo 'cf_active'; ?>"><a href="<?php echo $cf_path . '/?favorites'; ?>"><?php _e( 'Gemerkte Anzeigen', $this->text_domain ); ?></a></li>
-	<?php endif; ?>
-	<li class="<?php if (  $sub == 'saved') echo 'cf_active'; ?>"><a href="<?php echo $cf_path . '/?saved'; ?>"><?php _e( 'Gespeicherte Anzeigen', $this->text_domain ); ?></a></li>
-	<li class="<?php if (  $sub == 'ended') echo 'cf_active'; ?>"><a href="<?php echo $cf_path . '/?ended'; ?>"><?php _e( 'Beendete Anzeigen', $this->text_domain ); ?></a></li>
-</ul>
-<div class="clear"></div>
-<?php if ( !have_posts() ): ?>
-<br /><br />
-<div class="info" id="message">
-	<p><?php _e( 'Keine Kleinanzeigen gefunden.', $this->text_domain ); ?></p>
-</div>
+<nav class="cf-dashboard-nav">
+<a href="<?php echo esc_url( $cf_path ); ?>" class="cf-nav-item <?php echo $active_tab === 'active' ? 'is-active' : ''; ?>" data-tab="active">
+<span class="cf-nav-icon">&#x1F4CB;</span> <?php _e( 'Meine Anzeigen', $this->text_domain ); ?>
+</a>
+<?php if ( $user_show_favorites_tab ) : ?>
+<a href="<?php echo esc_url( $cf_path . '?favorites' ); ?>" class="cf-nav-item <?php echo $active_tab === 'favorites' ? 'is-active' : ''; ?>" data-tab="favorites">
+<span class="cf-nav-icon">&#x1F516;</span> <?php _e( 'Gemerkte Anzeigen', $this->text_domain ); ?>
+</a>
 <?php endif; ?>
+<a href="<?php echo esc_url( $cf_path . '?saved' ); ?>" class="cf-nav-item <?php echo $active_tab === 'saved' ? 'is-active' : ''; ?>" data-tab="saved">
+<span class="cf-nav-icon">&#x1F4DD;</span> <?php _e( 'Entwürfe', $this->text_domain ); ?>
+</a>
+<a href="<?php echo esc_url( $cf_path . '?ended' ); ?>" class="cf-nav-item <?php echo $active_tab === 'ended' ? 'is-active' : ''; ?>" data-tab="ended">
+<span class="cf-nav-icon">&#x1F4E6;</span> <?php _e( 'Beendete Anzeigen', $this->text_domain ); ?>
+</a>
+<a href="<?php echo esc_url( $cf_path . '?messages' ); ?>" class="cf-nav-item <?php echo $active_tab === 'messages' ? 'is-active' : ''; ?>" data-tab="messages">
+<span class="cf-nav-icon">&#x1F4AC;</span> <?php _e( 'Nachrichten', $this->text_domain ); ?>
+<?php if ( $unread_count > 0 ) : ?>
+<span class="cf-unread-badge"><?php echo esc_html( $unread_count ); ?></span>
+<?php endif; ?>
+</a>
+</nav>
 
-<div class="cf_tab_container">
+<div class="cf-dashboard-actions">
+<?php echo do_shortcode( '[cf_add_classified_btn text="' . esc_attr__( 'Neue Anzeige', $this->text_domain ) . '" view="loggedin"]' ); ?>
+</div>
+</aside>
 
-	<?php /* Display navigation to next/previous pages when applicable */ ?>
-	<?php echo $this->pagination( $this->pagination_top ); ?>
+<main class="cf-dashboard-main">
+<div id="cf-dashboard-content" class="cf-dashboard-content">
+<div class="cf-loader" style="text-align: center; padding: 40px; display: none;">
+<p><?php _e( 'Lädt...', $this->text_domain ); ?></p>
+</div>
+<div id="cf-tab-content" class="cf-tab-content">
+<!-- Inhalt wird hier per AJAX geladen -->
+</div>
+</div>
+</main>
 
-	<div class="cf-listing-grid cf-my-listing-grid">
-	<?php while ( have_posts() ) : the_post(); ?>
-	<?php // cf_debug( $wp_query ); ?>
+</div>
 
-	<div id="post-<?php the_ID(); ?>" <?php post_class( 'cf-listing-card-wrap' ); ?> >
-		<div class="cf-ad cf-listing-card">
-				<?php
-				$gallery_ids   = get_post_meta( get_the_ID(), '_cf_gallery_ids', true );
-				$gallery_count = is_array( $gallery_ids ) ? count( array_filter( $gallery_ids ) ) : 0;
-				$cost_value    = get_post_meta( get_the_ID(), '_cf_cost', true );
-				$cost_display  = is_numeric( $cost_value ) ? number_format_i18n( (float) $cost_value, 2 ) : $cost_value;
-				$cat_list      = get_the_term_list( get_the_ID(), 'kleinenanzeigen-cat', '', ', ', '' );
-				$region_list   = get_the_term_list( get_the_ID(), 'kleinanzeigen-region', '', ', ', '' );
-				$is_favorite   = method_exists( $this, 'is_favorite_post' ) && $this->is_favorite_post( get_the_ID() );
-				$is_reserved   = method_exists( $this, 'is_reserved_post' ) && $this->is_reserved_post( get_the_ID() );
-				?>
-				<div class="cf-image">
-					<?php if ( $gallery_count > 0 ) : ?>
-						<span class="cf-gallery-badge"><?php echo esc_html( sprintf( _n( '%d Bild', '%d Bilder', $gallery_count, $this->text_domain ), $gallery_count ) ); ?></span>
-					<?php endif; ?>
-					<?php
-					if ( '' == get_post_meta( get_the_ID(), '_thumbnail_id', true ) ) {
-						if ( ! empty( $options_general['field_image_def'] ) )
-						echo '<img width="150" height="150" title="no image" alt="no image" class="cf-no-image wp-post-image" src="' . $options_general['field_image_def'] . '">';
-					} else {
-						echo get_the_post_thumbnail( get_the_ID(), array( 200, 150 ) );
-					}
-					?>
-				</div>
-				<div class="cf-info">
-					<div class="cf-card-headline">
-						<h3 class="cf-title"><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-						<?php if ( '' !== (string) $cost_display ) : ?>
-							<span class="cf-price"><?php echo esc_html( $cost_display ); ?></span>
-						<?php endif; ?>
-					</div>
-
-					<div class="cf-card-meta-compact">
-						<?php if ( $is_reserved ) : ?>
-							<span class="cf-status-badge is-reserved"><?php _e( 'Reserviert', $this->text_domain ); ?></span>
-						<?php endif; ?>
-						<span class="cf-card-pill"><?php _e( 'Läuft ab', $this->text_domain ); ?>: <?php echo esc_html( $this->get_expiration_date( get_the_ID() ) ); ?></span>
-						<?php if ( ! empty( $cat_list ) ) : ?>
-							<span class="cf-card-pill"><?php echo wp_kses_post( $cat_list ); ?></span>
-						<?php endif; ?>
-						<?php if ( ! empty( $region_list ) ) : ?>
-							<span class="cf-card-pill"><?php echo wp_kses_post( $region_list ); ?></span>
-						<?php endif; ?>
-					</div>
-
-					<p class="cf-excerpt"><?php echo esc_html( wp_trim_words( wp_strip_all_tags( get_the_excerpt() ), 16, ' ...' ) ); ?></p>
-
-					<form action="#" method="post" id="action-form-<?php the_ID(); ?>" class="action-form cf-card-actions-form">
-					<?php wp_nonce_field('verify'); ?>
-					<input type="hidden" name="post_id" value="<?php the_ID(); ?>" />
-					<input type="hidden" name="url" value="<?php the_permalink(); ?>" />
-					<?php
-					if(current_user_can('edit_classified', get_the_ID())){
-						echo do_shortcode('[cf_edit_classified_btn text="' . __('Kleinanzeige bearbeiten', $this->text_domain) . '" view="always" post="' . get_the_ID() . '"]');
-					}
-					?>
-
-					<?php if ( isset( $sub ) && $sub == 'favorites' ): ?>
-					<a class="button cf-card-secondary" href="<?php the_permalink(); ?>"><?php _e( 'Anzeige ansehen', $this->text_domain ); ?></a>
-					<button type="button" class="button cf-card-secondary cf-favorite-toggle <?php echo $is_favorite ? 'is-active' : ''; ?>" data-post-id="<?php the_ID(); ?>">
-						<span class="cf-favorite-label-default"><?php _e( 'Merken', $this->text_domain ); ?></span>
-						<span class="cf-favorite-label-active"><?php _e( 'Gemerkt', $this->text_domain ); ?></span>
-					</button>
-					<?php elseif ( isset( $sub ) && $sub == 'active' ): ?>
-					<a class="button cf-card-secondary" href="<?php the_permalink(); ?>"><?php _e( 'Anzeige ansehen', $this->text_domain ); ?></a>
-					<?php if ( $user_allow_reserve_toggle ) : ?>
-					<button type="submit" class="button cf-card-secondary" name="reserve" value="<?php echo $is_reserved ? esc_attr__( 'Reservierung aufheben', $this->text_domain ) : esc_attr__( 'Als reserviert markieren', $this->text_domain ); ?>" onclick="classifieds.toggle_reserve('<?php the_ID(); ?>'); return false;" ><?php echo $is_reserved ? esc_html__( 'Reservierung aufheben', $this->text_domain ) : esc_html__( 'Als reserviert markieren', $this->text_domain ); ?></button>
-					<?php endif; ?>
-					<button type="submit" class="button cf-card-secondary" name="end" value="<?php _e('Kleinanzeige beenden', $this->text_domain ); ?>" onclick="classifieds.toggle_end('<?php the_ID(); ?>'); return false;" ><?php _e('Kleinanzeige beenden', $this->text_domain ); ?></button>
-					<?php elseif ( isset( $sub ) && ( $sub == 'saved' || $sub == 'ended' ) ): ?>
-					<a class="button cf-card-secondary" href="<?php the_permalink(); ?>"><?php _e( 'Anzeige ansehen', $this->text_domain ); ?></a>
-					<button type="submit" class="button cf-card-secondary" name="renew" value="<?php _e('Kleinanzeige erneuern', $this->text_domain ); ?>" onclick="classifieds.toggle_renew('<?php the_ID(); ?>'); return false;" ><?php _e('Kleinanzeige erneuern', $this->text_domain ); ?></button>
-					<?php endif; ?>
-
-					<?php if(current_user_can( 'delete_classifieds' ) && 'favorites' !== $sub): ?>
-					<button type="submit" class="button cf-card-secondary" name="delete" value="<?php _e('Kleinanzeige löschen', $this->text_domain ); ?>" onclick="classifieds.toggle_delete('<?php the_ID(); ?>'); return false;" ><?php _e('Kleinanzeige löschen', $this->text_domain ); ?></button>
-					<?php endif; ?>
-				</form>
-
-				<form action="#" method="post" id="confirm-form-<?php the_ID(); ?>" class="confirm-form">
-					<?php wp_nonce_field('verify'); ?>
-					<input type="hidden" name="action" />
-					<input type="hidden" name="post_id" value="<?php the_ID(); ?>" />
-					<input type="hidden" name="post_title" value="<?php the_title(); ?>" />
-
-					<span id="cf-delete-<?php the_ID(); ?>"><?php _e('Kleinanzeige löschen', $this->text_domain ); ?></span>
-					<span id="cf-renew-<?php the_ID(); ?>"><?php _e('Kleinanzeige erneuern', $this->text_domain ); ?></span>
-					<span id="cf-end-<?php the_ID(); ?>"><?php _e('Kleinanzeige beenden', $this->text_domain ); ?></span>
-					<span id="cf-reserve-<?php the_ID(); ?>"><?php echo $is_reserved ? esc_html__( 'Reservierung aufheben', $this->text_domain ) : esc_html__( 'Als reserviert markieren', $this->text_domain ); ?></span>
-					<?php if ( isset( $sub ) && ( $sub == 'saved' || $sub == 'ended' ) ):
-					$cf_payments = $this->get_options('payments');
-
-					//Get the duration options
-					$_cf_opts  = get_option( CF_OPTIONS_NAME );
-					$durations = isset( $_cf_opts['general']['duration_options'] ) ? $_cf_opts['general']['duration_options'] : array( '1 Woche', '2 Wochen', '4 Wochen', '8 Wochen' );
-					?>
-					<select name="duration">
-						<?php
-						//make duration options
-						foreach ( $durations as $key => $field_option ):
-						if( empty($field_option ) ) continue;
-						if($this->use_credits):
-						?>
-						<option value="<?php echo $field_option; ?>"><?php echo sprintf(__('%s für %s Credits', $this->text_domain), $field_option, round($field_option + 0) * $cf_payments['credits_per_week']); ?></option>
-						<?php else: ?>
-						<option value="<?php echo $field_option; ?>"><?php echo $field_option; ?></option>
-						<?php endif; ?>
-						<?php endforeach; ?>
-					</select>
-					<?php endif; ?>
-					<input type="submit" class="button confirm" value="<?php _e( 'Bestätigen', $this->text_domain ); ?>" name="confirm" />
-					<input type="submit" class="button cancel"  value="<?php _e( 'Abbrechen', $this->text_domain ); ?>" onclick="classifieds.cancel('<?php the_ID(); ?>'); return false;" />
-				</form>
-				</div>
-		</div>
-	</div><!-- #post-## -->
-
-	<?php endwhile; ?>
-	</div>
-	<?php /* Display navigation to next/previous pages when applicable */ ?>
-	<?php echo $this->pagination( $this->pagination_bottom ); ?>
-</div><!-- .cf_tab_container -->
 <?php
-if(is_object($wp_query)) $wp_query->post_count = 0;
+if ( isset( $wp_query ) ) $wp_query->post_count = 0;
+wp_reset_query();
 ?>
-<!-- End my Classifieds -->

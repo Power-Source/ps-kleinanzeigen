@@ -8,6 +8,8 @@ jQuery(document).ready(function($) {
 	var frontendConfig = window.cfFrontend || { ajaxUrl: '', nonce: '', i18n: {} };
 	var lastQuickViewTrigger = null;
 	var savedFiltersKey = 'cfSavedFilters';
+
+	// Dashboard tabs are initialized further below after cfDashboard is defined.
 	var lastUsedFilterKey = 'cfLastUsedFilter';
 	var autoRestoreEnabledKey = 'cfFilterAutoRestoreEnabled';
 
@@ -557,5 +559,205 @@ js_translate.image_chosen = 'Bild ausgewaehlt';
 		});
 	};
 
-})(jQuery);
+        // ============================================================
+        // Dashboard: Nachrichten & Konversationen
+        // ============================================================
+        window.cfDashboard = {
+                currentThreadId: null,
+                currentRecipientId: null,
+
+                openConversation: function(threadId) {
+                        var cfg = window.cfFrontend || {};
+                        if (!cfg.ajaxUrl || !cfg.nonce) return;
+
+                        this.currentThreadId = threadId;
+
+                        // Aktives Item markieren
+                        $('.cf-inbox-item').removeClass('is-open');
+                        $('.cf-inbox-item[data-thread-id="' + threadId + '"]').addClass('is-open');
+                        this.currentRecipientId = parseInt($('.cf-inbox-item[data-thread-id="' + threadId + '"]').data('recipient-id'), 10);
+
+                        var $view = $('#cf-conversation-view');
+                        $view.html('<div class="cf-loading">&#x231B; Wird geladen&hellip;</div>');
+
+                        $.post(cfg.ajaxUrl, {
+                                action: 'cf_get_conversation',
+                                nonce: cfg.nonce,
+                                thread_id: threadId
+                        }, function(res) {
+                                if (!res.success) {
+                                        $view.html('<div class="cf-notice cf-notice-error">' + (res.data && res.data.message ? res.data.message : 'Fehler') + '</div>');
+                                        return;
+                                }
+                                var d = res.data;
+                                cfDashboard.currentRecipientId = d.recipient_id;
+
+                                var html = '<div class="cf-conversation-inner">';
+                                html += '<div class="cf-conversation-header">';
+                                html += '<div class="cf-conv-user">';
+                                html += '<img src="' + d.other_avatar + '" alt="" class="cf-conv-avatar">';
+                                html += '<div><strong class="cf-conv-name">' + d.other_user + '</strong>';
+                                if (d.ad_title) {
+                                        html += '<a href="' + d.ad_url + '" target="_blank" class="cf-conv-ad-link">' + d.ad_title + '</a>';
+                                }
+                                html += '</div></div></div>';
+
+                                html += '<div class="cf-messages-thread" id="cf-messages-thread">';
+                                if (d.messages.length === 0) {
+                                        html += '<p class="cf-empty-thread">Noch keine Nachrichten in diesem Thread.</p>';
+                                } else {
+                                        $.each(d.messages, function(i, msg) {
+                                                var cls = msg.is_mine ? 'cf-msg cf-msg-out' : 'cf-msg cf-msg-in';
+                                                html += '<div class="' + cls + '">';
+                                                html += '<img src="' + msg.avatar + '" alt="" class="cf-msg-avatar">';
+                                                html += '<div class="cf-msg-bubble">';
+                                                html += '<div class="cf-msg-text">' + msg.message.replace(/\n/g, '<br>') + '</div>';
+                                                html += '<time class="cf-msg-time">' + msg.date + '</time>';
+                                                html += '</div></div>';
+                                        });
+                                }
+                                html += '</div>';
+
+                                html += '<div class="cf-reply-box">';
+                                html += '<textarea id="cf-reply-text" placeholder="Deine Antwort\u2026" rows="3"></textarea>';
+                                html += '<button class="button cf-btn-primary cf-reply-send">Senden</button>';
+                                html += '</div></div>';
+
+                                $view.html(html);
+
+                                // Scroll nach unten
+                                var $thread = $('#cf-messages-thread');
+                                $thread.scrollTop($thread[0].scrollHeight);
+
+                                // Reply-Button
+                                $view.on('click', '.cf-reply-send', function() {
+                                        cfDashboard.sendReply();
+                                });
+                                $view.on('keydown', '#cf-reply-text', function(e) {
+                                        if (e.ctrlKey && e.key === 'Enter') cfDashboard.sendReply();
+                                });
+                        });
+                },
+
+                sendReply: function() {
+                        var cfg = window.cfFrontend || {};
+                        var text = $('#cf-reply-text').val().trim();
+                        if (!text) return;
+
+                        var $btn = $('.cf-reply-send');
+                        $btn.prop('disabled', true).text('Wird gesendet\u2026');
+
+                        $.post(cfg.ajaxUrl, {
+                                action: 'cf_send_message',
+                                nonce: cfg.nonce,
+                                message: text,
+                                thread_id: this.currentThreadId,
+                                recipient_id: this.currentRecipientId
+                        }, function(res) {
+                                $btn.prop('disabled', false).text('Senden');
+                                if (res.success) {
+                                        $('#cf-reply-text').val('');
+                                        cfDashboard.openConversation(cfDashboard.currentThreadId);
+                                } else {
+                                        alert(res.data && res.data.message ? res.data.message : 'Fehler beim Senden.');
+                                }
+                        });
+                },
+
+                closeConversation: function() {
+                        $('#cf-conversation-view').html('<div class="cf-conversation-placeholder"><span>&#x1F4AC;</span><p>W&auml;hle eine Konversation aus.</p></div>');
+                        $('.cf-inbox-item').removeClass('is-open');
+                        this.currentThreadId = null;
+                },
+
+                // Dashboard-Tab AJAX nachladen
+                loadTab: function(tabName) {
+                        var cfg = window.cfFrontend || {};
+                        if (!cfg.ajaxUrl || !cfg.dashboardNonce) return;
+
+                        var $content = $('#cf-tab-content');
+                        var $loader = $('.cf-loader');
+
+                        $loader.show();
+                        $content.html('');
+
+						$.post(cfg.ajaxUrl, {
+                                action: 'cf_load_dashboard_tab',
+                                nonce: cfg.dashboardNonce,
+                                tab: tabName
+                        }, function(res) {
+                                $loader.hide();
+                                if (res.success) {
+									var html = (res.data && typeof res.data === 'object' && typeof res.data.html !== 'undefined') ? res.data.html : res.data;
+									$content.html(html);
+                                        // Tab-Link als aktiv markieren
+                                        $('.cf-nav-item').removeClass('is-active');
+                                        $('.cf-nav-item[data-tab="' + tabName + '"]').addClass('is-active');
+                                        // URL anpassen
+                                        window.history.pushState({tab: tabName}, '', '?tab=' + tabName);
+                                } else {
+                                        $content.html('<div class="cf-notice cf-notice-error">Fehler beim Laden des Tabs.</div>');
+                                }
+						}).fail(function(xhr) {
+								$loader.hide();
+								var msg = 'Fehler beim Laden des Tabs.';
+								if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+									msg = xhr.responseJSON.data.message;
+								}
+								$content.html('<div class="cf-notice cf-notice-error">' + msg + '</div>');
+						});
+                }
+        };
+
+				if ( $('#cf-dashboard-content').length > 0 ) {
+					var urlParams = new URLSearchParams(window.location.search);
+					var activeTab = urlParams.get('tab') || 'active';
+					window.cfDashboard.loadTab(activeTab);
+
+					$(document).on('click', '.cf-nav-item', function(e) {
+						e.preventDefault();
+						var tabName = $(this).data('tab');
+						if (tabName) {
+							window.cfDashboard.loadTab(tabName);
+						}
+					});
+				}
+
+        // AJAX-Kontaktformular auf Single-Seite
+        $(document).on('submit', '#cf-contact-form-ajax', function(e) {
+                e.preventDefault();
+                var cfg = window.cfFrontend || {};
+                if (!cfg.ajaxUrl || !cfg.nonce) return;
+
+                var $form    = $(this);
+                var $btn     = $form.find('.cf-ajax-send');
+                var $feedback = $form.find('.cf-form-feedback');
+                var postId    = $form.data('post-id');
+                var recipientId = $form.data('recipient-id');
+
+                $btn.prop('disabled', true).text('Wird gesendet\u2026');
+                $feedback.hide();
+
+                $.post(cfg.ajaxUrl, {
+                        action:       'cf_send_message',
+                        nonce:        cfg.nonce,
+                        post_id:      postId,
+                        recipient_id: recipientId,
+                        subject:      $form.find('[name="subject"]').val(),
+                        message:      $form.find('[name="message"]').val()
+                }, function(res) {
+                        $btn.prop('disabled', false).text('Nachricht senden');
+                        $feedback.show();
+                        if (res.success) {
+                                $feedback.attr('class', 'cf-form-feedback cf-notice-success')
+                                         .text('Nachricht gesendet! Der Anbieter meldet sich bei dir.');
+                                $form.find('[name="message"]').val('');
+                        } else {
+                                var msg = res.data && res.data.message ? res.data.message : 'Fehler beim Senden.';
+                                $feedback.attr('class', 'cf-form-feedback cf-notice-error').text(msg);
+                        }
+                });
+        });
+
+		})(jQuery);
 

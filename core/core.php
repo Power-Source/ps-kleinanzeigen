@@ -187,6 +187,13 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 			add_action( 'wp_ajax_cf_quick_view', array( &$this, 'ajax_quick_view' ) );
 			add_action( 'wp_ajax_nopriv_cf_quick_view', array( &$this, 'ajax_quick_view' ) );
 
+			// Nachrichtensystem
+			add_action( 'init', array( &$this, 'register_message_post_type' ) );
+			add_action( 'wp_ajax_cf_send_message', array( &$this, 'ajax_send_message' ) );
+			add_action( 'wp_ajax_cf_get_conversation', array( &$this, 'ajax_get_conversation' ) );
+			add_action( 'wp_ajax_cf_mark_messages_read', array( &$this, 'ajax_mark_messages_read' ) );
+			add_action( 'wp_ajax_cf_load_dashboard_tab', array( &$this, 'ajax_load_dashboard_tab' ) );
+
 
 			//Shortcodes
 			add_shortcode( 'cf_list_categories', array( &$this, 'classifieds_categories_sc' ) );
@@ -1540,6 +1547,370 @@ $cost_meta_key     = '_cf_cost';
 					}
 				}
 			}
+		}
+
+		/**
+		 * Registriert den cf_message Custom Post Type für interne Nachrichten
+		 */
+		function register_message_post_type() {
+			register_post_type( 'cf_message', array(
+				'public'              => false,
+				'show_ui'             => false,
+				'show_in_menu'        => false,
+				'supports'            => array( 'title', 'editor', 'author', 'custom-fields' ),
+				'capability_type'     => 'post',
+				'map_meta_cap'        => true,
+			) );
+		}
+
+		/**
+		 * Liefert alle Konversationen eines Users (als Sender oder Empfänger)
+		 */
+		function get_user_conversations( $user_id, $type = 'all' ) {
+			$conversations = array();
+
+			// Nachrichten holen wo User Empfänger ist (Posteingang)
+			$args = array(
+				'post_type'      => 'cf_message',
+				'posts_per_page' => 100,
+				'post_status'    => 'publish',
+				'meta_query'     => array( 'relation' => 'OR' ),
+			);
+
+			if ( $type === 'inbox' || $type === 'all' ) {
+				$inbox = get_posts( array_merge( $args, array(
+					'meta_query' => array(
+						array( 'key' => '_cf_msg_recipient', 'value' => $user_id, 'compare' => '=' ),
+					),
+					'orderby' => 'date', 'order' => 'DESC',
+				) ) );
+				foreach ( $inbox as $msg ) {
+					$thread_id = get_post_meta( $msg->ID, '_cf_msg_thread_id', true ) ?: $msg->ID;
+					if ( ! isset( $conversations[ $thread_id ] ) ) {
+						$conversations[ $thread_id ] = array(
+							'thread_id'    => $thread_id,
+							'last_message' => $msg,
+							'unread'       => 0,
+							'type'         => 'inbox',
+						);
+					}
+					if ( ! (int) get_post_meta( $msg->ID, '_cf_msg_read_' . $user_id, true ) ) {
+						$conversations[ $thread_id ]['unread']++;
+					}
+				}
+			}
+
+			if ( $type === 'outbox' || $type === 'all' ) {
+				$outbox = get_posts( array_merge( $args, array(
+					'author'     => $user_id,
+					'meta_query' => array(
+						array( 'key' => '_cf_msg_recipient', 'compare' => 'EXISTS' ),
+					),
+					'orderby' => 'date', 'order' => 'DESC',
+				) ) );
+				foreach ( $outbox as $msg ) {
+					$thread_id = get_post_meta( $msg->ID, '_cf_msg_thread_id', true ) ?: $msg->ID;
+					if ( ! isset( $conversations[ $thread_id ] ) ) {
+						$conversations[ $thread_id ] = array(
+							'thread_id'    => $thread_id,
+							'last_message' => $msg,
+							'unread'       => 0,
+							'type'         => 'outbox',
+						);
+					}
+				}
+			}
+
+			usort( $conversations, function( $a, $b ) {
+				return strtotime( $b['last_message']->post_date ) - strtotime( $a['last_message']->post_date );
+			} );
+
+			return array_values( $conversations );
+		}
+
+		/**
+		 * Anzahl ungelesener Nachrichten für einen User
+		 */
+		function get_unread_message_count( $user_id = 0 ) {
+			if ( ! $user_id ) $user_id = get_current_user_id();
+			if ( ! $user_id ) return 0;
+
+			$msgs = get_posts( array(
+				'post_type'      => 'cf_message',
+				'posts_per_page' => -1,
+				'post_status'    => 'publish',
+				'fields'         => 'ids',
+				'meta_query'     => array(
+					array( 'key' => '_cf_msg_recipient', 'value' => $user_id, 'compare' => '=' ),
+					array( 'key' => '_cf_msg_read_' . $user_id, 'compare' => 'NOT EXISTS' ),
+				),
+			) );
+
+			return count( $msgs );
+		}
+
+		/**
+		 * AJAX: Nachricht senden (ersetzt handle_contact_form_requests für eingeloggte User)
+		 */
+		function ajax_send_message() {
+			check_ajax_referer( 'cf_send_message', 'nonce' );
+
+			if ( ! is_user_logged_in() ) {
+				wp_send_json_error( array( 'message' => __( 'Du musst eingeloggt sein.', $this->text_domain ) ), 403 );
+			}
+
+			$post_id      = absint( $_POST['post_id'] ?? 0 );
+			$recipient_id = absint( $_POST['recipient_id'] ?? 0 );
+			$thread_id    = absint( $_POST['thread_id'] ?? 0 );
+			$subject      = sanitize_text_field( $_POST['subject'] ?? '' );
+			$message_text = sanitize_textarea_field( $_POST['message'] ?? '' );
+
+			if ( ! $message_text ) {
+				wp_send_json_error( array( 'message' => __( 'Nachricht darf nicht leer sein.', $this->text_domain ) ) );
+			}
+
+			if ( ! $recipient_id && $post_id ) {
+				$post = get_post( $post_id );
+				if ( $post ) $recipient_id = (int) $post->post_author;
+			}
+
+			if ( ! $recipient_id ) {
+				wp_send_json_error( array( 'message' => __( 'Empfänger nicht gefunden.', $this->text_domain ) ) );
+			}
+
+			$sender_id = get_current_user_id();
+			if ( $sender_id === $recipient_id ) {
+				wp_send_json_error( array( 'message' => __( 'Du kannst dir selbst keine Nachricht schicken.', $this->text_domain ) ) );
+			}
+
+			// Rate limiting: max 10 Nachrichten pro Stunde
+			$count_key = 'cf_msg_rate_' . $sender_id;
+			$count     = (int) get_transient( $count_key );
+			if ( $count >= 10 ) {
+				wp_send_json_error( array( 'message' => __( 'Zu viele Nachrichten. Bitte warte etwas.', $this->text_domain ) ) );
+			}
+			set_transient( $count_key, $count + 1, HOUR_IN_SECONDS );
+
+			$msg_id = wp_insert_post( array(
+				'post_type'    => 'cf_message',
+				'post_status'  => 'publish',
+				'post_title'   => $subject ?: __( 'Anfrage zur Anzeige', $this->text_domain ),
+				'post_content' => $message_text,
+				'post_author'  => $sender_id,
+			) );
+
+			if ( is_wp_error( $msg_id ) ) {
+				wp_send_json_error( array( 'message' => __( 'Fehler beim Senden.', $this->text_domain ) ) );
+			}
+
+			update_post_meta( $msg_id, '_cf_msg_recipient',  $recipient_id );
+			update_post_meta( $msg_id, '_cf_msg_post_id',    $post_id );
+			update_post_meta( $msg_id, '_cf_msg_thread_id',  $thread_id ?: $msg_id );
+
+			// Thread-ID auf sich selbst setzen wenn neue Konversation
+			if ( ! $thread_id ) {
+				update_post_meta( $msg_id, '_cf_msg_thread_id', $msg_id );
+			}
+
+			// E-Mail Benachrichtigung an Empfänger
+			$recipient  = get_userdata( $recipient_id );
+			$sender     = get_userdata( $sender_id );
+			$ad_title   = $post_id ? get_the_title( $post_id ) : '';
+			$options    = $this->get_options( 'general' );
+
+			$email_subject = $ad_title
+				? sprintf( __( 'Neue Nachricht zur Anzeige: %s', $this->text_domain ), $ad_title )
+				: __( 'Du hast eine neue Nachricht', $this->text_domain );
+
+			$email_body  = '<p>' . sprintf( __( 'Hallo %s,', $this->text_domain ), esc_html( $recipient->display_name ) ) . '</p>';
+			$email_body .= '<p>' . sprintf( __( '%s hat dir eine Nachricht geschickt:', $this->text_domain ), esc_html( $sender->display_name ) ) . '</p>';
+			$email_body .= '<blockquote>' . nl2br( esc_html( $message_text ) ) . '</blockquote>';
+			if ( $post_id ) {
+				$email_body .= '<p><a href="' . esc_url( get_permalink( $post_id ) ) . '">' . esc_html( $ad_title ) . '</a></p>';
+			}
+			$email_body .= '<p><a href="' . esc_url( get_permalink( $this->my_classifieds_page_id ) . '?messages' ) . '">' . __( 'Zur Nachrichtenübersicht', $this->text_domain ) . '</a></p>';
+
+			wp_mail(
+				$recipient->user_email,
+				$email_subject,
+				$email_body,
+				array( 'Content-Type: text/html; charset=UTF-8' )
+			);
+
+			wp_send_json_success( array(
+				'message'   => __( 'Nachricht gesendet!', $this->text_domain ),
+				'thread_id' => $thread_id ?: $msg_id,
+				'msg_id'    => $msg_id,
+			) );
+		}
+
+		/**
+		 * AJAX: Dashboard-Tab laden (Meine Anzeigen, Gemerkt, Nachrichten, etc.)
+		 */
+		function ajax_load_dashboard_tab() {
+			$verify_nonce = isset( $_REQUEST['nonce'] ) ? sanitize_text_field( $_REQUEST['nonce'] ) : '';
+			if ( ! wp_verify_nonce( $verify_nonce, 'cf_dashboard_nonce' ) ) {
+				wp_send_json_error( array( 'message' => 'Nonce-Fehler' ), 403 );
+			}
+
+			if ( ! is_user_logged_in() ) {
+				wp_send_json_error( array( 'message' => __( 'Du musst eingeloggt sein.', $this->text_domain ) ), 403 );
+			}
+
+			$tab = sanitize_key( $_POST['tab'] ?? 'active' );
+			$paged = absint( $_POST['paged'] ?? 1 );
+
+			if ( ! in_array( $tab, array( 'active', 'favorites', 'saved', 'ended', 'messages' ), true ) ) {
+				wp_send_json_error( array( 'message' => __( 'Ungültiger Tab.', $this->text_domain ) ) );
+			}
+
+			global $current_user, $wp_query;
+			$current_user = wp_get_current_user();
+
+			// Inhalte vorbereiten
+			if ( $tab !== 'messages' ) {
+				$query_args = array(
+					'paged'     => $paged,
+					'post_type' => 'classifieds',
+					'author'    => $current_user->ID,
+				);
+
+				if ( $tab === 'favorites' ) {
+					$query_args['post_status'] = 'publish';
+					unset( $query_args['author'] );
+					$favorite_ids = method_exists( $this, 'get_favorite_ids' ) ? $this->get_favorite_ids() : array();
+					$query_args['post__in'] = ! empty( $favorite_ids ) ? array_map( 'absint', $favorite_ids ) : array( 0 );
+				} elseif ( $tab === 'saved' ) {
+					$query_args['post_status'] = array( 'draft', 'pending' );
+				} elseif ( $tab === 'ended' ) {
+					$query_args['post_status'] = 'private';
+				} else {
+					$query_args['post_status'] = 'publish';
+				}
+
+				query_posts( $query_args );
+
+				ob_start();
+				if ( have_posts() ) {
+					while ( have_posts() ) {
+						the_post();
+						include $this->plugin_dir . 'ui-front/general/dash-item.php';
+					}
+				} else {
+					echo '<p>' . __( 'Noch keine Anzeigen in diesem Bereich.', $this->text_domain ) . '</p>';
+				}
+				$content = ob_get_clean();
+
+				wp_reset_query();
+			} else {
+				// Nachrichten-Tab
+				ob_start();
+				include $this->plugin_dir . 'ui-front/general/dash-messages.php';
+				$content = ob_get_clean();
+			}
+
+			wp_send_json_success( array( 'html' => $content, 'tab' => $tab ) );
+		}
+
+		/**
+		 * AJAX: Konversation laden
+		 */
+		function ajax_get_conversation() {
+			check_ajax_referer( 'cf_send_message', 'nonce' );
+
+			if ( ! is_user_logged_in() ) {
+				wp_send_json_error( array( 'message' => __( 'Nicht eingeloggt.', $this->text_domain ) ), 403 );
+			}
+
+			$thread_id = absint( $_POST['thread_id'] ?? 0 );
+			$user_id   = get_current_user_id();
+
+			if ( ! $thread_id ) {
+				wp_send_json_error( array( 'message' => __( 'Konversation nicht gefunden.', $this->text_domain ) ) );
+			}
+
+			// Sicherheitscheck: User muss Sender oder Empfänger sein
+			$thread_root = get_post( $thread_id );
+			if ( ! $thread_root ) {
+				wp_send_json_error( array( 'message' => __( 'Konversation nicht gefunden.', $this->text_domain ) ) );
+			}
+
+			$root_recipient = (int) get_post_meta( $thread_id, '_cf_msg_recipient', true );
+			$root_sender    = (int) $thread_root->post_author;
+
+			if ( $user_id !== $root_sender && $user_id !== $root_recipient ) {
+				wp_send_json_error( array( 'message' => __( 'Zugriff verweigert.', $this->text_domain ) ), 403 );
+			}
+
+			$messages = get_posts( array(
+				'post_type'      => 'cf_message',
+				'posts_per_page' => 50,
+				'post_status'    => 'publish',
+				'meta_key'       => '_cf_msg_thread_id',
+				'meta_value'     => $thread_id,
+				'orderby'        => 'date',
+				'order'          => 'ASC',
+			) );
+
+			$output = array();
+			foreach ( $messages as $msg ) {
+				$sender_data = get_userdata( $msg->post_author );
+				$output[] = array(
+					'id'        => $msg->ID,
+					'sender'    => $sender_data ? esc_html( $sender_data->display_name ) : __( 'Unbekannt', $this->text_domain ),
+					'avatar'    => get_avatar_url( $msg->post_author, array( 'size' => 40 ) ),
+					'message'   => esc_html( $msg->post_content ),
+					'date'      => get_the_date( 'd.m.Y H:i', $msg ),
+					'is_mine'   => $msg->post_author == $user_id,
+					'unread'    => ! (int) get_post_meta( $msg->ID, '_cf_msg_read_' . $user_id, true ),
+				);
+				// Als gelesen markieren
+				update_post_meta( $msg->ID, '_cf_msg_read_' . $user_id, 1 );
+			}
+
+			$post_id    = (int) get_post_meta( $thread_id, '_cf_msg_post_id', true );
+			$other_id   = ( $user_id === $root_sender ) ? $root_recipient : $root_sender;
+			$other_user = get_userdata( $other_id );
+
+			wp_send_json_success( array(
+				'messages'         => $output,
+				'thread_id'        => $thread_id,
+				'other_user'       => $other_user ? esc_html( $other_user->display_name ) : '',
+				'other_avatar'     => $other_user ? get_avatar_url( $other_id, array( 'size' => 40 ) ) : '',
+				'ad_title'         => $post_id ? esc_html( get_the_title( $post_id ) ) : '',
+				'ad_url'           => $post_id ? esc_url( get_permalink( $post_id ) ) : '',
+				'recipient_id'     => $other_id,
+			) );
+		}
+
+		/**
+		 * AJAX: Nachrichten als gelesen markieren
+		 */
+		function ajax_mark_messages_read() {
+			check_ajax_referer( 'cf_send_message', 'nonce' );
+			if ( ! is_user_logged_in() ) wp_send_json_error( null, 403 );
+
+			$thread_id = absint( $_POST['thread_id'] ?? 0 );
+			$user_id   = get_current_user_id();
+
+			if ( ! $thread_id ) wp_send_json_error();
+
+			$messages = get_posts( array(
+				'post_type'      => 'cf_message',
+				'posts_per_page' => -1,
+				'post_status'    => 'publish',
+				'fields'         => 'ids',
+				'meta_query'     => array(
+					array( 'key' => '_cf_msg_thread_id', 'value' => $thread_id ),
+					array( 'key' => '_cf_msg_recipient', 'value' => $user_id ),
+				),
+			) );
+
+			foreach ( $messages as $mid ) {
+				update_post_meta( $mid, '_cf_msg_read_' . $user_id, 1 );
+			}
+
+			wp_send_json_success();
 		}
 
 		/**
