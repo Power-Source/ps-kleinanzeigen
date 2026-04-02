@@ -423,7 +423,8 @@ var classifieds = {
 		jQuery('#cf-end-'+key).show();
 		jQuery('#cf-renew-'+key).hide();
 		jQuery('#cf-delete-'+key).hide();
-		jQuery('input[name="action"]').val('end');
+		jQuery('#cf-reserve-'+key).hide();
+		jQuery('#confirm-form-'+key+' input[name="action"]').val('end');
 	},
 	toggle_renew: function(key) {
 		jQuery('#confirm-form-'+key).show();
@@ -432,7 +433,8 @@ var classifieds = {
 		jQuery('#cf-end-'+key).hide();
 		jQuery('#cf-renew-'+key).show();
 		jQuery('#cf-delete-'+key).hide();
-		jQuery('input[name="action"]').val('renew');
+		jQuery('#cf-reserve-'+key).hide();
+		jQuery('#confirm-form-'+key+' input[name="action"]').val('renew');
 	},
 	toggle_delete: function(key) {
 		jQuery('#confirm-form-'+key).show();
@@ -441,7 +443,18 @@ var classifieds = {
 		jQuery('#cf-end-'+key).hide();
 		jQuery('#cf-renew-'+key).hide();
 		jQuery('#cf-delete-'+key).show();
-		jQuery('input[name="action"]').val('delete');
+		jQuery('#cf-reserve-'+key).hide();
+		jQuery('#confirm-form-'+key+' input[name="action"]').val('delete');
+	},
+	toggle_reserve: function(key) {
+		jQuery('#confirm-form-'+key).show();
+		jQuery('#confirm-form-'+key+' select[name="duration"]').hide();
+		jQuery('#action-form-'+key).hide();
+		jQuery('#cf-end-'+key).hide();
+		jQuery('#cf-renew-'+key).hide();
+		jQuery('#cf-delete-'+key).hide();
+		jQuery('#cf-reserve-'+key).show();
+		jQuery('#confirm-form-'+key+' input[name="action"]').val('reserve');
 	},
 	toggle_contact_form: function() {
 		jQuery('.cf-ad-info').hide();

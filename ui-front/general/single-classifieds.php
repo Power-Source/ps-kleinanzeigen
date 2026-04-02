@@ -34,6 +34,8 @@ $single_show_gallery = ! isset( $frontend_options['single_show_gallery'] ) || 1 
 $single_show_trust_block = ! isset( $frontend_options['single_show_trust_block'] ) || 1 === (int) $frontend_options['single_show_trust_block'];
 $single_show_seller_card = ! isset( $frontend_options['single_show_seller_card'] ) || 1 === (int) $frontend_options['single_show_seller_card'];
 $single_show_sticky_actions = ! isset( $frontend_options['single_show_sticky_actions'] ) || 1 === (int) $frontend_options['single_show_sticky_actions'];
+$single_show_reserved_badge = ! isset( $frontend_options['single_show_reserved_badge'] ) || 1 === (int) $frontend_options['single_show_reserved_badge'];
+$is_reserved = method_exists( $this, 'is_reserved_post' ) ? $this->is_reserved_post( $post->ID ) : ( '1' === (string) get_post_meta( $post->ID, '_cf_reserved', true ) );
 
 /**
 * $content is already filled with the database html.
@@ -153,6 +155,9 @@ $single_show_sticky_actions = ! isset( $frontend_options['single_show_sticky_act
 			<button type="button" class="button cf-cta-share" data-copy-url="<?php echo esc_url( get_permalink() ); ?>"><?php _e( 'Link teilen', $this->text_domain ); ?></button>
 		</div>
 		<div class="cf-quick-meta">
+			<?php if ( $single_show_reserved_badge && $is_reserved ) : ?>
+				<span class="cf-meta-chip cf-meta-chip-reserved"><?php _e( 'Reserviert', $this->text_domain ); ?></span>
+			<?php endif; ?>
 			<?php if ( '' !== $cost_display ) : ?>
 				<span class="cf-meta-chip"><?php _e( 'Preis:', $this->text_domain ); ?> <?php echo esc_html( $cost_display ); ?></span>
 			<?php endif; ?>

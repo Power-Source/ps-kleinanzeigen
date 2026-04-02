@@ -106,6 +106,9 @@ if (!class_exists('Classifieds_Core_Main')):
                             wp_delete_post($_POST['post_id']);
                             /* Set the proper step which will be loaded by "page-my-classifieds.php" */
                             set_query_var('cf_action', 'my-classifieds');
+                        } elseif ($_POST['action'] == 'reserve') {
+                            $this->toggle_reserved_status((int) $_POST['post_id']);
+                            set_query_var('cf_action', 'my-classifieds');
                         }
                     } else {
                         die(__('Security check failed!', $this->text_domain));

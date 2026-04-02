@@ -37,6 +37,7 @@ $archive_show_filter_tools = ! isset( $frontend_options['archive_show_filter_too
 $archive_show_quickview = ! isset( $frontend_options['archive_show_quickview'] ) || 1 === (int) $frontend_options['archive_show_quickview'];
 $archive_show_favorites = ! isset( $frontend_options['archive_show_favorites'] ) || 1 === (int) $frontend_options['archive_show_favorites'];
 $archive_show_contact_cta = ! isset( $frontend_options['archive_show_contact_cta'] ) || 1 === (int) $frontend_options['archive_show_contact_cta'];
+$archive_show_reserved_badge = ! isset( $frontend_options['archive_show_reserved_badge'] ) || 1 === (int) $frontend_options['archive_show_reserved_badge'];
 
 $archive_intro = isset( $frontend_options['archive_intro'] ) ? trim( $frontend_options['archive_intro'] ) : '';
 
@@ -181,12 +182,16 @@ $cost = is_numeric( $cost ) ? number_format_i18n( (float) $cost, 2 ) : $cost;
 $gallery_ids   = get_post_meta( get_the_ID(), '_cf_gallery_ids', true );
 $gallery_count = is_array( $gallery_ids ) ? count( array_filter( $gallery_ids ) ) : 0;
 $is_favorite   = in_array( get_the_ID(), $favorite_ids, true );
+$is_reserved   = method_exists( $cf, 'is_reserved_post' ) ? $cf->is_reserved_post( get_the_ID() ) : ( '1' === (string) get_post_meta( get_the_ID(), '_cf_reserved', true ) );
 ?>
 <div id="post-<?php the_ID(); ?>" <?php post_class( 'cf-listing-card-wrap' ); ?>>
 
 	<div class="entry-content">
 		<div class="cf-ad cf-listing-card">
 			<div class="cf-image">
+				<?php if ( $archive_show_reserved_badge && $is_reserved ) : ?>
+					<span class="cf-status-badge is-reserved"><?php _e( 'Reserviert', CF_TEXT_DOMAIN ); ?></span>
+				<?php endif; ?>
 				<?php if ( $gallery_count > 0 ) : ?>
 					<span class="cf-gallery-badge"><?php echo esc_html( sprintf( _n( '%d Bild', '%d Bilder', $gallery_count, CF_TEXT_DOMAIN ), $gallery_count ) ); ?></span>
 				<?php endif; ?>

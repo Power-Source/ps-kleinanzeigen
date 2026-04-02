@@ -15,13 +15,16 @@ $archive_show_filter_tools = isset( $options['archive_show_filter_tools'] ) ? (i
 $archive_show_quickview = isset( $options['archive_show_quickview'] ) ? (int) $options['archive_show_quickview'] : 1;
 $archive_show_favorites = isset( $options['archive_show_favorites'] ) ? (int) $options['archive_show_favorites'] : 1;
 $archive_show_contact_cta = isset( $options['archive_show_contact_cta'] ) ? (int) $options['archive_show_contact_cta'] : 1;
+$archive_show_reserved_badge = isset( $options['archive_show_reserved_badge'] ) ? (int) $options['archive_show_reserved_badge'] : 1;
 
 $single_show_gallery = isset( $options['single_show_gallery'] ) ? (int) $options['single_show_gallery'] : 1;
 $single_show_seller_card = isset( $options['single_show_seller_card'] ) ? (int) $options['single_show_seller_card'] : 1;
 $single_show_sticky_actions = isset( $options['single_show_sticky_actions'] ) ? (int) $options['single_show_sticky_actions'] : 1;
 $single_show_trust_block = isset( $options['single_show_trust_block'] ) ? (int) $options['single_show_trust_block'] : 1;
+$single_show_reserved_badge = isset( $options['single_show_reserved_badge'] ) ? (int) $options['single_show_reserved_badge'] : 1;
 
 $user_show_favorites_tab = isset( $options['user_show_favorites_tab'] ) ? (int) $options['user_show_favorites_tab'] : 1;
+$user_allow_reserve_toggle = isset( $options['user_allow_reserve_toggle'] ) ? (int) $options['user_allow_reserve_toggle'] : 1;
 ?>
 
 <div class="wrap">
@@ -133,6 +136,16 @@ $user_show_favorites_tab = isset( $options['user_show_favorites_tab'] ) ? (int) 
 							</label>
 						</td>
 					</tr>
+					<tr>
+						<th><?php _e( 'Reserviert-Badge im Archiv', $this->text_domain ); ?></th>
+						<td>
+							<input type="hidden" name="archive_show_reserved_badge" value="0" />
+							<label>
+								<input type="checkbox" name="archive_show_reserved_badge" value="1" <?php checked( 1 === $archive_show_reserved_badge ); ?> />
+								<span class="description"><?php _e( 'Zeigt bei reservierten Anzeigen ein sichtbares Badge in der Karte.', $this->text_domain ); ?></span>
+							</label>
+						</td>
+					</tr>
 				</table>
 			</div>
 		</div>
@@ -200,6 +213,16 @@ $user_show_favorites_tab = isset( $options['user_show_favorites_tab'] ) ? (int) 
 							</label>
 						</td>
 					</tr>
+					<tr>
+						<th><?php _e( 'Reserviert-Badge auf Detailseite', $this->text_domain ); ?></th>
+						<td>
+							<input type="hidden" name="single_show_reserved_badge" value="0" />
+							<label>
+								<input type="checkbox" name="single_show_reserved_badge" value="1" <?php checked( 1 === $single_show_reserved_badge ); ?> />
+								<span class="description"><?php _e( 'Blendet auf der Anzeige gut sichtbar den Status Reserviert ein.', $this->text_domain ); ?></span>
+							</label>
+						</td>
+					</tr>
 				</table>
 			</div>
 		</div>
@@ -234,6 +257,16 @@ $user_show_favorites_tab = isset( $options['user_show_favorites_tab'] ) ? (int) 
 							<label>
 								<input type="checkbox" name="user_show_favorites_tab" value="1" <?php checked( 1 === $user_show_favorites_tab ); ?> />
 								<span class="description"><?php _e( 'Nutzer sehen dann einen eigenen Bereich fuer gemerkte Anzeigen.', $this->text_domain ); ?></span>
+							</label>
+						</td>
+					</tr>
+					<tr>
+						<th><?php _e( 'Reservieren im Userbereich erlauben', $this->text_domain ); ?></th>
+						<td>
+							<input type="hidden" name="user_allow_reserve_toggle" value="0" />
+							<label>
+								<input type="checkbox" name="user_allow_reserve_toggle" value="1" <?php checked( 1 === $user_allow_reserve_toggle ); ?> />
+								<span class="description"><?php _e( 'Nutzer koennen in Meine Anzeigen den Status Reserviert an/aus schalten.', $this->text_domain ); ?></span>
 							</label>
 						</td>
 					</tr>
@@ -277,10 +310,13 @@ $user_show_favorites_tab = isset( $options['user_show_favorites_tab'] ) ? (int) 
 				archive_show_quickview: true,
 				archive_show_favorites: true,
 				archive_show_contact_cta: true,
+				archive_show_reserved_badge: true,
 				single_show_gallery: true,
 				single_show_trust_block: false,
 				single_show_seller_card: true,
 				single_show_sticky_actions: true,
+				single_show_reserved_badge: true,
+				user_allow_reserve_toggle: true,
 				user_show_favorites_tab: true
 			},
 			premium: {
@@ -290,10 +326,13 @@ $user_show_favorites_tab = isset( $options['user_show_favorites_tab'] ) ? (int) 
 				archive_show_quickview: true,
 				archive_show_favorites: true,
 				archive_show_contact_cta: true,
+				archive_show_reserved_badge: true,
 				single_show_gallery: true,
 				single_show_trust_block: true,
 				single_show_seller_card: true,
 				single_show_sticky_actions: true,
+				single_show_reserved_badge: true,
+				user_allow_reserve_toggle: true,
 				user_show_favorites_tab: true
 			},
 			community: {
@@ -303,10 +342,13 @@ $user_show_favorites_tab = isset( $options['user_show_favorites_tab'] ) ? (int) 
 				archive_show_quickview: false,
 				archive_show_favorites: true,
 				archive_show_contact_cta: false,
+				archive_show_reserved_badge: true,
 				single_show_gallery: true,
 				single_show_trust_block: false,
 				single_show_seller_card: true,
 				single_show_sticky_actions: false,
+				single_show_reserved_badge: true,
+				user_allow_reserve_toggle: true,
 				user_show_favorites_tab: true
 			}
 		};

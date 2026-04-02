@@ -176,6 +176,33 @@ width: 100%;
 	font-weight: 600;
 }
 
+.cf-status-badge {
+	display: inline-block;
+	padding: 5px 10px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1;
+	letter-spacing: 0.02em;
+	background: #eef2ff;
+	color: #1f2937;
+	border: 1px solid #c7d2fe;
+}
+
+.cf-image .cf-status-badge {
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	z-index: 3;
+}
+
+.cf-status-badge.is-reserved,
+.cf-meta-chip-reserved {
+	background: #fff2e8;
+	border-color: #f7c89c;
+	color: #9a3412;
+}
+
 .cf-image h3{
 	float: right;
 }

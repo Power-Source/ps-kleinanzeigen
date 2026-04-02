@@ -16,9 +16,11 @@
 global $bp, $wp_query, $paged;
 
 $options = $this->get_options( 'general' );
+$options_general = $options;
 $options_frontend = $this->get_options( 'frontend' );
 $user_intro = isset( $options_frontend['user_intro'] ) ? trim( $options_frontend['user_intro'] ) : '';
 $user_show_favorites_tab = ! isset( $options_frontend['user_show_favorites_tab'] ) || 1 === (int) $options_frontend['user_show_favorites_tab'];
+$user_allow_reserve_toggle = ! isset( $options_frontend['user_allow_reserve_toggle'] ) || 1 === (int) $options_frontend['user_allow_reserve_toggle'];
 $favorite_ids = method_exists( $this, 'get_favorite_ids' ) ? $this->get_favorite_ids() : array();
 
 $cf_path = $bp->displayed_user->domain . $this->classifieds_page_slug .'/' . $this->my_classifieds_page_slug;
@@ -126,6 +128,7 @@ query_posts($query_args);
 		<br clear="both" />
 		<div class="cf-listing-grid cf-my-listing-grid">
 		<?php if ( have_posts() ) while ( have_posts() ) : the_post(); ?>
+		<?php $is_reserved = method_exists( $this, 'is_reserved_post' ) && $this->is_reserved_post( get_the_ID() ); ?>
 
 		<div id="post-<?php the_ID(); ?>" <?php post_class(); ?> >
 			<div class="cf-ad">
@@ -141,6 +144,9 @@ query_posts($query_args);
 						?>
 					</div>
 					<div class="cf-info">
+						<?php if ( $is_reserved ) : ?>
+							<span class="cf-status-badge is-reserved"><?php _e( 'Reserviert', $this->text_domain ); ?></span>
+						<?php endif; ?>
 						<table>
 							<tr>
 								<th><?php _e( 'Titel', $this->text_domain ); ?></th>
@@ -176,6 +182,9 @@ query_posts($query_args);
 						?>
 
 						<?php if ( isset( $sub ) && $sub == 'active' ): ?>
+						<?php if ( $user_allow_reserve_toggle ) : ?>
+						<button type="submit" name="reserve" value="<?php echo $is_reserved ? esc_attr__( 'Reservierung aufheben', $this->text_domain ) : esc_attr__( 'Als reserviert markieren', $this->text_domain ); ?>" onclick="classifieds.toggle_reserve('<?php the_ID(); ?>'); return false;" ><?php echo $is_reserved ? esc_html__( 'Reservierung aufheben', $this->text_domain ) : esc_html__( 'Als reserviert markieren', $this->text_domain ); ?></button>
+						<?php endif; ?>
 						<button type="submit" name="end" value="<?php _e('Anzeige beenden', $this->text_domain ); ?>" onclick="classifieds.toggle_end('<?php the_ID(); ?>'); return false;" ><?php _e('Anzeige beenden', $this->text_domain ); ?></button>
 						<?php elseif ( isset( $sub ) && $sub == 'favorites' ): ?>
 						<a class="button" href="<?php the_permalink(); ?>"><?php _e('Anzeige ansehen', $this->text_domain ); ?></a>
@@ -206,6 +215,7 @@ query_posts($query_args);
 						<span id="cf-delete-<?php the_ID(); ?>"><?php _e('Anzeige loeschen', $this->text_domain ); ?></span>
 						<span id="cf-renew-<?php the_ID(); ?>"><?php _e('Anzeige verlaengern', $this->text_domain ); ?></span>
 						<span id="cf-end-<?php the_ID(); ?>"><?php _e('Anzeige beenden', $this->text_domain ); ?></span>
+						<span id="cf-reserve-<?php the_ID(); ?>"><?php echo $is_reserved ? esc_html__( 'Reservierung aufheben', $this->text_domain ) : esc_html__( 'Als reserviert markieren', $this->text_domain ); ?></span>
 
 						<?php if ( $sub == 'saved' || $sub == 'ended' ):
 						$cf_payments = $this->get_options('payments');

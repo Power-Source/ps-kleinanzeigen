@@ -243,6 +243,9 @@ if (!class_exists('Classifieds_Core_BuddyPress')):
                         } elseif ($_POST['action'] == 'delete') {
                             wp_delete_post($_POST['post_id']);
                             $this->render_front('my-classifieds', array('action' => 'delete', 'post_title' => $_POST['post_title']));
+                        } elseif ($_POST['action'] == 'reserve') {
+                            $is_reserved = $this->toggle_reserved_status((int) $_POST['post_id']);
+                            $this->render_front('my-classifieds', array('action' => 'reserve', 'reserved' => $is_reserved, 'post_title' => $_POST['post_title']));
                         }
                     } else {
                         die(__('Security check failed!', $this->text_domain));

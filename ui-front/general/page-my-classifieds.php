@@ -19,6 +19,7 @@ $options_general = $this->get_options( 'general' );
 $options_frontend = $this->get_options( 'frontend' );
 $user_intro = isset( $options_frontend['user_intro'] ) ? trim( $options_frontend['user_intro'] ) : '';
 $user_show_favorites_tab = ! isset( $options_frontend['user_show_favorites_tab'] ) || 1 === (int) $options_frontend['user_show_favorites_tab'];
+$user_allow_reserve_toggle = ! isset( $options_frontend['user_allow_reserve_toggle'] ) || 1 === (int) $options_frontend['user_allow_reserve_toggle'];
 
 $favorite_ids = method_exists( $this, 'get_favorite_ids' ) ? $this->get_favorite_ids() : array();
 
@@ -115,6 +116,7 @@ echo do_shortcode('[cf_checkout_btn text="' . __('Kleinanzeigen kaufen', $this->
 				$cat_list      = get_the_term_list( get_the_ID(), 'kleinenanzeigen-cat', '', ', ', '' );
 				$region_list   = get_the_term_list( get_the_ID(), 'kleinanzeigen-region', '', ', ', '' );
 				$is_favorite   = method_exists( $this, 'is_favorite_post' ) && $this->is_favorite_post( get_the_ID() );
+				$is_reserved   = method_exists( $this, 'is_reserved_post' ) && $this->is_reserved_post( get_the_ID() );
 				?>
 				<div class="cf-image">
 					<?php if ( $gallery_count > 0 ) : ?>
@@ -138,6 +140,9 @@ echo do_shortcode('[cf_checkout_btn text="' . __('Kleinanzeigen kaufen', $this->
 					</div>
 
 					<div class="cf-card-meta-compact">
+						<?php if ( $is_reserved ) : ?>
+							<span class="cf-status-badge is-reserved"><?php _e( 'Reserviert', $this->text_domain ); ?></span>
+						<?php endif; ?>
 						<span class="cf-card-pill"><?php _e( 'Läuft ab', $this->text_domain ); ?>: <?php echo esc_html( $this->get_expiration_date( get_the_ID() ) ); ?></span>
 						<?php if ( ! empty( $cat_list ) ) : ?>
 							<span class="cf-card-pill"><?php echo wp_kses_post( $cat_list ); ?></span>
@@ -167,6 +172,9 @@ echo do_shortcode('[cf_checkout_btn text="' . __('Kleinanzeigen kaufen', $this->
 					</button>
 					<?php elseif ( isset( $sub ) && $sub == 'active' ): ?>
 					<a class="button cf-card-secondary" href="<?php the_permalink(); ?>"><?php _e( 'Anzeige ansehen', $this->text_domain ); ?></a>
+					<?php if ( $user_allow_reserve_toggle ) : ?>
+					<button type="submit" class="button cf-card-secondary" name="reserve" value="<?php echo $is_reserved ? esc_attr__( 'Reservierung aufheben', $this->text_domain ) : esc_attr__( 'Als reserviert markieren', $this->text_domain ); ?>" onclick="classifieds.toggle_reserve('<?php the_ID(); ?>'); return false;" ><?php echo $is_reserved ? esc_html__( 'Reservierung aufheben', $this->text_domain ) : esc_html__( 'Als reserviert markieren', $this->text_domain ); ?></button>
+					<?php endif; ?>
 					<button type="submit" class="button cf-card-secondary" name="end" value="<?php _e('Kleinanzeige beenden', $this->text_domain ); ?>" onclick="classifieds.toggle_end('<?php the_ID(); ?>'); return false;" ><?php _e('Kleinanzeige beenden', $this->text_domain ); ?></button>
 					<?php elseif ( isset( $sub ) && ( $sub == 'saved' || $sub == 'ended' ) ): ?>
 					<a class="button cf-card-secondary" href="<?php the_permalink(); ?>"><?php _e( 'Anzeige ansehen', $this->text_domain ); ?></a>
@@ -187,6 +195,7 @@ echo do_shortcode('[cf_checkout_btn text="' . __('Kleinanzeigen kaufen', $this->
 					<span id="cf-delete-<?php the_ID(); ?>"><?php _e('Kleinanzeige löschen', $this->text_domain ); ?></span>
 					<span id="cf-renew-<?php the_ID(); ?>"><?php _e('Kleinanzeige erneuern', $this->text_domain ); ?></span>
 					<span id="cf-end-<?php the_ID(); ?>"><?php _e('Kleinanzeige beenden', $this->text_domain ); ?></span>
+					<span id="cf-reserve-<?php the_ID(); ?>"><?php echo $is_reserved ? esc_html__( 'Reservierung aufheben', $this->text_domain ) : esc_html__( 'Als reserviert markieren', $this->text_domain ); ?></span>
 					<?php if ( isset( $sub ) && ( $sub == 'saved' || $sub == 'ended' ) ):
 					$cf_payments = $this->get_options('payments');
 
