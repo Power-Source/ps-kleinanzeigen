@@ -1,0 +1,5 @@
+# PHPStan Baseline for ps-kleinanzeigen
+# Run: phpstan analyse --generate-baseline
+
+parameters:
+  ignoreErrors: []

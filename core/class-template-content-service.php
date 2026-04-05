@@ -166,4 +166,31 @@ class CF_Template_Content_Service {
 
 		return $new_content;
 	}
+
+	/**
+	 * Magic method: delegate property access to core.
+	 *
+	 * @param string $name Property name
+	 * @return mixed
+	 */
+	public function __get( $name ) {
+		if ( isset( $this->core->$name ) ) {
+			return $this->core->$name;
+		}
+		return null;
+	}
+
+	/**
+	 * Magic method: delegate method calls to core.
+	 *
+	 * @param string $name Method name
+	 * @param array  $args Method arguments
+	 * @return mixed
+	 */
+	public function __call( $name, $args ) {
+		if ( method_exists( $this->core, $name ) ) {
+			return call_user_func_array( array( $this->core, $name ), $args );
+		}
+		trigger_error( 'Call to undefined method ' . __CLASS__ . '::' . $name . '()', E_USER_ERROR );
+	}
 }

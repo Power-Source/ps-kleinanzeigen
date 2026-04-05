@@ -84,6 +84,7 @@ if (!class_exists('Classifieds_Core_Main')):
                     if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'verify' ) ) {
                         die(__('Security check failed!', $this->text_domain));
                     }
+                    $post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
                     $validation = $this->classified_submit_validator->validate_update_submission( $_POST );
                     $credits_required = $validation['credits_required'];
                     // If user have more credits of the required credits proceed with renewing the ad
@@ -91,7 +92,9 @@ if (!class_exists('Classifieds_Core_Main')):
                         // Update ad
                         $this->update_ad($_POST);
                         // Save the expiration date
-                        $this->save_expiration_date($_POST['post_id']);
+                        if ( $post_id ) {
+                            $this->save_expiration_date($post_id);
+                        }
                         // Set the proper step which will be loaded by "page-my-classifieds.php"
                         set_query_var('cf_action', 'my-classifieds');
 
@@ -103,7 +106,11 @@ if (!class_exists('Classifieds_Core_Main')):
                             if ($this->transactions->billing_type == 'one_time') $this->transactions->status = 'used';
                         }
 
-                        wp_redirect(get_permalink($_POST['post_id']));
+                        if ( $post_id ) {
+                            wp_safe_redirect(get_permalink($post_id));
+                        } else {
+                            wp_safe_redirect(get_permalink($this->my_classifieds_page_id));
+                        }
                         exit;
 
                     } else {
@@ -113,7 +120,7 @@ if (!class_exists('Classifieds_Core_Main')):
                         $post_data['classified_data']['post_status'] = 'draft';
                         /* Create ad */
                         $post_id = $this->update_ad($post_data);
-                        set_query_var('cf_post_id', $_POST['post_id']);
+                        set_query_var('cf_post_id', absint( $_POST['post_id'] ?? 0 ));
                         /* Set the proper step which will be loaded by "page-my-classifieds.php" */
                         set_query_var('cf_action', 'edit');
                         $error = __('Du hast nicht genug Credits fuer die ausgewaehlte Laufzeit. Waehle, wenn moeglich, eine kuerzere Laufzeit oder kauf mehr Credits.<br />Deine Anzeige wurde als Entwurf gespeichert.', $this->text_domain);
@@ -247,10 +254,12 @@ if (!class_exists('Classifieds_Core_Main')):
                 $this->is_classifieds_page = true;
             } /* If user wants to go to My Classifieds main page  */
             elseif (isset($_POST['go_my_classifieds'])) {
-                wp_redirect(get_permalink($this->my_classifieds_page_id));
+                wp_safe_redirect(get_permalink($this->my_classifieds_page_id));
+                exit;
             } /* If user wants to go to checkout page  */
             elseif (isset($_POST['purchase'])) {
-                wp_redirect(get_permalink($this->checkout_page_id));
+                wp_safe_redirect(get_permalink($this->checkout_page_id));
+                exit;
             } else {
                 /* Set the proper step which will be loaded by "page-my-classifieds.php" */
                 set_query_var('cf_action', 'my-classifieds');

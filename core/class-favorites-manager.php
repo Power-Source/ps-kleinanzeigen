@@ -49,11 +49,14 @@ class CF_Favorites_Manager {
 		setcookie(
 			'cf_favorites',
 			wp_json_encode( $favorites ),
-			time() + MONTH_IN_SECONDS,
-			COOKIEPATH ? COOKIEPATH : '/',
-			COOKIE_DOMAIN,
-			is_ssl(),
-			true
+			array(
+				'expires'  => time() + MONTH_IN_SECONDS,
+				'path'     => COOKIEPATH ? COOKIEPATH : '/',
+				'domain'   => COOKIE_DOMAIN,
+				'secure'   => is_ssl(),
+				'httponly' => true,
+				'samesite' => 'Lax',
+			)
 		);
 
 		$_COOKIE['cf_favorites'] = wp_json_encode( $favorites );

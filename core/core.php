@@ -614,13 +614,13 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 
 						$args = array( 'redirect_to' => urlencode( get_permalink( $query->queried_object_id ) ) );
 						if ( ! empty( $_REQUEST['register'] ) ) {
-							$args['register'] = $_REQUEST['register'];
+							$args['register'] = sanitize_text_field( wp_unslash( $_REQUEST['register'] ) );
 						}
 						if ( ! empty( $_REQUEST['reset'] ) ) {
-							$args['reset'] = $_REQUEST['reset'];
+							$args['reset'] = sanitize_text_field( wp_unslash( $_REQUEST['reset'] ) );
 						}
 
-						wp_redirect( esc_url_raw( add_query_arg( $args, get_permalink( $this->signin_page_id ) ) ) );
+						wp_safe_redirect( esc_url_raw( add_query_arg( $args, get_permalink( $this->signin_page_id ) ) ) );
 						exit;
 					}
 				}
@@ -628,7 +628,7 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 				//Are are we managing credits?
 				if ( ! $this->use_credits ) {
 					if ( @is_page( $this->my_credits_page_id ) ) {
-						wp_redirect( get_permalink( $this->my_classifieds_page_id ) );
+						wp_safe_redirect( get_permalink( $this->my_classifieds_page_id ) );
 						exit;
 					}
 				}
@@ -636,16 +636,17 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 				//Are we adding a classified?
 				if ( ! ( current_user_can( 'create_classifieds' ) && current_user_can( 'publish_classifieds' ) ) ) {
 					if ( @is_page( $this->add_classified_page_id ) ) {
-						wp_redirect( get_permalink( $this->my_classifieds_page_id ) );
+						wp_safe_redirect( get_permalink( $this->my_classifieds_page_id ) );
 						exit;
 					}
 				}
 
 				//Or are we editing a classified?
 				//Can the user edit classifieds?
-				if ( ! empty( $_REQUEST['post_id'] ) && ! current_user_can( 'edit_classified', $_REQUEST['post_id'] ) ) {
+				$post_id = ! empty( $_REQUEST['post_id'] ) ? absint( wp_unslash( $_REQUEST['post_id'] ) ) : 0;
+				if ( $post_id && ! current_user_can( 'edit_classified', $post_id ) ) {
 					if ( @is_page( $this->edit_classified_page_id ) ) {
-						wp_redirect( get_permalink( $this->my_classifieds_page_id ) );
+						wp_safe_redirect( get_permalink( $this->my_classifieds_page_id ) );
 						exit;
 					}
 				}
@@ -1067,8 +1068,9 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 		 * @return void
 		 **/
 		function show_only_c_user_classifieds( $wp_query ) {
-			if ( strpos( $_SERVER['REQUEST_URI'], '/wp-admin/edit.php' ) !== false ) {
-				if ( isset( $_GET['post_type'] ) && 'classifieds' == $_GET['post_type'] && ! current_user_can( 'level_10' ) ) {
+			if ( is_admin() ) {
+				$post_type = isset( $_GET['post_type'] ) ? sanitize_key( wp_unslash( $_GET['post_type'] ) ) : '';
+				if ( 'classifieds' === $post_type && ! current_user_can( 'manage_options' ) ) {
 					$wp_query->set( 'author', get_current_user_id() );
 				}
 			}

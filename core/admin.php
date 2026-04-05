@@ -253,7 +253,7 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 
 		$params = stripslashes_deep($_POST);
 
-		$page = (empty($_GET['page'])) ? '' : $_GET['page'] ;
+		$page = empty( $_GET['page'] ) ? '' : sanitize_key( wp_unslash( $_GET['page'] ) );
 
 		if ( $page == $this->menu_slug ) {
 			if ( isset( $params['confirm'] ) ) {
@@ -276,7 +276,7 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 			}
 		}
 		elseif ( $page == 'classifieds_settings' ) {
-			$tab = (empty($_GET['tab'])) ? 'general' : $_GET['tab']; //default tab
+			$tab = empty( $_GET['tab'] ) ? 'general' : sanitize_key( wp_unslash( $_GET['tab'] ) ); //default tab
 			if ( 'payment-types' === $tab ) {
 				$tab = 'payments';
 			}
@@ -776,7 +776,7 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 
 		global $wp_roles;
 
-		$role = $_POST['role'];
+		$role = sanitize_key( wp_unslash( $_POST['role'] ) );
 
 		if ( !$wp_roles->is_role( $role ) )
 		die(-1);
@@ -807,10 +807,11 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 		// add/remove capabilities
 		global $wp_roles;
 
-		$role = $_POST['roles'];
+		$role = sanitize_key( wp_unslash( $_POST['roles'] ?? '' ) );
 
 		$all_caps = array_keys( $this->capability_map );
-		$to_add = array_keys( $_POST['capabilities'] );
+		$raw_caps = isset( $_POST['capabilities'] ) && is_array( $_POST['capabilities'] ) ? $_POST['capabilities'] : array();
+		$to_add = array_map( 'sanitize_key', array_keys( $raw_caps ) );
 		$to_remove = array_diff( $all_caps, $to_add );
 
 		foreach ( $to_remove as $capability ) {
@@ -834,10 +835,11 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 				$tax_obj = get_taxonomy($tax_slug);
 				$tax_name = $tax_obj->labels->name;
 				$terms = get_terms($tax_slug);
+				$current_tax = isset( $_GET[ $tax_slug ] ) ? sanitize_text_field( wp_unslash( $_GET[ $tax_slug ] ) ) : '';
 				echo "<select name='$tax_slug' id='$tax_slug' class='postform'>";
 				echo "<option value=''>{$tax_obj->labels->all_items}&nbsp;</option>";
 				foreach ($terms as $term) {
-					echo '<option value='. $term->slug, $_GET[$tax_slug] == $term->slug ? ' selected="selected"' : '','>' . $term->name .' (' . $term->count .')</option>';
+					echo '<option value='. $term->slug, selected( $current_tax, $term->slug, false ),'>' . $term->name .' (' . $term->count .')</option>';
 				}
 				echo "</select>";
 			}

@@ -67,7 +67,7 @@ class CF_Contact_Form_Service {
 		}
 
 		$sent = wp_mail( $to, $tm_subject, $body, $headers ) ? '1' : '0';
-		wp_redirect( get_permalink( $post->ID ) . '?sent=' . $sent );
+		wp_safe_redirect( get_permalink( $post->ID ) . '?sent=' . $sent );
 		exit;
 	}
 

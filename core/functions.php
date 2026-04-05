@@ -15,10 +15,13 @@ function cf_supports_taxonomy($taxonomy = '')
 function the_cf_categories_home($echo = true, $atts = null)
 {
 
-    extract(shortcode_atts(array(
+    $atts = shortcode_atts(array(
         'style' => '', //list, grid
         'ccats' => '', //list, grid
-    ), $atts));
+    ), (array) $atts);
+
+    $style = $atts['style'];
+    $ccats = $atts['ccats'];
 
     //get plugin options
     $options = get_option(CF_OPTIONS_NAME);

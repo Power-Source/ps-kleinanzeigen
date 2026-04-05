@@ -1,0 +1,36 @@
+includes:
+  - phar://phpstan.phar/conf/bleedingEdge.neon
+  - vendor/phpstan/phpstan-strict-rules/rules.neon
+  - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+  level: 5
+  paths:
+    - core/
+    - ui-admin/
+    - ui-front/
+    - loader.php
+
+  excludePaths:
+    - core/core.php.backup
+    - tests/
+
+  ignoreErrors:
+    # WordPress-spezifische Patterns
+    - identifier: missingType.iterableValue
+      path: core/class-my-classifieds-dashboard.php
+    - identifier: undefinedVariable
+      message: '#Variable \$post is undefined#'
+      path: core/class-template-content-service.php
+    - identifier: undefinedFunction
+      message: '#Unknown function#' 
+      paths:
+        - core/core.php
+        - core/main.php
+        - core/admin.php
+        - ui-admin/
+
+  reportUnmatchedIgnoredErrors: false
+
+  strictRules:
+    allRulesWarningLevel: 5
