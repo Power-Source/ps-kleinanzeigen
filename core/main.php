@@ -8,6 +8,8 @@ if (!class_exists('Classifieds_Core_Main')):
     {
 
         public $cf_ads_per_page = 20;
+        public $classified_submit_validator;
+        public $my_classifieds_request_actions;
 
         /**
          * Constructor.
@@ -19,6 +21,11 @@ if (!class_exists('Classifieds_Core_Main')):
         {
 
             parent::__construct(); //Get the inheritance right
+
+            require_once $this->plugin_dir . 'core/class-classified-submit-validator.php';
+            $this->classified_submit_validator = new CF_Classified_Submit_Validator( $this );
+            require_once $this->plugin_dir . 'core/class-my-classifieds-request-actions.php';
+            $this->my_classifieds_request_actions = new CF_My_Classifieds_Request_Actions( $this );
 
             //add_action( 'init', array(&$this, 'init'));
 
@@ -68,52 +75,7 @@ if (!class_exists('Classifieds_Core_Main')):
 
             //Manage Classifieds
             if (is_page($this->my_classifieds_page_id)) {
-                // If confirm button is pressed
-                if (isset($_POST['confirm'])) {
-                    // Verify _wpnonce field
-                    if (wp_verify_nonce($_POST['_wpnonce'], 'verify')) {
-                        // Process posts based on the action variables. End action
-                        if ($_POST['action'] == 'end') {
-                            $this->process_status((int)$_POST['post_id'], 'private');
-                        } // Renew action
-                        elseif ($_POST['action'] == 'renew') {
-                            // The credits required to renew the classified for the selected period
-                            $duration = isset($_POST[$this->custom_fields['duration']]) ? $_POST[$this->custom_fields['duration']] : $_POST['duration'];
-
-                            $credits_required = $this->get_credits_from_duration($duration);
-                            // If user have more credits of the required credits proceed with renewing the ad
-                            if ($this->is_full_access() || ($this->user_credits >= $credits_required)) {
-                                // Process the status of the post
-                                $this->process_status((int)$_POST['post_id'], 'publish');
-                                // Save the expiration date
-                                $this->save_expiration_date($_POST['post_id']);
-
-                                if (!$this->is_full_access()) {
-                                    /* Update new credits amount */
-                                    $this->transactions->credits -= $credits_required;
-                                } else {
-                                    //Check one_time
-                                    if ($this->transactions->billing_type == 'one_time') $this->transactions->status = 'used';
-                                }
-
-                            } else {
-                                $error = __('Du hast nicht genug Credits fuer die ausgewaehlte Laufzeit. Waehle, wenn moeglich, eine kuerzere Laufzeit oder kauf mehr Credits. Deine Anzeige wurde als Entwurf gespeichert.', $this->text_domain);
-                                set_query_var('cf_error', $error);
-                            }
-                            //$this->process_credits()
-                        } /* Delete action */
-                        elseif ($_POST['action'] == 'delete') {
-                            wp_delete_post($_POST['post_id']);
-                            /* Set the proper step which will be loaded by "page-my-classifieds.php" */
-                            set_query_var('cf_action', 'my-classifieds');
-                        } elseif ($_POST['action'] == 'reserve') {
-                            $this->toggle_reserved_status((int) $_POST['post_id']);
-                            set_query_var('cf_action', 'my-classifieds');
-                        }
-                    } else {
-                        die(__('Security check failed!', $this->text_domain));
-                    }
-                }
+                $this->my_classifieds_request_actions->handle_confirm_action( $_POST );
 
                 //Updating Classifieds
             } elseif (is_page($this->add_classified_page_id) || is_page($this->edit_classified_page_id)) {
@@ -122,11 +84,10 @@ if (!class_exists('Classifieds_Core_Main')):
                     if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'verify' ) ) {
                         die(__('Security check failed!', $this->text_domain));
                     }
-                    // The credits required to renew the classified for the selected period
-
-                    $credits_required = $this->get_credits_from_duration($_POST[$this->custom_fields['duration']]);
+                    $validation = $this->classified_submit_validator->validate_update_submission( $_POST );
+                    $credits_required = $validation['credits_required'];
                     // If user have more credits of the required credits proceed with renewing the ad
-                    if ($this->is_full_access() || ($this->user_credits >= $credits_required)) {
+                    if ( $validation['has_credits'] ) {
                         // Update ad
                         $this->update_ad($_POST);
                         // Save the expiration date
