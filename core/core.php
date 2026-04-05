@@ -3063,7 +3063,7 @@ $cost_meta_key     = '_cf_cost';
 add_action( 'activated_plugin', 'cf_flag_activation', 1 );
 function cf_flag_activation( $plugin = '' ) {
 	//Flag we're activating
-	if ( $plugin == 'classifieds/loader.php' ) {
+	if ( $plugin == 'ps-kleinanzeigen/loader.php' ) {
 		add_site_option( 'cf_activate', true );
 	}
 }

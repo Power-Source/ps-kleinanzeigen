@@ -245,10 +245,6 @@ class CF_Transactions{
 
 			if($this->_transactions['order']['status'] == 'success') {
 
-				//for affiliate subscription
-				$affiliate_settings = $this->get_options( 'affiliate_settings' );
-				do_action( 'classifieds_set_paid_member', $affiliate_settings, $user_id, $this->_transactions['order']['billing_type'] );
-
 				$member_role = $this->get_options('general');
 				$member_role = $member_role['member_role'];
 				$user = get_userdata($this->user_id);
@@ -320,10 +316,6 @@ class CF_Transactions{
 			}
 
 			if($this->_transactions['order']['status'] == 'success') {
-
-				//for affiliate subscription
-				$affiliate_settings = $this->get_options( 'affiliate_settings' );
-				do_action( 'classifieds_set_paid_member', $affiliate_settings, $user_id, $this->_transactions['order']['billing_type'] );
 
 				$member_role = $this->get_options('general');
 				$member_role = $member_role['member_role'];

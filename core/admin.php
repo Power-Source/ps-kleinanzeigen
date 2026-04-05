@@ -328,6 +328,21 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 						$params = $this->sync_marketpress_checkout_products( $params );
 						$this->sync_legacy_payment_types( $params );
 					}
+					if ( 'affiliate' === $tab ) {
+						$params['cf_credit_commissions'] = $this->sanitize_affiliate_credit_commissions(
+							isset( $params['cf_credit_commission_mode'] ) ? $params['cf_credit_commission_mode'] : array(),
+							isset( $params['cf_credit_commission_value'] ) ? $params['cf_credit_commission_value'] : array()
+						);
+						$params['cf_credit_future_commissions'] = $this->sanitize_affiliate_credit_commissions(
+							isset( $params['cf_credit_future_commission_mode'] ) ? $params['cf_credit_future_commission_mode'] : array(),
+							isset( $params['cf_credit_future_commission_value'] ) ? $params['cf_credit_future_commission_value'] : array()
+						);
+						$params['cf_one_time_commission'] = $this->sanitize_affiliate_commission_rule(
+							isset( $params['cf_one_time_commission_mode'] ) ? $params['cf_one_time_commission_mode'] : 'fixed',
+							isset( $params['cf_one_time_commission_value'] ) ? $params['cf_one_time_commission_value'] : ''
+						);
+						$params['cf_credit_pay_future'] = empty( $params['cf_credit_pay_future'] ) ? 0 : 1;
+					}
 					if ( 'frontend' === $tab ) {
 						if ( isset( $params['archive_intro'] ) ) {
 							$params['archive_intro'] = wp_kses_post( $params['archive_intro'] );
@@ -413,6 +428,66 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Sanitize per-package affiliate commissions.
+	 *
+	 * @param array $commissions
+	 * @return array
+	 */
+	function sanitize_affiliate_credit_commissions( $modes, $values ) {
+		if ( ! is_array( $modes ) && ! is_array( $values ) ) {
+			return array();
+		}
+
+		$result = array();
+		$modes = is_array( $modes ) ? $modes : array();
+		$values = is_array( $values ) ? $values : array();
+
+		foreach ( array_unique( array_merge( array_keys( $modes ), array_keys( $values ) ) ) as $product_id ) {
+			$product_id = absint( $product_id );
+			if ( $product_id <= 0 ) {
+				continue;
+			}
+
+			$rule = $this->sanitize_affiliate_commission_rule(
+				isset( $modes[ $product_id ] ) ? $modes[ $product_id ] : 'fixed',
+				isset( $values[ $product_id ] ) ? $values[ $product_id ] : ''
+			);
+
+			if ( empty( $rule ) ) {
+				continue;
+			}
+
+			$result[ $product_id ] = $rule;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Sanitize a single affiliate commission rule.
+	 *
+	 * @param string $mode
+	 * @param mixed  $value
+	 * @return array
+	 */
+	function sanitize_affiliate_commission_rule( $mode, $value ) {
+		$mode = ( 'percent' === $mode ) ? 'percent' : 'fixed';
+		$normalized = $this->sanitize_decimal_string( $value );
+		if ( (float) $normalized <= 0 ) {
+			return array();
+		}
+
+		if ( 'percent' === $mode ) {
+			$normalized = sprintf( '%.2f', min( 100, max( 0, (float) $normalized ) ) );
+		}
+
+		return array(
+			'mode'  => $mode,
+			'value' => $normalized,
+		);
 	}
 
 	/**
