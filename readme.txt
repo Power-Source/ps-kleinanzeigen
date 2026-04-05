@@ -3,6 +3,7 @@ Contributors: DerN3rd (WMS N@W)
 Tags: post types, taxonomies, custom fields, kleinanzeigen, ads, paypal, payments
 Requires at least: 3.0
 Tested up to: 5.8.0
+ClassicPress: 2.7.0
 Stable tag: 1.0.0
 
 Füge Kleinanzeigen zu Deinem Blog, Netzwerk oder Deiner BuddyPress-Seite hinzu. Erstelle und verwalte Anzeigen, lade Bilder hoch, sende E-Mails, aktiviere das Kreditsystem und berechne Deinen Benutzern die Platzierung von Anzeigen in Deinem Netzwerk oder auf der BuddyPress-Seite.
@@ -30,12 +31,7 @@ Dank der vollständigen PayPal-Integration des Plugins legst Du die Preise fest 
 Kleinanzeigen verwendet einen benutzerdefinierten Beitragstyp, der mit PS CustomPress erstellt wurde. Die Verwendung von PS CustomPress ist keine Voraussetzung für die Verwendung von Kleinanzeigen. 
 Es bietet nur einige zusätzliche Funktionen, mit denen Du benutzerdefinierte Felder für Deine Einträge erstellen und den benutzerdefinierten Posttyp für Kleinanzeigen anpassen kannst.
 
-[POWERED BY PSOURCE](https://github.com/cp-psource)
-
-= Hilfe und Support =
-
-[Projektseite](https://cp-psource.github.io/classifieds)
-[GitHub](https://github.com/piestingtal-source/classifieds)
+[POWERED BY PSOURCE](https://github.com/Power-Source)
 
 == Kurzanleitung ==
 

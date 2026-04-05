@@ -22,6 +22,11 @@ $step = (empty($_GET['step'])) ? $step : $_GET['step'];
 $error = get_query_var('checkout_error');
 $error = (empty($error)) ? '' : $error;
 
+$mp_bridge_enabled = ! empty( $options['payments']['enable_marketpress_bridge'] );
+$mp_one_time_product_id = empty( $options['payments']['mp_one_time_product_id'] ) ? 0 : absint( $options['payments']['mp_one_time_product_id'] );
+$mp_credit_packages = ( ! empty( $options['payments']['mp_credit_packages'] ) && is_array( $options['payments']['mp_credit_packages'] ) ) ? $options['payments']['mp_credit_packages'] : array();
+$mp_one_time_product_url = ( $mp_one_time_product_id > 0 ) ? get_permalink( $mp_one_time_product_id ) : '';
+
 if ( $this->is_full_access() && $step != 'success' && $step != 'api_call_error' ) {
 	_e( 'You already have access to create ads.', $this->text_domain );
 	$step = '';
@@ -36,6 +41,33 @@ elseif ( !empty($error) ): ?>
 
 //STEP = TERMS
 if ( $step == 'terms'): ?>
+
+<?php if ( $mp_bridge_enabled && ( ! empty( $mp_credit_packages ) || $mp_one_time_product_url ) ) : ?>
+<div class="cf-marketpress-checkout" style="margin:0 0 18px 0;padding:12px 14px;border:1px solid #c3d9f8;background:#f5f9ff;">
+	<strong><?php _e( 'Direktkauf ueber MarketPress', $this->text_domain ); ?></strong>
+	<p style="margin:8px 0 10px 0;">
+		<?php _e( 'Credits und Einmalzahlung koennen direkt im Shop gekauft werden. Die Freischaltung erfolgt danach automatisch in Kleinanzeigen.', $this->text_domain ); ?>
+	</p>
+	<div>
+		<?php if ( ! empty( $mp_credit_packages ) ) : ?>
+			<?php foreach ( $mp_credit_packages as $credit_package ) : ?>
+				<?php
+				$package_product_id = empty( $credit_package['product_id'] ) ? 0 : absint( $credit_package['product_id'] );
+				$package_url = $package_product_id > 0 ? get_permalink( $package_product_id ) : '';
+				if ( empty( $package_url ) ) {
+					continue;
+				}
+				$package_label = empty( $credit_package['label'] ) ? __( 'Credits Paket', $this->text_domain ) : $credit_package['label'];
+				?>
+				<a class="button" href="<?php echo esc_url( $package_url ); ?>"><?php echo esc_html( $package_label ); ?></a>
+			<?php endforeach; ?>
+		<?php endif; ?>
+		<?php if ( $mp_one_time_product_url ) : ?>
+			<a class="button" href="<?php echo esc_url( $mp_one_time_product_url ); ?>"><?php _e( 'Einmalzahlung kaufen', $this->text_domain ); ?></a>
+		<?php endif; ?>
+	</div>
+</div>
+<?php endif; ?>
 
 <!-- Begin Terms -->
 <form action="#" method="post"  class="checkout">
@@ -105,7 +137,7 @@ if ( $step == 'terms'): ?>
 	<strong><?php _e( 'Nutzungsbedingungen', $this->text_domain ); ?></strong>
 	<table>
 		<tr>
-			<td><div class="terms"><?php echo nl2br( $options['payments']['tos_txt'] ); ?></div></td>
+			<td><div class="terms"><?php echo wp_kses_post( wpautop( $options['payments']['tos_txt'] ) ); ?></div></td>
 		</tr>
 	</table>
 	<br />

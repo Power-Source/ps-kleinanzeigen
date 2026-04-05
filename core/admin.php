@@ -255,7 +255,6 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 		'frontend',
 		'capabilities',
 		'payments',
-		'payment-types',
 		'affiliate',
 		'shortcodes',
 		);
@@ -286,6 +285,9 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 		}
 		elseif ( $page == 'classifieds_settings' ) {
 			$tab = (empty($_GET['tab'])) ? 'general' : $_GET['tab']; //default tab
+			if ( 'payment-types' === $tab ) {
+				$tab = 'payments';
+			}
 			if ( in_array( $tab, $valid_tabs)) {
 				/* Save options */
 				if ( isset( $params['add_role'] ) ) {
@@ -306,6 +308,25 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 					check_admin_referer('verify');
 					if ( 'general' === $tab && isset( $params['trust_block_content'] ) ) {
 						$params['trust_block_content'] = wp_kses_post( $params['trust_block_content'] );
+					}
+					if ( 'payments' === $tab ) {
+						$params['use_free'] = empty( $params['use_free'] ) ? 0 : 1;
+						if ( isset( $params['tos_txt'] ) ) {
+							$params['tos_txt'] = wp_kses_post( $params['tos_txt'] );
+						}
+						$memberships_available = class_exists( 'MS_Model_Membership' ) && class_exists( 'MS_Model_Member' );
+						$params['enable_recurring'] = ( $memberships_available && ! empty( $params['enable_recurring'] ) ) ? 1 : 0;
+						$required_membership_ids = isset( $params['required_membership_ids'] ) ? (array) $params['required_membership_ids'] : array();
+						$required_membership_ids = array_values( array_unique( array_filter( array_map( 'absint', $required_membership_ids ) ) ) );
+						$params['required_membership_ids'] = $memberships_available ? $required_membership_ids : array();
+						$params['enable_one_time'] = empty( $params['enable_one_time'] ) ? 0 : 1;
+						$params['enable_credits'] = empty( $params['enable_credits'] ) ? 0 : 1;
+						$params['enable_marketpress_bridge'] = class_exists( 'MP_Product' ) ? 1 : 0;
+						$params['mp_one_time_product_id'] = isset( $params['mp_one_time_product_id'] ) ? absint( $params['mp_one_time_product_id'] ) : 0;
+						$params['mp_credit_meta_key'] = isset( $params['mp_credit_meta_key'] ) ? sanitize_key( $params['mp_credit_meta_key'] ) : 'cf_credit_amount';
+						$params['mp_credit_packages'] = $this->sanitize_credit_packages( isset( $params['mp_credit_packages'] ) ? $params['mp_credit_packages'] : array() );
+						$params = $this->sync_marketpress_checkout_products( $params );
+						$this->sync_legacy_payment_types( $params );
 					}
 					if ( 'frontend' === $tab ) {
 						if ( isset( $params['archive_intro'] ) ) {
@@ -348,6 +369,177 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 
 			}
 		}
+	}
+
+	/**
+	 * Build a clean package array from request values.
+	 *
+	 * @param array $packages
+	 * @return array
+	 */
+	function sanitize_credit_packages( $packages ) {
+		if ( ! is_array( $packages ) ) {
+			return array();
+		}
+
+		$labels = isset( $packages['label'] ) && is_array( $packages['label'] ) ? $packages['label'] : array();
+		$credits = isset( $packages['credits'] ) && is_array( $packages['credits'] ) ? $packages['credits'] : array();
+		$prices = isset( $packages['price'] ) && is_array( $packages['price'] ) ? $packages['price'] : array();
+		$product_ids = isset( $packages['product_id'] ) && is_array( $packages['product_id'] ) ? $packages['product_id'] : array();
+
+		$max = max( count( $labels ), count( $credits ), count( $prices ), count( $product_ids ) );
+		$result = array();
+
+		for ( $i = 0; $i < $max; $i++ ) {
+			$label = isset( $labels[ $i ] ) ? sanitize_text_field( $labels[ $i ] ) : '';
+			$credit_count = isset( $credits[ $i ] ) ? absint( $credits[ $i ] ) : 0;
+			$price = isset( $prices[ $i ] ) ? $this->sanitize_decimal_string( $prices[ $i ] ) : '0.00';
+			$product_id = isset( $product_ids[ $i ] ) ? absint( $product_ids[ $i ] ) : 0;
+
+			if ( $credit_count <= 0 ) {
+				continue;
+			}
+
+			if ( '' === $label ) {
+				$label = sprintf( '%d Credits', $credit_count );
+			}
+
+			$result[] = array(
+				'label'      => $label,
+				'credits'    => $credit_count,
+				'price'      => $price,
+				'product_id' => $product_id,
+			);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Keep decimal text normalized for storage.
+	 *
+	 * @param mixed $value
+	 * @return string
+	 */
+	function sanitize_decimal_string( $value ) {
+		$value = (string) $value;
+		$value = str_replace( ',', '.', $value );
+		$value = preg_replace( '/[^0-9\.]/', '', $value );
+		if ( '' === $value ) {
+			return '0.00';
+		}
+
+		return sprintf( '%.2f', (float) $value );
+	}
+
+	/**
+	 * Auto-create/update MarketPress products for one-time and credit packages.
+	 *
+	 * @param array $params
+	 * @return array
+	 */
+	function sync_marketpress_checkout_products( $params ) {
+		if ( empty( $params['enable_marketpress_bridge'] ) ) {
+			return $params;
+		}
+
+		if ( ! class_exists( 'MP_Product' ) ) {
+			return $params;
+		}
+
+		$post_type = MP_Product::get_post_type();
+		$existing = $this->get_options( 'payments' );
+		$existing = is_array( $existing ) ? $existing : array();
+
+		if ( ! empty( $params['enable_one_time'] ) ) {
+			$one_time_id = ! empty( $params['mp_one_time_product_id'] ) ? absint( $params['mp_one_time_product_id'] ) : 0;
+			if ( $one_time_id <= 0 && ! empty( $existing['mp_one_time_product_id'] ) ) {
+				$one_time_id = absint( $existing['mp_one_time_product_id'] );
+			}
+
+			$title = ! empty( $params['one_time_txt'] ) ? sanitize_text_field( $params['one_time_txt'] ) : __( 'Kleinanzeigen Einmalzahlung', $this->text_domain );
+			$one_time_id = $this->upsert_marketpress_product( $one_time_id, $title, $params['one_time_cost'], $post_type );
+			$params['mp_one_time_product_id'] = $one_time_id;
+		}
+
+		if ( ! empty( $params['enable_credits'] ) ) {
+			$packages = isset( $params['mp_credit_packages'] ) && is_array( $params['mp_credit_packages'] ) ? $params['mp_credit_packages'] : array();
+			$updated_packages = array();
+
+			foreach ( $packages as $package ) {
+				$product_id = empty( $package['product_id'] ) ? 0 : absint( $package['product_id'] );
+				$title = sprintf( __( 'Credits Paket: %s', $this->text_domain ), sanitize_text_field( $package['label'] ) );
+				$product_id = $this->upsert_marketpress_product( $product_id, $title, $package['price'], $post_type );
+
+				if ( $product_id > 0 ) {
+					update_post_meta( $product_id, 'cf_credit_amount', absint( $package['credits'] ) );
+				}
+
+				$package['product_id'] = $product_id;
+				$updated_packages[] = $package;
+			}
+
+			$params['mp_credit_packages'] = $updated_packages;
+		}
+
+		return $params;
+	}
+
+	/**
+	 * Create or update a simple MarketPress digital product.
+	 *
+	 * @param int    $product_id
+	 * @param string $title
+	 * @param string $price
+	 * @param string $post_type
+	 * @return int
+	 */
+	function upsert_marketpress_product( $product_id, $title, $price, $post_type ) {
+		$product_id = absint( $product_id );
+		$title = sanitize_text_field( $title );
+		$price = $this->sanitize_decimal_string( $price );
+
+		if ( $product_id <= 0 || ! get_post( $product_id ) ) {
+			$product_id = wp_insert_post( array(
+				'post_type'   => $post_type,
+				'post_status' => 'publish',
+				'post_title'  => $title,
+			) );
+		} else {
+			wp_update_post( array(
+				'ID'         => $product_id,
+				'post_title' => $title,
+			) );
+		}
+
+		$product_id = absint( $product_id );
+		if ( $product_id <= 0 ) {
+			return 0;
+		}
+
+		update_post_meta( $product_id, 'regular_price', $price );
+		update_post_meta( $product_id, 'product_type', 'digital' );
+		update_post_meta( $product_id, 'track_inventory', 0 );
+
+		return $product_id;
+	}
+
+	/**
+	 * Keep legacy gateway options disabled after migration to MarketPress flow.
+	 *
+	 * @param array $payments_params
+	 * @return void
+	 */
+	function sync_legacy_payment_types( $payments_params ) {
+		$options = $this->get_options();
+		$payment_types = ( isset( $options['payment_types'] ) && is_array( $options['payment_types'] ) ) ? $options['payment_types'] : array();
+
+		$payment_types['use_free'] = empty( $payments_params['use_free'] ) ? 0 : 1;
+		$payment_types['use_paypal'] = 0;
+		$payment_types['use_authorizenet'] = 0;
+
+		$options['payment_types'] = $payment_types;
+		update_option( $this->options_name, $options );
 	}
 
 	/**

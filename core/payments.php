@@ -69,27 +69,28 @@ class CF_Payments{
 		$this->user_role = (empty($options['general']['member_role']) ) ? get_option('default_role') :$options['general']['member_role'] ;
 
 		//How do we sell stuff
-		$options = (empty($options['payment_types'] ) ) ? array() : $options['payment_types'] ;
+		$payment_type_options = (empty($options['payment_types'] ) ) ? array() : $options['payment_types'] ;
+		$payment_settings = $this->get_options('payments');
 
-		$this->use_free = ( ! empty($options['use_free']));
+		$this->use_free = ! empty($payment_settings['use_free']) || ! empty($payment_type_options['use_free']);
 		if (! $this->use_free) { //Can't use gateways if it's free.
 
 			//PAYPAL
-			$this->use_paypal = ( ! empty($options['use_paypal'])) && (! empty($options['paypal']['api_username'])) && (! empty($options['paypal']['api_password'])) && (! empty($options['paypal']['api_signature']));
+			$this->use_paypal = ( ! empty($payment_type_options['use_paypal'])) && (! empty($payment_type_options['paypal']['api_username'])) && (! empty($payment_type_options['paypal']['api_password'])) && (! empty($payment_type_options['paypal']['api_signature']));
 			if ($this->use_paypal){ //make sure the api fields have something in them
-				$this->paypal_options = $options['paypal'];
+				$this->paypal_options = $payment_type_options['paypal'];
 			}
 
 			//AUTHORIZENET
-			$this->use_authorizenet = (! empty($options['use_authorizenet'])) &&  (! empty($options['authorizenet']['api_user'])) && (! empty($options['authorizenet']['api_key']));
+			$this->use_authorizenet = (! empty($payment_type_options['use_authorizenet'])) &&  (! empty($payment_type_options['authorizenet']['api_user'])) && (! empty($payment_type_options['authorizenet']['api_key']));
 			if ($this->use_authorizenet){ //make sure the api fields have something in them
-				$this->authorizenet_options = $options['authorizenet'];
+				$this->authorizenet_options = $payment_type_options['authorizenet'];
 			}
 
-			$options = $this->get_options('payments');
+			$options = $payment_settings;
 
 			$this->use_credits   = ( ! empty($options['enable_credits']));
-			$this->use_recurring = ( ! empty($options['enable_recurring']));
+			$this->use_recurring = false;
 			$this->use_one_time      = ( ! empty($options['enable_one_time']));
 		}
 	}

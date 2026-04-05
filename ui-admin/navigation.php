@@ -10,7 +10,6 @@
 	<a class="nav-tab <?php if ( $tab == 'frontend' ) echo 'nav-tab-active'; ?>" href="<?php echo esc_attr('admin.php?page=classifieds_settings&tab=frontend');?>" ><?php _e( 'Frontend', $this->text_domain ); ?></a>
 	<a class="nav-tab <?php if ( $tab == 'capabilities' || empty($tab))  echo 'nav-tab-active'; ?>" href="<?php echo esc_attr('admin.php?page=classifieds_settings&tab=capabilities');?>" ><?php _e( 'Rechte', $this->text_domain ); ?></a>
 	<a class="nav-tab <?php if ( $tab == 'payments' ) echo 'nav-tab-active'; ?>" href="<?php echo esc_attr('admin.php?page=classifieds_settings&tab=payments'); ?>" ><?php _e( 'Zahlungen', $this->text_domain ); ?></a>
-	<a class="nav-tab <?php if ( $tab == 'payment-types' ) echo 'nav-tab-active'; ?>" href="<?php echo esc_attr('admin.php?page=classifieds_settings&tab=payment-types'); ?>"><?php _e( 'Zahlungsarten', $this->text_domain ); ?></a>
 
 	<?php if ( class_exists( 'affiliateadmin' ) ):?>
 	<a id="dr-settings_affiliate" class="nav-tab <?php if ( $tab == 'affiliate' ) echo 'nav-tab-active'; ?>" href="<?php echo esc_attr('admin.php?page=classifieds_settings&tab=affiliate');?>"><?php _e( 'Affiliate', $this->text_domain ); ?></a>

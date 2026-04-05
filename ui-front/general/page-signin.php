@@ -118,7 +118,7 @@ if(is_multisite() ){
 					<div>
 						<br />
 						<label><strong><?php _e('Nutzungsbedingungen', $this->text_domain)?></strong></label>
-						<div class="terms"><?php echo nl2br( $options['tos_txt'] ); ?></div>
+						<div class="terms"><?php echo wp_kses_post( wpautop( $options['tos_txt'] ) ); ?></div>
 						<label><input type="checkbox" id="tos_agree" value="1" class="required"  tabindex="103" /> <?php _e('Ich stimme den Nutzungsbedingungen zu', $this->text_domain); ?></label>
 					</div>
 					<?php endif; ?>

@@ -58,12 +58,14 @@ class Classifieds_Core_Data {
 		//Default Payments settings
 		if ( empty( $options['payments'] ) ) {
 			$options['payments'] = array(
+			'use_free'           => '1',
 			'enable_recurring'    => '1',
 			'recurring_cost'      => '9.99',
 			'recurring_name'      => 'Subscription',
 			'billing_period'      => 'Month',
 			'billing_frequency'   => '1',
 			'billing_agreement'   => 'Customer will be billed at &ldquo;9.99 per month for 2 years&rdquo;',
+			'required_membership_ids' => array(),
 			'enable_one_time'     => '1',
 			'one_time_cost'       => '99.99',
 			'one_time_name'       => 'One Time Only',
@@ -72,7 +74,7 @@ class Classifieds_Core_Data {
 			'credits_per_week'    => 1,
 			'signup_credits'      => 0,
 			'credits_description' => '',
-			'tos_txt'             => 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec at sem libero. Pellentesque accumsan consequat porttitor. Curabitur ut lorem sed ipsum laoreet tempus at vel erat. In sed tempus arcu. Quisque ut luctus leo. Nulla facilisi. Sed sodales lectus ut tellus venenatis ac convallis metus suscipit. Vestibulum nec orci ut erat ultrices ullamcorper nec in lorem. Vivamus mauris velit, vulputate eget adipiscing elementum, mollis ac sem. Aliquam faucibus scelerisque orci, ut venenatis massa lacinia nec. Phasellus hendrerit lorem ornare orci congue elementum. Nam faucibus urna a purus hendrerit sit amet pulvinar sapien suscipit. Phasellus adipiscing molestie imperdiet. Mauris sit amet justo massa, in pellentesque nibh. Sed congue, dolor eleifend egestas egestas, erat ligula malesuada nulla, sit amet venenatis massa libero ac lacus. Vestibulum interdum vehicula leo et iaculis.',
+			'tos_txt'             => 'Mit dem Absenden einer Kleinanzeige bestaetigst Du, dass Deine Angaben wahrheitsgemaess sind und keine Rechte Dritter verletzen. Unzulaessige, irrefuehrende oder rechtswidrige Inhalte sind nicht erlaubt und koennen entfernt werden. Kostenpflichtige Optionen werden vor Abschluss transparent angezeigt. Es gelten unsere <a href="/datenschutz" target="_blank" rel="noopener noreferrer">Datenschutzhinweise</a> und das <a href="/impressum" target="_blank" rel="noopener noreferrer">Impressum</a>.',
 			'key'                 => 'payments'
 			);
 		}
@@ -80,6 +82,10 @@ class Classifieds_Core_Data {
 		if (! empty($options['payment_settings']) ) {
 			$options['payments'] = array_replace($options['payment_settings']);
 			unset($options['payment_settings']);
+		}
+
+		if ( ! isset( $options['payments']['use_free'] ) ) {
+			$options['payments']['use_free'] = ( ! empty( $options['payment_types']['use_free'] ) ) ? '1' : '0';
 		}
 
 		if(empty($options['payment_types']) ) {

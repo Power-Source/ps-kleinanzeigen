@@ -273,25 +273,26 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 			$this->user_role = ( empty( $options['member_role'] ) ) ? get_option( 'default_role' ) : $options['member_role'];
 
 			//How do we sell stuff
-			$options = $this->get_options( 'payment_types' );
+			$payment_type_options = $this->get_options( 'payment_types' );
+			$payment_settings = $this->get_options( 'payments' );
 
-			$this->use_free = ( ! empty( $options['use_free'] ) );
+			$this->use_free = ! empty( $payment_settings['use_free'] ) || ! empty( $payment_type_options['use_free'] );
 			if ( ! $this->use_free ) { //Can't use gateways if it's free.
 
-				$this->use_paypal = ( ! empty( $options['use_paypal'] ) );
+				$this->use_paypal = ( ! empty( $payment_type_options['use_paypal'] ) );
 				if ( $this->use_paypal ) { //make sure the api fields have something in them
-					$this->use_paypal = ( ! empty( $options['paypal']['api_username'] ) ) && ( ! empty( $options['paypal']['api_password'] ) ) && ( ! empty( $options['paypal']['api_signature'] ) );
+					$this->use_paypal = ( ! empty( $payment_type_options['paypal']['api_username'] ) ) && ( ! empty( $payment_type_options['paypal']['api_password'] ) ) && ( ! empty( $payment_type_options['paypal']['api_signature'] ) );
 				}
 
-				$this->use_authorizenet = ( ! empty( $options['use_authorizenet'] ) );
+				$this->use_authorizenet = ( ! empty( $payment_type_options['use_authorizenet'] ) );
 				if ( $this->use_authorizenet ) { //make sure the api fields have something in them
-					$this->use_authorizenet = ( ! empty( $options['authorizenet']['api_user'] ) ) && ( ! empty( $options['authorizenet']['api_key'] ) );
+					$this->use_authorizenet = ( ! empty( $payment_type_options['authorizenet']['api_user'] ) ) && ( ! empty( $payment_type_options['authorizenet']['api_key'] ) );
 				}
 
-				$options = $this->get_options( 'payments' );
+				$options = $payment_settings;
 
 				$this->use_credits   = ( ! empty( $options['enable_credits'] ) );
-				$this->use_recurring = ( ! empty( $options['enable_recurring'] ) );
+				$this->use_recurring = false;
 				$this->use_one_time  = ( ! empty( $options['enable_one_time'] ) );
 			}
 
@@ -1423,6 +1424,11 @@ $cost_meta_key     = '_cf_cost';
 			}
 
 			//for paid users
+			if ( $this->is_membership_requirement_enabled() && $this->current_user_has_required_membership() ) {
+				$result = true;
+			}
+
+			//Legacy paid users
 			if ( $this->transactions->billing_type ) {
 				if ( 'one_time' == $this->transactions->billing_type && 'success' == $this->transactions->status ) {
 					$result = true;
@@ -1436,6 +1442,74 @@ $cost_meta_key     = '_cf_cost';
 			}
 
 			return apply_filters( 'classifieds_full_access', $result );
+		}
+
+		/**
+		 * True when recurring access should be controlled by PS-Mitgliedschaften.
+		 *
+		 * @return bool
+		 */
+		function is_membership_requirement_enabled() {
+			$options = $this->get_options( 'payments' );
+			$enabled = ! empty( $options['enable_recurring'] );
+			$required_ids = $this->get_required_membership_ids();
+
+			return $enabled && $this->is_memberships_plugin_available() && ! empty( $required_ids );
+		}
+
+		/**
+		 * Checks if PS-Mitgliedschaften API is available.
+		 *
+		 * @return bool
+		 */
+		function is_memberships_plugin_available() {
+			return class_exists( 'MS_Model_Membership' ) && class_exists( 'MS_Model_Member' );
+		}
+
+		/**
+		 * Returns configured required membership IDs.
+		 *
+		 * @return int[]
+		 */
+		function get_required_membership_ids() {
+			$options = $this->get_options( 'payments' );
+			$ids = isset( $options['required_membership_ids'] ) ? (array) $options['required_membership_ids'] : array();
+
+			return array_values( array_unique( array_filter( array_map( 'absint', $ids ) ) ) );
+		}
+
+		/**
+		 * Checks if current user has one of the configured required memberships.
+		 *
+		 * @return bool
+		 */
+		function current_user_has_required_membership() {
+			if ( ! $this->is_memberships_plugin_available() ) {
+				return false;
+			}
+
+			$user_id = get_current_user_id();
+			if ( empty( $user_id ) ) {
+				return false;
+			}
+
+			$required_ids = $this->get_required_membership_ids();
+			if ( empty( $required_ids ) ) {
+				return false;
+			}
+
+			$member = MS_Factory::load( 'MS_Model_Member', $user_id );
+			if ( ! is_object( $member ) || ! method_exists( $member, 'has_membership' ) ) {
+				return false;
+			}
+
+			foreach ( $required_ids as $membership_id ) {
+				if ( $member->has_membership( $membership_id ) ) {
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		/**

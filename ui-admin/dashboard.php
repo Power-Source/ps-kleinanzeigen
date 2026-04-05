@@ -31,7 +31,7 @@
 			<tr>
 				<td><?php the_ID(); ?></td>
 				<td><?php the_title(); ?></td>
-				<td><?php echo strip_tags(get_the_term_list(get_the_ID(), 'classifieds_categories', '',', ','') ); ?> </td>
+				<td><?php $_term_list = get_the_term_list(get_the_ID(), 'classifieds_categories', '',', ',''); echo is_wp_error($_term_list) ? '' : strip_tags($_term_list); ?> </td>
 				<td><?php echo $this->get_expiration_date( get_the_ID() ); ?></td>
 				<td>
 					<?php
@@ -83,7 +83,7 @@
 			<tr>
 				<td><?php the_ID(); ?></td>
 				<td><?php the_title(); ?></td>
-				<td><?php echo strip_tags(get_the_term_list(get_the_ID(), 'classifieds_categories', '',', ','') ); ?> </td>
+				<td><?php $_term_list = get_the_term_list(get_the_ID(), 'classifieds_categories', '',', ',''); echo is_wp_error($_term_list) ? '' : strip_tags($_term_list); ?> </td>
 				<td><?php echo $this->get_expiration_date( get_the_ID() ); ?></td>
 				<td>
 					<?php
@@ -149,7 +149,7 @@
 			<tr>
 				<td><?php the_ID(); ?></td>
 				<td><?php the_title(); ?></td>
-				<td><?php echo strip_tags(get_the_term_list(get_the_ID(), 'classifieds_categories', '',', ','') ); ?> </td>
+				<td><?php $_term_list = get_the_term_list(get_the_ID(), 'classifieds_categories', '',', ',''); echo is_wp_error($_term_list) ? '' : strip_tags($_term_list); ?> </td>
 				<td><?php echo $this->get_expiration_date( get_the_ID() ); ?></td>
 				<td>
 					<?php
