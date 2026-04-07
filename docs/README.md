@@ -1,5 +1,12 @@
 # PS Kleinanzeigen Plugin
 
+## Entwickler-Dokumentation
+
+- [DEV-HANDBUCH](./DEV-HANDBUCH.md)
+- [SCHNITTSTELLEN](./SCHNITTSTELLEN.md)
+- [HOOK-REFERENZ](./HOOK-REFERENZ.md)
+- [HOOK-BOILERPLATES](./HOOK-BOILERPLATES.php)
+
 **Benutzer können Anzeigen erstellen und verwalten, Bilder hochladen, E-Mails zu ihren Angeboten erhalten und Guthaben kaufen.**
 
 ## PS Kleinanzeigen bietet Benutzern einen Ort zum Kaufen und Verkaufen von Waren auf Deiner Webseite.
