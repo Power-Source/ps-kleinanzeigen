@@ -97,17 +97,20 @@ class CF_Message_Read_Service {
 			return 0;
 		}
 
-		$msgs = get_posts( array(
-			'post_type'      => 'cf_message',
-			'posts_per_page' => -1,
-			'post_status'    => 'publish',
-			'fields'         => 'ids',
-			'meta_query'     => array(
+		$query = new WP_Query( array(
+			'post_type'              => 'cf_message',
+			'posts_per_page'         => 1,
+			'post_status'            => 'publish',
+			'fields'                 => 'ids',
+			'no_found_rows'          => false,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+			'meta_query'             => array(
 				array( 'key' => '_cf_msg_recipient', 'value' => $user_id, 'compare' => '=' ),
 				array( 'key' => '_cf_msg_read_' . $user_id, 'compare' => 'NOT EXISTS' ),
 			),
 		) );
 
-		return count( $msgs );
+		return (int) $query->found_posts;
 	}
 }

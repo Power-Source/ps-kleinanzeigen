@@ -1458,15 +1458,40 @@ $cost_meta_key     = '_cf_cost';
 		 * @return void
 		 **/
 		function check_expiration_dates_callback() {
-			$posts = get_posts( array( 'post_type' => $this->post_type, 'numberposts' => 0 ) );
-			foreach ( $posts as $post ) {
-				$expiration_date = get_post_meta( $post->ID, '_expiration_date', true );
-				if ( empty( $expiration_date ) ) {
-					$this->process_status( $post->ID, 'draft' );
-				} elseif ( $expiration_date < time() ) {
-					$this->process_status( $post->ID, 'private' );
+			global $wpdb;
+
+			$last_post_id = 0;
+			$batch_size   = 200;
+
+			do {
+				$post_ids = $wpdb->get_col( $wpdb->prepare(
+					"SELECT ID FROM {$wpdb->posts}
+					 WHERE post_type = %s
+					   AND post_status = 'publish'
+					   AND ID > %d
+					 ORDER BY ID ASC
+					 LIMIT %d",
+					$this->post_type,
+					$last_post_id,
+					$batch_size
+				) );
+
+				if ( empty( $post_ids ) ) {
+					break;
 				}
-			}
+
+				foreach ( $post_ids as $post_id ) {
+					$post_id = (int) $post_id;
+					$expiration_date = get_post_meta( $post_id, '_expiration_date', true );
+					if ( empty( $expiration_date ) ) {
+						$this->process_status( $post_id, 'draft' );
+					} elseif ( $expiration_date < time() ) {
+						$this->process_status( $post_id, 'private' );
+					}
+				}
+
+				$last_post_id = (int) end( $post_ids );
+			} while ( ! empty( $post_ids ) );
 		}
 
 		/**

@@ -3,11 +3,12 @@
  * Dashboard Nachrichten-View (für AJAX-Listing)
  */
 $current_user_id = get_current_user_id();
+$text_domain = isset( $this->core->text_domain ) ? $this->core->text_domain : 'classifieds';
 
 // Ungelesene Nachrichten abrufen
 $args = array(
 	'post_type'      => 'cf_message',
-	'posts_per_page' => -1,
+	'posts_per_page' => 50,
 	'meta_query'     => array(
 		array(
 			'key'   => '_cf_msg_recipient',
@@ -16,6 +17,7 @@ $args = array(
 	),
 	'orderby'        => 'post_date',
 	'order'          => 'DESC',
+	'no_found_rows'  => true,
 );
 
 $messages = new WP_Query( $args );
@@ -34,14 +36,14 @@ if ( $messages->have_posts() ) : ?>
 				<div class="cf-msg-content">
 					<strong><?php echo esc_html( $sender->display_name ); ?></strong>
 					<p><?php echo esc_html( wp_trim_words( get_the_content(), 20 ) ); ?></p>
-					<small><?php echo esc_html( human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) ) ) . ' ' . __( 'her', 'ps-kleinanzeigen' ); ?></small>
+					<small><?php echo esc_html( human_time_diff( get_the_time( 'U' ), current_time( 'timestamp' ) ) ) . ' ' . __( 'her', $text_domain ); ?></small>
 				</div>
-				<button class="cf-btn-open-msg" data-msg-id="<?php the_ID(); ?>"><?php _e( 'Öffnen', 'ps-kleinanzeigen' ); ?></button>
+				<button class="cf-btn-open-msg" data-msg-id="<?php the_ID(); ?>"><?php _e( 'Öffnen', $text_domain ); ?></button>
 			</div>
 		<?php endwhile; ?>
 	</div>
 <?php else : ?>
-	<p><?php _e( 'Noch keine Nachrichten.', 'ps-kleinanzeigen' ); ?></p>
+	<p><?php _e( 'Noch keine Nachrichten.', $text_domain ); ?></p>
 <?php endif;
 
 wp_reset_postdata();

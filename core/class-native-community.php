@@ -182,16 +182,7 @@ class PS_Native_Community {
             return 0;
         }
 
-        $args = array(
-            'post_type'      => 'classifieds',
-            'post_status'    => 'publish',
-            'author'         => $user_id,
-            'posts_per_page' => -1,
-            'fields'         => 'ids',
-        );
-
-        $query = new WP_Query( $args );
-        return $query->found_posts;
+        return (int) count_user_posts( $user_id, 'classifieds', true );
     }
 }
 

@@ -9,7 +9,8 @@ jQuery(function($) {
 			// set data
 			var data = {
 				action: 'cf_get_caps',
-				role: $('#roles option:selected').val()
+				role: $('#roles option:selected').val(),
+				_wpnonce: $('input[name="_wpnonce"]').first().val()
 			};
 			// make the post request and process the response
 			$.post(ajaxurl, data, function(response) {

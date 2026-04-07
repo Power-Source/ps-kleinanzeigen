@@ -771,6 +771,7 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 	* @return JSON Encoded string
 	*/
 	function ajax_get_caps() {
+		check_ajax_referer( 'verify' );
 		if ( !current_user_can( 'manage_options' ) ) die(-1);
 		if(empty($_POST['role'])) die(-1);
 

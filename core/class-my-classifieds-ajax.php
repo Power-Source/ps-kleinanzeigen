@@ -216,20 +216,29 @@ class CF_My_Classifieds_Ajax {
 			wp_send_json_error();
 		}
 
-		$messages = get_posts( array(
-			'post_type'      => 'cf_message',
-			'posts_per_page' => -1,
-			'post_status'    => 'publish',
-			'fields'         => 'ids',
-			'meta_query'     => array(
-				array( 'key' => '_cf_msg_thread_id', 'value' => $thread_id ),
-				array( 'key' => '_cf_msg_recipient', 'value' => $user_id ),
-			),
-		) );
+		$paged = 1;
+		do {
+			$messages = get_posts( array(
+				'post_type'              => 'cf_message',
+				'posts_per_page'         => 200,
+				'paged'                  => $paged,
+				'post_status'            => 'publish',
+				'fields'                 => 'ids',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+				'meta_query'             => array(
+					array( 'key' => '_cf_msg_thread_id', 'value' => $thread_id ),
+					array( 'key' => '_cf_msg_recipient', 'value' => $user_id ),
+				),
+			) );
 
-		foreach ( $messages as $mid ) {
-			update_post_meta( $mid, '_cf_msg_read_' . $user_id, 1 );
-		}
+			foreach ( $messages as $mid ) {
+				update_post_meta( $mid, '_cf_msg_read_' . $user_id, 1 );
+			}
+
+			$paged++;
+		} while ( ! empty( $messages ) );
 
 		wp_send_json_success();
 	}
