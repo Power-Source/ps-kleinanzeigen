@@ -36,6 +36,7 @@ $single_show_seller_card = ! isset( $frontend_options['single_show_seller_card']
 $single_show_sticky_actions = ! isset( $frontend_options['single_show_sticky_actions'] ) || 1 === (int) $frontend_options['single_show_sticky_actions'];
 $single_show_reserved_badge = ! isset( $frontend_options['single_show_reserved_badge'] ) || 1 === (int) $frontend_options['single_show_reserved_badge'];
 $is_reserved = method_exists( $this, 'is_reserved_post' ) ? $this->is_reserved_post( $post->ID ) : ( '1' === (string) get_post_meta( $post->ID, '_cf_reserved', true ) );
+$is_featured = method_exists( $this, 'is_featured' ) ? $this->is_featured( $post->ID ) : ( '1' === (string) get_post_meta( $post->ID, '_cf_is_featured', true ) );
 $template_preset = isset( $GLOBALS['cf_frontend_template_preset'] ) ? sanitize_key( (string) $GLOBALS['cf_frontend_template_preset'] ) : '';
 if ( ! in_array( $template_preset, array( 'b2c', 'premium', 'community' ), true ) ) {
 	$template_preset = '';
@@ -123,6 +124,9 @@ $open_contact_form = isset( $_GET['cf_contact'] ) && '1' === wp_unslash( $_GET['
 
 		<div class="cf-single-summary-card">
 			<div class="cf-single-summary-head">
+				<?php if ( $is_featured ) : ?>
+					<span class="cf-status-badge is-featured"><?php _e( 'Featured', $this->text_domain ); ?></span>
+				<?php endif; ?>
 				<?php if ( $single_show_reserved_badge && $is_reserved ) : ?>
 					<span class="cf-status-badge is-reserved"><?php _e( 'Reserviert', $this->text_domain ); ?></span>
 				<?php endif; ?>
@@ -331,6 +335,8 @@ $open_contact_form = isset( $_GET['cf_contact'] ) && '1' === wp_unslash( $_GET['
 		</aside>
 	</div>
 </div>
+
+<?php require CF_PLUGIN_DIR . 'ui-front/general/partials/single-footer-navigation.php'; ?>
 
 <?php if ( $single_show_sticky_actions ) : ?>
 <div class="cf-sticky-mobile-actions">

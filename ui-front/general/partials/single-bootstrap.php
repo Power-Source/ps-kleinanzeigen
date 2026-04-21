@@ -102,6 +102,7 @@ if ( $featured_image_id > 0 ) {
 }
 
 $is_reserved = method_exists( $this, 'is_reserved_post' ) ? $this->is_reserved_post( $post->ID ) : ( '1' === (string) get_post_meta( $post->ID, '_cf_reserved', true ) );
+$is_featured = method_exists( $this, 'is_featured' ) ? $this->is_featured( $post->ID ) : ( '1' === (string) get_post_meta( $post->ID, '_cf_is_featured', true ) );
 
 $published_date = get_the_date();
 $expiration_date = '';

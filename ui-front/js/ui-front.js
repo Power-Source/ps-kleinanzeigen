@@ -129,6 +129,61 @@ jQuery(document).ready(function($) {
 		});
 	}
 
+	function syncFeaturedButtons(postId, active, message) {
+		$('.cf-btn-toggle-featured[data-post-id="' + postId + '"]').each(function() {
+			var $button = $(this);
+			var isActive = !!active;
+
+			$button.toggleClass('is-active', isActive);
+			$button.attr('aria-pressed', isActive ? 'true' : 'false');
+
+			var $card = $button.closest('.cf-dashboard-item');
+			$card.toggleClass('is-featured', isActive);
+
+			if ($card.find('.cf-badge-featured').length === 0 && isActive) {
+				$card.find('.cf-card-overlay-badges').prepend('<span class="cf-badge-featured">Featured</span>');
+			}
+
+			if (!isActive) {
+				$card.find('.cf-badge-featured').remove();
+			}
+
+			var $hint = $card.find('.cf-featured-hint');
+			if ($hint.length && message) {
+				$hint.text(message);
+			}
+		});
+	}
+
+	function toggleFeatured(postId, $button) {
+		if (!frontendConfig.ajaxUrl || !frontendConfig.nonce || !postId) {
+			return;
+		}
+
+		$button.prop('disabled', true).addClass('is-busy');
+
+		$.post(frontendConfig.ajaxUrl, {
+			action: 'cf_toggle_featured',
+			nonce: frontendConfig.nonce,
+			post_id: postId
+		}).done(function(response) {
+			if (response && response.success && response.data) {
+				syncFeaturedButtons(postId, !!response.data.is_featured, response.data.message || '');
+				return;
+			}
+
+			if (response && response.data && response.data.message) {
+				window.alert(response.data.message);
+			}
+		}).fail(function(xhr) {
+			if (xhr && xhr.responseJSON && xhr.responseJSON.data && xhr.responseJSON.data.message) {
+				window.alert(xhr.responseJSON.data.message);
+			}
+		}).always(function() {
+			$button.prop('disabled', false).removeClass('is-busy');
+		});
+	}
+
 	function closeQuickView() {
 		$('#cf-quickview-modal').removeClass('is-open').attr('aria-hidden', 'true');
 		$('body').removeClass('cf-modal-open');
@@ -336,6 +391,12 @@ jQuery(document).ready(function($) {
 		e.preventDefault();
 		var $button = $(this);
 		toggleFavorite($button.data('post-id'), $button);
+	});
+
+	$(document).on('click', '.cf-btn-toggle-featured', function(e) {
+		e.preventDefault();
+		var $button = $(this);
+		toggleFeatured($button.data('post-id'), $button);
 	});
 
 	$(document).on('click', '.cf-quickview-trigger', function(e) {

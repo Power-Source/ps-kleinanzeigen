@@ -14,11 +14,14 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/archive-bootstrap.php';
 	$cost = is_numeric( $cost ) ? number_format_i18n( (float) $cost, 2 ) : $cost;
 	$is_favorite = in_array( get_the_ID(), $favorite_ids, true );
 	$is_reserved = method_exists( $cf, 'is_reserved_post' ) ? $cf->is_reserved_post( get_the_ID() ) : ( '1' === (string) get_post_meta( get_the_ID(), '_cf_reserved', true ) );
+	$is_featured = method_exists( $cf, 'is_featured' ) ? $cf->is_featured( get_the_ID() ) : ( '1' === (string) get_post_meta( get_the_ID(), '_cf_is_featured', true ) );
+	$premium_card_classes = 'cf-listing-card-wrap cf-premium-card-wrap' . ( $is_featured ? ' is-featured' : '' );
 	$cat_list = get_the_term_list( get_the_ID(), 'kleinenanzeigen-cat', '', ', ', '' );
 ?>
-<article id="post-<?php the_ID(); ?>" <?php post_class( 'cf-listing-card-wrap cf-premium-card-wrap' ); ?>>
+<article id="post-<?php the_ID(); ?>" <?php post_class( $premium_card_classes ); ?>>
 	<div class="cf-premium-card">
 		<header class="cf-premium-card-head">
+			<?php if ( $is_featured ) : ?><span class="cf-status-badge is-featured"><?php _e( 'Featured', CF_TEXT_DOMAIN ); ?></span><?php endif; ?>
 			<?php if ( $archive_show_reserved_badge && $is_reserved ) : ?><span class="cf-status-badge is-reserved"><?php _e( 'Reserviert', CF_TEXT_DOMAIN ); ?></span><?php endif; ?>
 			<span class="cf-premium-author"><?php _e( 'Von', CF_TEXT_DOMAIN ); ?> <?php the_author(); ?></span>
 		</header>

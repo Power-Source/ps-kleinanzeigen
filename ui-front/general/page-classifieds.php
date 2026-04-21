@@ -119,6 +119,87 @@ if ( in_array($tax_key, $taxonomies) ) {
 
 query_posts($query_args);
 
+if ( is_object( $wp_query ) && ! empty( $wp_query->posts ) ) {
+	$premium_meta_keys = apply_filters(
+		'cf_premium_meta_keys',
+		array(
+			'_cf_is_premium',
+			'_cf_premium',
+			'cf_is_premium',
+			'is_premium',
+		)
+	);
+
+	$is_premium_post = function( $post_id ) use ( $premium_meta_keys ) {
+		$post_id = (int) $post_id;
+		if ( $post_id <= 0 ) {
+			return false;
+		}
+
+		if ( method_exists( $this, 'is_premium_post' ) ) {
+			return (bool) $this->is_premium_post( $post_id );
+		}
+
+		foreach ( (array) $premium_meta_keys as $meta_key ) {
+			$raw = get_post_meta( $post_id, (string) $meta_key, true );
+			$normalized = strtolower( trim( (string) $raw ) );
+			if ( in_array( $normalized, array( '1', 'yes', 'true', 'premium' ), true ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+	$is_featured_post = function( $post_id ) {
+		$post_id = (int) $post_id;
+		if ( $post_id <= 0 ) {
+			return false;
+		}
+
+		if ( method_exists( $this, 'is_featured' ) ) {
+			return (bool) $this->is_featured( $post_id );
+		}
+
+		return '1' === (string) get_post_meta( $post_id, '_cf_is_featured', true );
+	};
+
+	$has_premium_posts = false;
+	foreach ( $wp_query->posts as $candidate_post ) {
+		if ( isset( $candidate_post->ID ) && $is_premium_post( $candidate_post->ID ) ) {
+			$has_premium_posts = true;
+			break;
+		}
+	}
+
+	usort(
+		$wp_query->posts,
+		function ( $a, $b ) use ( $is_premium_post, $is_featured_post, $has_premium_posts ) {
+			$a_premium = $is_premium_post( $a->ID ) ? 1 : 0;
+			$b_premium = $is_premium_post( $b->ID ) ? 1 : 0;
+			if ( $a_premium !== $b_premium ) {
+				return ( $a_premium < $b_premium ) ? 1 : -1;
+			}
+
+			if ( ! $has_premium_posts ) {
+				$a_featured = $is_featured_post( $a->ID ) ? 1 : 0;
+				$b_featured = $is_featured_post( $b->ID ) ? 1 : 0;
+				if ( $a_featured !== $b_featured ) {
+					return ( $a_featured < $b_featured ) ? 1 : -1;
+				}
+			}
+
+			$a_date = strtotime( ! empty( $a->post_date_gmt ) ? $a->post_date_gmt : $a->post_date );
+			$b_date = strtotime( ! empty( $b->post_date_gmt ) ? $b->post_date_gmt : $b->post_date );
+			if ( $a_date === $b_date ) {
+				return 0;
+			}
+
+			return ( $a_date < $b_date ) ? 1 : -1;
+		}
+	);
+}
+
 
 load_template( $this->custom_classifieds_template( 'loop-taxonomy' ) );
 

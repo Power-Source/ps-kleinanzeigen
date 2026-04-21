@@ -10,6 +10,7 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 		<div class="cf-community-title-wrap">
 			<h1 class="cf-community-title"><?php echo esc_html( get_the_title() ); ?></h1>
 			<div class="cf-community-meta-inline">
+				<?php if ( $is_featured ) : ?><span class="cf-status-badge is-featured"><?php _e( 'Featured', $this->text_domain ); ?></span><?php endif; ?>
 				<span class="cf-meta-chip"><?php _e( 'Von', $this->text_domain ); ?>: <?php echo wp_kses_post( the_author_classifieds_link() ); ?></span>
 				<?php if ( '' !== $cost_display ) : ?><span class="cf-meta-chip"><?php _e( 'Preis', $this->text_domain ); ?>: <?php echo esc_html( $cost_display ); ?></span><?php endif; ?>
 				<?php if ( '' !== $region_name ) : ?><span class="cf-meta-chip"><?php echo esc_html( $region_name ); ?></span><?php endif; ?>
@@ -44,8 +45,8 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 
 	<section class="cf-community-facts cf-single-section">
 		<dl class="cf-single-facts">
-			<div class="cf-single-fact"><dt><?php _e( 'Veroeffentlicht', $this->text_domain ); ?></dt><dd><?php echo esc_html( $published_date ); ?></dd></div>
-			<div class="cf-single-fact"><dt><?php _e( 'Laeuft aus', $this->text_domain ); ?></dt><dd><?php echo esc_html( $expiration_date ); ?></dd></div>
+			<div class="cf-single-fact"><dt><?php _e( 'Veröffentlicht', $this->text_domain ); ?></dt><dd><?php echo esc_html( $published_date ); ?></dd></div>
+			<div class="cf-single-fact"><dt><?php _e( 'Läuft aus', $this->text_domain ); ?></dt><dd><?php echo esc_html( $expiration_date ); ?></dd></div>
 			<?php if ( '' !== $duration ) : ?><div class="cf-single-fact"><dt><?php _e( 'Laufzeit', $this->text_domain ); ?></dt><dd><?php echo esc_html( $duration ); ?></dd></div><?php endif; ?>
 		</dl>
 	</section>
@@ -61,6 +62,8 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 		<?php require CF_PLUGIN_DIR . 'ui-front/general/partials/single-sidebar-stack.php'; ?>
 	</aside>
 </div>
+
+<?php require CF_PLUGIN_DIR . 'ui-front/general/partials/single-footer-navigation.php'; ?>
 
 <div class="cf-lightbox" id="cf-lightbox" aria-hidden="true">
 	<button type="button" class="cf-lightbox-close" aria-label="<?php esc_attr_e( 'Schliessen', $this->text_domain ); ?>">&times;</button>

@@ -16,10 +16,13 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/archive-bootstrap.php';
 	$gallery_count = is_array( $gallery_ids ) ? count( array_filter( $gallery_ids ) ) : 0;
 	$is_favorite = in_array( get_the_ID(), $favorite_ids, true );
 	$is_reserved = method_exists( $cf, 'is_reserved_post' ) ? $cf->is_reserved_post( get_the_ID() ) : ( '1' === (string) get_post_meta( get_the_ID(), '_cf_reserved', true ) );
+	$is_featured = method_exists( $cf, 'is_featured' ) ? $cf->is_featured( get_the_ID() ) : ( '1' === (string) get_post_meta( get_the_ID(), '_cf_is_featured', true ) );
+	$b2c_card_classes = 'cf-listing-card-wrap cf-b2c-card-wrap' . ( $is_featured ? ' is-featured' : '' );
 ?>
-<article id="post-<?php the_ID(); ?>" <?php post_class( 'cf-listing-card-wrap cf-b2c-card-wrap' ); ?>>
+<article id="post-<?php the_ID(); ?>" <?php post_class( $b2c_card_classes ); ?>>
 	<div class="cf-b2c-card">
 		<a class="cf-b2c-thumb" href="<?php the_permalink(); ?>">
+			<?php if ( $is_featured ) : ?><span class="cf-status-badge is-featured"><?php _e( 'Featured', CF_TEXT_DOMAIN ); ?></span><?php endif; ?>
 			<?php if ( $archive_show_reserved_badge && $is_reserved ) : ?><span class="cf-status-badge is-reserved"><?php _e( 'Reserviert', CF_TEXT_DOMAIN ); ?></span><?php endif; ?>
 			<?php if ( $gallery_count > 0 ) : ?><span class="cf-gallery-badge"><?php echo esc_html( sprintf( _n( '%d Bild', '%d Bilder', $gallery_count, CF_TEXT_DOMAIN ), $gallery_count ) ); ?></span><?php endif; ?>
 			<?php

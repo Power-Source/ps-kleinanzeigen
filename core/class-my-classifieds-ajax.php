@@ -242,4 +242,89 @@ class CF_My_Classifieds_Ajax {
 
 		wp_send_json_success();
 	}
+
+	/**
+	 * AJAX: Featured aktivieren/deaktivieren
+	 */
+	public function ajax_toggle_featured() {
+		check_ajax_referer( 'cf_frontend_actions', 'nonce' );
+
+		if ( ! is_user_logged_in() ) {
+			wp_send_json_error( array( 'message' => __( 'Du musst eingeloggt sein.', $this->core->text_domain ) ), 403 );
+		}
+
+		$post_id = absint( $_POST['post_id'] ?? 0 );
+		if ( ! $post_id ) {
+			wp_send_json_error( array( 'message' => __( 'Ungültige Anzeige ID.', $this->core->text_domain ) ) );
+		}
+
+		$post = get_post( $post_id );
+		if ( ! $post || $post->post_type !== $this->core->post_type ) {
+			wp_send_json_error( array( 'message' => __( 'Anzeige nicht gefunden.', $this->core->text_domain ) ) );
+		}
+
+		// Check permissions
+		if ( get_current_user_id() !== $post->post_author && ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Berechtigung verweigert.', $this->core->text_domain ) ), 403 );
+		}
+
+		$options = $this->core->get_options( 'payments' );
+		if ( empty( $options['enable_featured'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'Featured ist nicht aktiviert.', $this->core->text_domain ) ) );
+		}
+
+		$is_featured = $this->core->is_featured( $post_id );
+		$duration_days = ! empty( $options['featured_duration_days'] ) ? absint( $options['featured_duration_days'] ) : 0;
+
+		if ( $is_featured ) {
+			// Deactivate featured
+			$this->core->unset_featured( $post_id );
+			wp_send_json_success( array(
+				'message' => __( 'Featured wurde deaktiviert.', $this->core->text_domain ),
+				'is_featured' => false,
+			) );
+		} else {
+			// Try to activate featured
+
+			// Check if user has enough credits or funds
+			$cost_type = ! empty( $options['featured_cost_type'] ) ? $options['featured_cost_type'] : 'credits';
+
+			if ( $cost_type === 'credits' ) {
+				$cost = ! empty( $options['featured_credit_cost'] ) ? absint( $options['featured_credit_cost'] ) : 50;
+				$transactions = new CF_Transactions( get_current_user_id() );
+				$user_credits = (int) $transactions->credits;
+
+				if ( $user_credits < $cost ) {
+					wp_send_json_error( array(
+						'message' => sprintf(
+							__( 'Du hast nicht genug Credits. Benötigt: %d, Du hast: %d.', $this->core->text_domain ),
+							$cost,
+							$user_credits
+						),
+					) );
+				}
+
+				// Deduct credits (logged by CF_Transactions magic setter)
+				$transactions->credits = max( 0, $user_credits - $cost );
+			} else {
+				wp_send_json_error(
+					array(
+						'message' => __( 'Featured im Geld-Modus bitte ueber den Checkout kaufen. Dashboard-Sofortaktivierung ist nur fuer Credits verfuegbar.', $this->core->text_domain ),
+					)
+				);
+			}
+
+			// Activate featured
+			$this->core->set_featured( $post_id, $duration_days );
+
+			$featured_until = $this->core->get_featured_until( $post_id );
+			$until_text = $featured_until ? date_i18n( 'd.m.Y', $featured_until ) : __( 'unbegrenzt', $this->core->text_domain );
+
+			wp_send_json_success( array(
+				'message' => sprintf( __( 'Featured aktiviert bis: %s', $this->core->text_domain ), $until_text ),
+				'is_featured' => true,
+				'featured_until' => $featured_until,
+			) );
+		}
+	}
 }

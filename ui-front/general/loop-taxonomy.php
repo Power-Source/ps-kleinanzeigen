@@ -187,12 +187,17 @@ $gallery_ids   = get_post_meta( get_the_ID(), '_cf_gallery_ids', true );
 $gallery_count = is_array( $gallery_ids ) ? count( array_filter( $gallery_ids ) ) : 0;
 $is_favorite   = in_array( get_the_ID(), $favorite_ids, true );
 $is_reserved   = method_exists( $cf, 'is_reserved_post' ) ? $cf->is_reserved_post( get_the_ID() ) : ( '1' === (string) get_post_meta( get_the_ID(), '_cf_reserved', true ) );
+$is_featured   = method_exists( $cf, 'is_featured' ) ? $cf->is_featured( get_the_ID() ) : ( '1' === (string) get_post_meta( get_the_ID(), '_cf_is_featured', true ) );
+$listing_card_classes = 'cf-listing-card-wrap' . ( $is_featured ? ' is-featured' : '' );
 ?>
-<div id="post-<?php the_ID(); ?>" <?php post_class( 'cf-listing-card-wrap' ); ?>>
+<div id="post-<?php the_ID(); ?>" <?php post_class( $listing_card_classes ); ?>>
 
 	<div class="entry-content">
 		<div class="cf-ad cf-listing-card">
 			<div class="cf-image">
+				<?php if ( $is_featured ) : ?>
+					<span class="cf-status-badge is-featured"><?php _e( 'Featured', CF_TEXT_DOMAIN ); ?></span>
+				<?php endif; ?>
 				<?php if ( $archive_show_reserved_badge && $is_reserved ) : ?>
 					<span class="cf-status-badge is-reserved"><?php _e( 'Reserviert', CF_TEXT_DOMAIN ); ?></span>
 				<?php endif; ?>

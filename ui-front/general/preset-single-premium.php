@@ -20,6 +20,7 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 			<?php endif; ?>
 		</div>
 		<div class="cf-premium-hero-meta">
+			<?php if ( $is_featured ) : ?><span class="cf-status-badge is-featured"><?php _e( 'Featured', $this->text_domain ); ?></span><?php endif; ?>
 			<?php if ( $single_show_reserved_badge && $is_reserved ) : ?><span class="cf-status-badge is-reserved"><?php _e( 'Reserviert', $this->text_domain ); ?></span><?php endif; ?>
 			<h1 class="cf-premium-title"><?php echo esc_html( get_the_title() ); ?></h1>
 			<?php if ( '' !== $cost_display ) : ?><div class="cf-single-price"><?php echo esc_html( $cost_display ); ?></div><?php endif; ?>
@@ -44,8 +45,8 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 				<dl class="cf-single-facts">
 					<div class="cf-single-fact"><dt><?php _e( 'Anbieter', $this->text_domain ); ?></dt><dd><?php echo the_author_classifieds_link(); ?></dd></div>
 					<div class="cf-single-fact"><dt><?php _e( 'Kategorie', $this->text_domain ); ?></dt><dd><?php echo wp_kses_post( get_the_term_list( $post->ID, 'kleinenanzeigen-cat', '', ', ', '' ) ); ?></dd></div>
-					<div class="cf-single-fact"><dt><?php _e( 'Veroeffentlicht', $this->text_domain ); ?></dt><dd><?php echo esc_html( $published_date ); ?></dd></div>
-					<div class="cf-single-fact"><dt><?php _e( 'Laeuft aus', $this->text_domain ); ?></dt><dd><?php echo esc_html( $expiration_date ); ?></dd></div>
+					<div class="cf-single-fact"><dt><?php _e( 'Veröffentlicht', $this->text_domain ); ?></dt><dd><?php echo esc_html( $published_date ); ?></dd></div>
+					<div class="cf-single-fact"><dt><?php _e( 'Läuft aus', $this->text_domain ); ?></dt><dd><?php echo esc_html( $expiration_date ); ?></dd></div>
 					<?php if ( '' !== $region_name ) : ?><div class="cf-single-fact"><dt><?php _e( 'Standort', $this->text_domain ); ?></dt><dd><?php echo esc_html( $region_name ); ?></dd></div><?php endif; ?>
 				</dl>
 				<div class="cf-quick-actions cf-single-actions cf-premium-actions">
@@ -59,6 +60,8 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 		</aside>
 	</div>
 </div>
+
+<?php require CF_PLUGIN_DIR . 'ui-front/general/partials/single-footer-navigation.php'; ?>
 
 <div class="cf-lightbox" id="cf-lightbox" aria-hidden="true">
 	<button type="button" class="cf-lightbox-close" aria-label="<?php esc_attr_e( 'Schliessen', $this->text_domain ); ?>">&times;</button>

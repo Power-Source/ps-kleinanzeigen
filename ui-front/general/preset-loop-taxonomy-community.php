@@ -14,8 +14,10 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/archive-bootstrap.php';
 	$cost = is_numeric( $cost ) ? number_format_i18n( (float) $cost, 2 ) : $cost;
 	$is_favorite = in_array( get_the_ID(), $favorite_ids, true );
 	$is_reserved = method_exists( $cf, 'is_reserved_post' ) ? $cf->is_reserved_post( get_the_ID() ) : ( '1' === (string) get_post_meta( get_the_ID(), '_cf_reserved', true ) );
+	$is_featured = method_exists( $cf, 'is_featured' ) ? $cf->is_featured( get_the_ID() ) : ( '1' === (string) get_post_meta( get_the_ID(), '_cf_is_featured', true ) );
+	$community_card_classes = 'cf-listing-card-wrap cf-community-row-wrap' . ( $is_featured ? ' is-featured' : '' );
 ?>
-<article id="post-<?php the_ID(); ?>" <?php post_class( 'cf-listing-card-wrap cf-community-row-wrap' ); ?>>
+<article id="post-<?php the_ID(); ?>" <?php post_class( $community_card_classes ); ?>>
 	<div class="cf-community-row">
 		<a class="cf-community-thumb" href="<?php the_permalink(); ?>">
 			<?php
@@ -31,6 +33,7 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/archive-bootstrap.php';
 			<p class="cf-community-meta"><?php _e( 'Von', CF_TEXT_DOMAIN ); ?> <?php the_author(); ?> · <?php echo esc_html( $cf->get_expiration_date( get_the_ID() ) ); ?></p>
 		</div>
 		<div class="cf-community-side">
+			<?php if ( $is_featured ) : ?><span class="cf-status-badge is-featured"><?php _e( 'Featured', CF_TEXT_DOMAIN ); ?></span><?php endif; ?>
 			<?php if ( ! empty( $cost ) ) : ?><div class="cf-community-price"><?php echo esc_html( $cost ); ?></div><?php endif; ?>
 			<?php if ( $archive_show_reserved_badge && $is_reserved ) : ?><span class="cf-status-badge is-reserved"><?php _e( 'Reserviert', CF_TEXT_DOMAIN ); ?></span><?php endif; ?>
 			<div class="cf-community-actions">

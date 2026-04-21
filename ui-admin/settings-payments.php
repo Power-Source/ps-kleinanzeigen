@@ -39,6 +39,8 @@ $expired_restart_mode = isset( $options['expired_restart_mode'] ) ? sanitize_key
 if ( ! in_array( $expired_restart_mode, array( 'none', 'free', 'credits' ), true ) ) {
 	$expired_restart_mode = 'credits';
 }
+$featured_money_product_id = empty( $options['featured_money_product_id'] ) ? 0 : absint( $options['featured_money_product_id'] );
+$featured_money_product_edit_url = $featured_money_product_id > 0 ? get_edit_post_link( $featured_money_product_id, '' ) : '';
 ?>
 
 <div class="wrap">
@@ -355,6 +357,80 @@ if ( ! in_array( $expired_restart_mode, array( 'none', 'free', 'credits' ), true
 								<option value="credits" <?php selected( $expired_restart_mode, 'credits' ); ?>><?php _e( 'Credit-pflichtig', $this->text_domain ); ?></option>
 							</select>
 							<br /><span class="description"><?php _e( 'Steuert, wie abgelaufene Anzeigen wieder aktiviert werden koennen.', $this->text_domain ); ?></span>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+		<div class="postbox">
+			<h3 class='hndle'><span><?php _e( 'Featured-Anzeigen', $this->text_domain ) ?></span></h3>
+			<div class="inside">
+				<table class="form-table">
+					<tr>
+						<th><label for="enable_featured"><?php _e( 'Featured-Funktion aktivieren', $this->text_domain ); ?></label></th>
+						<td>
+							<label>
+								<input type="checkbox" id="enable_featured" name="enable_featured" value="1" <?php checked( ! empty( $options['enable_featured'] ) ); ?> />
+								<?php _e( 'Aktiv: User koennen ihre Anzeigen als &quot;Featured&quot; hervorheben.', $this->text_domain ); ?>
+							</label>
+							<br /><span class="description"><?php _e( 'Featured-Anzeigen erhalten eine prominente Platzierung und ein visuelles Unterscheidungsmerkmal.', $this->text_domain ); ?></span>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="featured_cost_type"><?php _e( 'Featured-Kosten (Typ)', $this->text_domain ); ?></label></th>
+						<td>
+							<select id="featured_cost_type" name="featured_cost_type" class="regular-text">
+								<option value="credits" <?php selected( empty( $options['featured_cost_type'] ) || $options['featured_cost_type'] === 'credits' ); ?>><?php _e( 'Credits', $this->text_domain ); ?></option>
+								<option value="money" <?php selected( ! empty( $options['featured_cost_type'] ) && $options['featured_cost_type'] === 'money' ); ?>><?php _e( 'Geld (EUR)', $this->text_domain ); ?></option>
+							</select>
+							<br /><span class="description"><?php _e( 'Waehlen Sie, wie Featured-Anzeigen bezahlt werden.', $this->text_domain ); ?></span>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="featured_credit_cost"><?php _e( 'Preis fuer Featured (Credits)', $this->text_domain ); ?></label></th>
+						<td>
+							<input type="number" min="0" id="featured_credit_cost" name="featured_credit_cost" value="<?php echo empty( $options['featured_credit_cost'] ) ? '50' : absint( $options['featured_credit_cost'] ); ?>" class="small-text" />
+							<span class="description"><?php _e( 'Credits, die ein User pro Featured-Aktivierung zahlt (nur wenn Kosten-Typ = Credits).', $this->text_domain ); ?></span>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="featured_money_cost"><?php _e( 'Preis fuer Featured (EUR)', $this->text_domain ); ?></label></th>
+						<td>
+							<input type="text" placeholder="2.99" id="featured_money_cost" name="featured_money_cost" value="<?php echo empty( $options['featured_money_cost'] ) ? '2.99' : esc_attr( $options['featured_money_cost'] ); ?>" class="small-text" />
+							<span class="description"><?php _e( 'Preis in EUR (nur wenn Kosten-Typ = Geld und MarketPress aktiv).', $this->text_domain ); ?></span>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="featured_duration_days"><?php _e( 'Featured-Dauer', $this->text_domain ); ?></label></th>
+						<td>
+							<input type="number" min="0" id="featured_duration_days" name="featured_duration_days" value="<?php echo empty( $options['featured_duration_days'] ) ? '7' : absint( $options['featured_duration_days'] ); ?>" class="small-text" />
+							<span class="description"><?php _e( 'Tage, fuer wie lange eine Featured-Anzeige aktiv bleibt (0 = unbegrenzt).', $this->text_domain ); ?></span>
+						</td>
+					</tr>
+					<tr>
+						<th><?php _e( 'Featured Money Product (MarketPress)', $this->text_domain ); ?></th>
+						<td>
+							<input type="hidden" id="featured_money_product_id" name="featured_money_product_id" value="<?php echo esc_attr( $featured_money_product_id ); ?>" />
+							<?php if ( ! $marketpress_active ) : ?>
+								<span class="description" style="color:#b71c1c;"><?php _e( 'MarketPress ist nicht aktiv. Produkt wird automatisch erstellt, sobald MarketPress aktiv ist und du speicherst.', $this->text_domain ); ?></span>
+							<?php elseif ( $featured_money_product_id > 0 ) : ?>
+								<span class="description"><?php _e( 'Automatik aktiv: Das Featured-Produkt wird beim Speichern automatisch synchronisiert.', $this->text_domain ); ?></span>
+								<?php if ( ! empty( $featured_money_product_edit_url ) ) : ?>
+									<br /><a class="button button-secondary" href="<?php echo esc_url( $featured_money_product_edit_url ); ?>"><?php _e( 'Produkt bearbeiten', $this->text_domain ); ?></a>
+								<?php endif; ?>
+							<?php else : ?>
+								<span class="description"><?php _e( 'Noch kein Produkt vorhanden. Wird beim Speichern automatisch erstellt, wenn Kosten-Typ = Geld aktiv ist.', $this->text_domain ); ?></span>
+							<?php endif; ?>
+						</td>
+					</tr>
+					<tr>
+						<th><label for="featured_expire_with_classified"><?php _e( 'Mit Anzeige verfallen', $this->text_domain ); ?></label></th>
+						<td>
+							<label>
+								<input type="checkbox" id="featured_expire_with_classified" name="featured_expire_with_classified" value="1" <?php checked( ! empty( $options['featured_expire_with_classified'] ) ); ?> />
+								<?php _e( 'Aktiv: Featured-Status verfaellt, wenn die Anzeige selbst verfaellt oder neu gestartet wird.', $this->text_domain ); ?>
+							</label>
 						</td>
 					</tr>
 				</table>

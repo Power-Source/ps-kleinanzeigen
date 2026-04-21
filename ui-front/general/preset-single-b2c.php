@@ -45,6 +45,9 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 		<aside class="cf-b2c-side">
 			<section class="cf-single-summary-card">
 				<div class="cf-single-summary-head">
+					<?php if ( $is_featured ) : ?>
+						<span class="cf-status-badge is-featured"><?php _e( 'Featured', $this->text_domain ); ?></span>
+					<?php endif; ?>
 					<?php if ( $single_show_reserved_badge && $is_reserved ) : ?>
 						<span class="cf-status-badge is-reserved"><?php _e( 'Reserviert', $this->text_domain ); ?></span>
 					<?php endif; ?>
@@ -54,8 +57,8 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 				</div>
 				<dl class="cf-single-facts">
 					<div class="cf-single-fact"><dt><?php _e( 'Anbieter', $this->text_domain ); ?></dt><dd><?php echo the_author_classifieds_link(); ?></dd></div>
-					<div class="cf-single-fact"><dt><?php _e( 'Veroeffentlicht', $this->text_domain ); ?></dt><dd><?php echo esc_html( $published_date ); ?></dd></div>
-					<div class="cf-single-fact"><dt><?php _e( 'Laeuft aus', $this->text_domain ); ?></dt><dd><?php echo esc_html( $expiration_date ); ?></dd></div>
+					<div class="cf-single-fact"><dt><?php _e( 'Veröffentlicht', $this->text_domain ); ?></dt><dd><?php echo esc_html( $published_date ); ?></dd></div>
+					<div class="cf-single-fact"><dt><?php _e( 'Läuft aus', $this->text_domain ); ?></dt><dd><?php echo esc_html( $expiration_date ); ?></dd></div>
 					<?php if ( '' !== $duration ) : ?><div class="cf-single-fact"><dt><?php _e( 'Laufzeit', $this->text_domain ); ?></dt><dd><?php echo esc_html( $duration ); ?></dd></div><?php endif; ?>
 					<?php if ( '' !== $region_name ) : ?><div class="cf-single-fact"><dt><?php _e( 'Standort', $this->text_domain ); ?></dt><dd><?php echo esc_html( $region_name ); ?></dd></div><?php endif; ?>
 				</dl>
@@ -76,6 +79,8 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 		</aside>
 	</div>
 </div>
+
+<?php require CF_PLUGIN_DIR . 'ui-front/general/partials/single-footer-navigation.php'; ?>
 
 <?php if ( $single_show_sticky_actions ) : ?>
 <div class="cf-sticky-mobile-actions">

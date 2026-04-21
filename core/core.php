@@ -180,6 +180,7 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 
 			/* Check expiration dates */
 			add_action( 'check_expiration_dates', array( &$this, 'check_expiration_dates_callback' ) );
+			add_action( 'check_expiration_dates', array( &$this, 'maybe_expire_featured' ) );
 
 			/** Map meta capabilities */
 			add_filter( 'map_meta_cap', array( &$this, 'map_meta_cap' ), 11, 4 );
@@ -191,6 +192,10 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 
 			add_filter( 'user_contactmethods', array( &$this, 'contact_fields' ), 10, 2 );
 			add_filter( 'admin_post_thumbnail_html', array( &$this, 'on_admin_post_thumbnail_html' ) );
+
+			/** Hide theme prev/next post navigation on single classifieds */
+			add_filter( 'next_post_link', array( &$this, 'suppress_adjacent_post_link_on_classifieds' ) );
+			add_filter( 'previous_post_link', array( &$this, 'suppress_adjacent_post_link_on_classifieds' ) );
 
 			add_filter( 'wp_ajax_cf-captcha', array( &$this, 'on_captcha' ) );
 			add_filter( 'wp_ajax_nopriv_cf-captcha', array( &$this, 'on_captcha' ) );
@@ -217,6 +222,7 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 			add_action( 'wp_ajax_cf_mark_messages_read', array( $this->my_classifieds_ajax, 'ajax_mark_messages_read' ) );
 			add_action( 'wp_ajax_cf_load_dashboard_tab', array( $this->my_classifieds_ajax, 'ajax_load_dashboard_tab' ) );
 			add_action( 'wp_ajax_nopriv_cf_load_dashboard_tab', array( $this->my_classifieds_ajax, 'ajax_load_dashboard_tab' ) );
+			add_action( 'wp_ajax_cf_toggle_featured', array( $this->my_classifieds_ajax, 'ajax_toggle_featured' ) );
 
 
 			//Shortcodes
@@ -553,6 +559,13 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 		 *
 		 * @return array
 		 */
+		function suppress_adjacent_post_link_on_classifieds( $output ) {
+			if ( is_singular( 'classifieds' ) ) {
+				return '';
+			}
+			return $output;
+		}
+
 		function contact_fields( $contact_fields = array(), $user = null ) {
 
 			$cc_contact = array(
@@ -1614,6 +1627,195 @@ $cost_meta_key     = '_cf_cost';
 
 				$last_post_id = (int) end( $post_ids );
 			} while ( ! empty( $post_ids ) );
+		}
+
+		/**
+		 * Activate featured status for a classified listing.
+		 *
+		 * @param int $post_id The classified post ID.
+		 * @param int $duration_days Duration in days (0 = unlimited).
+		 * @return bool True on success.
+		 **/
+		function set_featured( $post_id, $duration_days = 0 ) {
+			if ( ! $this->is_valid_post( $post_id ) ) {
+				return false;
+			}
+
+			update_post_meta( $post_id, '_cf_is_featured', 1 );
+
+			if ( $duration_days > 0 ) {
+				$featured_until = strtotime( "+{$duration_days} days" );
+				update_post_meta( $post_id, '_cf_featured_until', $featured_until );
+			} else {
+				delete_post_meta( $post_id, '_cf_featured_until' );
+			}
+
+			return true;
+		}
+
+		/**
+		 * Check if a classified listing is currently featured.
+		 *
+		 * @param int $post_id The classified post ID.
+		 * @return bool True if featured and not expired.
+		 **/
+		function is_featured( $post_id ) {
+			if ( ! $this->is_valid_post( $post_id ) ) {
+				return false;
+			}
+
+			$is_featured = (bool) get_post_meta( $post_id, '_cf_is_featured', true );
+
+			if ( ! $is_featured ) {
+				return false;
+			}
+
+			$featured_until = get_post_meta( $post_id, '_cf_featured_until', true );
+
+			if ( empty( $featured_until ) ) {
+				return true; // Unlimited featured
+			}
+
+			if ( $featured_until < time() ) {
+				// Featured has expired
+				$this->unset_featured( $post_id );
+				return false;
+			}
+
+			return true;
+		}
+
+		/**
+		 * Get the timestamp until when a listing is featured.
+		 *
+		 * @param int $post_id The classified post ID.
+		 * @return int|false Unix timestamp or false if not featured or unlimited.
+		 **/
+		function get_featured_until( $post_id ) {
+			if ( ! $this->is_featured( $post_id ) ) {
+				return false;
+			}
+
+			$featured_until = get_post_meta( $post_id, '_cf_featured_until', true );
+
+			return ! empty( $featured_until ) ? (int) $featured_until : false;
+		}
+
+		/**
+		 * Remove featured status from a listing.
+		 *
+		 * @param int $post_id The classified post ID.
+		 * @return bool True on success.
+		 **/
+		function unset_featured( $post_id ) {
+			if ( ! $this->is_valid_post( $post_id ) ) {
+				return false;
+			}
+
+			delete_post_meta( $post_id, '_cf_is_featured' );
+			delete_post_meta( $post_id, '_cf_featured_until' );
+
+			return true;
+		}
+
+		/**
+		 * Expire featured status for listings where featured_until has passed.
+		 * Called via hourly cron hook.
+		 *
+		 * @return void
+		 **/
+		function maybe_expire_featured() {
+			global $wpdb;
+
+			$last_post_id = 0;
+			$batch_size   = 200;
+
+			do {
+				$post_ids = $wpdb->get_col( $wpdb->prepare(
+					"SELECT DISTINCT pm.post_id FROM {$wpdb->postmeta} pm
+					 INNER JOIN {$wpdb->posts} p ON pm.post_id = p.ID
+					 WHERE pm.meta_key = '_cf_featured_until'
+					   AND pm.meta_value > 0
+					   AND CAST(pm.meta_value AS UNSIGNED) < %d
+					   AND p.post_type = %s
+					   AND pm.post_id > %d
+					 ORDER BY pm.post_id ASC
+					 LIMIT %d",
+					time(),
+					$this->post_type,
+					$last_post_id,
+					$batch_size
+				) );
+
+				if ( empty( $post_ids ) ) {
+					break;
+				}
+
+				foreach ( $post_ids as $post_id ) {
+					$this->unset_featured( (int) $post_id );
+				}
+
+				$last_post_id = (int) end( $post_ids );
+			} while ( ! empty( $post_ids ) );
+		}
+
+		/**
+		 * Get featured listings, with optional ordering.
+		 *
+		 * @param array $args {
+		 *     @type int $limit Number of posts to return. Default 6.
+		 *     @type bool $exclude_premium Whether to exclude premium listings. Default false.
+		 *     @type array $category Category IDs to filter by. Default empty (all).
+		 *     @type array $exclude_ids Post IDs to exclude. Default empty.
+		 * }
+		 * @return WP_Query The query object with featured listings.
+		 **/
+		function get_featured_listings( $args = array() ) {
+			$defaults = array(
+				'limit'            => 6,
+				'exclude_premium'  => false,
+				'category'         => array(),
+				'exclude_ids'      => array(),
+			);
+
+			$args = wp_parse_args( $args, $defaults );
+
+			$meta_query = array(
+				array(
+					'key'   => '_cf_is_featured',
+					'value' => 1,
+					'compare' => '=',
+				),
+			);
+
+			$tax_query = array();
+
+			if ( ! empty( $args['category'] ) ) {
+				$tax_query[] = array(
+					'taxonomy' => $this->category_taxonomy,
+					'field'    => 'term_id',
+					'terms'    => (array) $args['category'],
+				);
+			}
+
+			$query_args = array(
+				'post_type'      => $this->post_type,
+				'posts_per_page' => $args['limit'],
+				'post_status'    => 'publish',
+				'meta_query'     => $meta_query,
+				'orderby'        => 'meta_value_num',
+				'order'          => 'DESC',
+			);
+
+			if ( ! empty( $tax_query ) ) {
+				$query_args['tax_query'] = $tax_query;
+			}
+
+			if ( ! empty( $args['exclude_ids'] ) ) {
+				$query_args['post__not_in'] = (array) $args['exclude_ids'];
+			}
+
+			return new WP_Query( $query_args );
 		}
 
 		/**

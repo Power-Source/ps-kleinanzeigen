@@ -324,6 +324,21 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 						if ( ! in_array( $params['expired_restart_mode'], array( 'none', 'free', 'credits' ), true ) ) {
 							$params['expired_restart_mode'] = 'credits';
 						}
+						// Featured settings
+						$params['enable_featured'] = empty( $params['enable_featured'] ) ? 0 : 1;
+						$params['featured_cost_type'] = isset( $params['featured_cost_type'] ) ? sanitize_key( $params['featured_cost_type'] ) : 'credits';
+						if ( ! in_array( $params['featured_cost_type'], array( 'credits', 'money' ), true ) ) {
+							$params['featured_cost_type'] = 'credits';
+						}
+						$params['featured_credit_cost'] = isset( $params['featured_credit_cost'] ) ? absint( $params['featured_credit_cost'] ) : 50;
+						$params['featured_money_cost'] = isset( $params['featured_money_cost'] ) ? sanitize_text_field( $params['featured_money_cost'] ) : '2.99';
+						$params['featured_duration_days'] = isset( $params['featured_duration_days'] ) ? absint( $params['featured_duration_days'] ) : 7;
+						$existing_payments = $this->get_options( 'payments' );
+						$existing_payments = is_array( $existing_payments ) ? $existing_payments : array();
+						$params['featured_money_product_id'] = isset( $params['featured_money_product_id'] )
+							? absint( $params['featured_money_product_id'] )
+							: ( ! empty( $existing_payments['featured_money_product_id'] ) ? absint( $existing_payments['featured_money_product_id'] ) : 0 );
+						$params['featured_expire_with_classified'] = empty( $params['featured_expire_with_classified'] ) ? 0 : 1;
 						$params = $this->sync_marketpress_checkout_products( $params );
 						$this->sync_legacy_payment_types( $params );
 					}
@@ -613,6 +628,22 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 			}
 
 			$params['mp_credit_packages'] = $updated_packages;
+		}
+
+		if ( ! empty( $params['enable_featured'] ) && isset( $params['featured_cost_type'] ) && 'money' === $params['featured_cost_type'] ) {
+			$featured_product_id = ! empty( $params['featured_money_product_id'] ) ? absint( $params['featured_money_product_id'] ) : 0;
+			if ( $featured_product_id <= 0 && ! empty( $existing['featured_money_product_id'] ) ) {
+				$featured_product_id = absint( $existing['featured_money_product_id'] );
+			}
+
+			$featured_title = __( 'Kleinanzeigen Featured Upgrade', $this->text_domain );
+			$featured_price = isset( $params['featured_money_cost'] ) ? $params['featured_money_cost'] : '2.99';
+			$featured_product_id = $this->upsert_marketpress_product( $featured_product_id, $featured_title, $featured_price, $post_type );
+			$params['featured_money_product_id'] = $featured_product_id;
+
+			if ( $featured_product_id > 0 ) {
+				update_post_meta( $featured_product_id, 'cf_featured_upgrade', 1 );
+			}
 		}
 
 		return $params;
