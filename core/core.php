@@ -241,7 +241,7 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 
 
 		function on_enqueue_scripts() {
-			wp_enqueue_style( 'jquery-taginput', $this->plugin_url . 'ui-front/css/jquery.tagsinput.css' );
+			wp_enqueue_style( 'cf-taginput', $this->plugin_url . 'ui-front/css/cf-tagsinput.css' );
 		}
 
 		/**

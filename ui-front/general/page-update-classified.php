@@ -54,7 +54,7 @@ wp_enqueue_script('set-post-thumbnail');
 ?>
 
 <!-- Begin Update Classifieds -->
-<script type="text/javascript" src="<?php echo $this->plugin_url . 'ui-front/js/jquery.tagsinput.min.js?ver=2'; ?>" ></script>
+<script type="text/javascript" src="<?php echo esc_url( $this->plugin_url . 'ui-front/js/cf-tagsinput.js' ); ?>" ></script>
 <script type="text/javascript" src="<?php echo $this->plugin_url . 'ui-front/js/media-post.js'; ?>" ></script>
 <script type="text/javascript">
 window.cfGalleryEditor = <?php echo wp_json_encode( array(

@@ -1,4 +1,15 @@
 
+/**
+ * Build an error notice DOM element without innerHTML.
+ * Available in all closures.
+ */
+function buildErrorNotice(message) {
+	var el = document.createElement('div');
+	el.className = 'cf-notice cf-notice-error';
+	el.textContent = message || 'Fehler';
+	return el;
+}
+
 jQuery(document).ready(function($) {
 	$('form.confirm-form').hide();
 	$('form.cf-contact-form').hide();
@@ -636,8 +647,8 @@ js_translate.image_chosen = 'Bild ausgewaehlt';
 				return;
 			}
 
-			$('input[data-gallery-picker-id="' + pickerId + '"]').remove();
-			$('.cf-gallery-preview-item[data-picker-id="' + pickerId + '"]').remove();
+			$('input[data-gallery-picker-id]').filter(function() { return $(this).data('galleryPickerId') === pickerId; }).remove();
+			$('.cf-gallery-preview-item[data-picker-id]').filter(function() { return $(this).data('pickerId') === pickerId; }).remove();
 		});
 
 		$(document).on('click', '.cf-gallery-remove-existing', function() {
@@ -721,7 +732,11 @@ js_translate.image_chosen = 'Bild ausgewaehlt';
 		}
 
 		var objectUrl = URL.createObjectURL(file);
-		$preview.html('<img src="' + objectUrl + '" alt="Bildvorschau" class="cf-image-preview-img" />');
+		var imgEl = document.createElement('img');
+		imgEl.src = objectUrl;
+		imgEl.alt = 'Bildvorschau';
+		imgEl.className = 'cf-image-preview-img';
+		$preview.empty().append(imgEl);
 	};
 
 	renderGalleryPreview = function(input) {
@@ -793,44 +808,66 @@ js_translate.image_chosen = 'Bild ausgewaehlt';
                                 thread_id: threadId
                         }, function(res) {
                                 if (!res.success) {
-                                        $view.html('<div class="cf-notice cf-notice-error">' + (res.data && res.data.message ? res.data.message : 'Fehler') + '</div>');
+                                        $view.empty().append(buildErrorNotice(res.data && res.data.message ? res.data.message : 'Fehler'));
                                         return;
                                 }
                                 var d = res.data;
                                 cfDashboard.currentRecipientId = d.recipient_id;
 
-                                var html = '<div class="cf-conversation-inner">';
-                                html += '<div class="cf-conversation-header">';
-                                html += '<div class="cf-conv-user">';
-                                html += '<img src="' + d.other_avatar + '" alt="" class="cf-conv-avatar">';
-                                html += '<div><strong class="cf-conv-name">' + d.other_user + '</strong>';
-                                if (d.ad_title) {
-                                        html += '<a href="' + d.ad_url + '" target="_blank" class="cf-conv-ad-link">' + d.ad_title + '</a>';
-                                }
-                                html += '</div></div></div>';
+                                // Build conversation DOM safely (no innerHTML with user-supplied data)
+                                var $inner = $('<div class="cf-conversation-inner"></div>');
 
-                                html += '<div class="cf-messages-thread" id="cf-messages-thread">';
+                                // Header
+                                var $header = $('<div class="cf-conversation-header"><div class="cf-conv-user"></div></div>');
+                                var $convUser = $header.find('.cf-conv-user');
+                                var avatarEl = document.createElement('img');
+                                avatarEl.src = d.other_avatar || '';
+                                avatarEl.alt = '';
+                                avatarEl.className = 'cf-conv-avatar';
+                                var $nameWrap = $('<div><strong class="cf-conv-name"></strong></div>');
+                                $nameWrap.find('.cf-conv-name').text(d.other_user || '');
+                                if (d.ad_title) {
+                                        var $adLink = $('<a target="_blank" class="cf-conv-ad-link"></a>');
+                                        $adLink.attr('href', d.ad_url || '#').text(d.ad_title);
+                                        $nameWrap.append($adLink);
+                                }
+                                $convUser.append(avatarEl).append($nameWrap);
+                                $inner.append($header);
+
+                                // Messages thread
+                                var $thread = $('<div class="cf-messages-thread" id="cf-messages-thread"></div>');
                                 if (d.messages.length === 0) {
-                                        html += '<p class="cf-empty-thread">Noch keine Nachrichten in diesem Thread.</p>';
+                                        $thread.append($('<p class="cf-empty-thread">Noch keine Nachrichten in diesem Thread.</p>'));
                                 } else {
                                         $.each(d.messages, function(i, msg) {
                                                 var cls = msg.is_mine ? 'cf-msg cf-msg-out' : 'cf-msg cf-msg-in';
-                                                html += '<div class="' + cls + '">';
-                                                html += '<img src="' + msg.avatar + '" alt="" class="cf-msg-avatar">';
-                                                html += '<div class="cf-msg-bubble">';
-                                                html += '<div class="cf-msg-text">' + msg.message.replace(/\n/g, '<br>') + '</div>';
-                                                html += '<time class="cf-msg-time">' + msg.date + '</time>';
-                                                html += '</div></div>';
+                                                var $msgDiv = $('<div></div>').addClass(cls);
+                                                var msgAvatar = document.createElement('img');
+                                                msgAvatar.src = msg.avatar || '';
+                                                msgAvatar.alt = '';
+                                                msgAvatar.className = 'cf-msg-avatar';
+                                                var $bubble = $('<div class="cf-msg-bubble"></div>');
+                                                // Render message text: split on newlines, insert <br> between text nodes
+                                                var $msgText = $('<div class="cf-msg-text"></div>');
+                                                var lines = String(msg.message || '').split('\n');
+                                                $.each(lines, function(li, line) {
+                                                        if (li > 0) $msgText.append(document.createElement('br'));
+                                                        $msgText.append(document.createTextNode(line));
+                                                });
+                                                var $msgTime = $('<time class="cf-msg-time"></time>').text(msg.date || '');
+                                                $bubble.append($msgText).append($msgTime);
+                                                $msgDiv.append(msgAvatar).append($bubble);
+                                                $thread.append($msgDiv);
                                         });
                                 }
-                                html += '</div>';
+                                $inner.append($thread);
 
-                                html += '<div class="cf-reply-box">';
-                                html += '<textarea id="cf-reply-text" placeholder="Deine Antwort\u2026" rows="3"></textarea>';
-                                html += '<button class="button cf-btn-primary cf-reply-send">Senden</button>';
-                                html += '</div></div>';
+                                // Reply box
+                                var $replyBox = $('<div class="cf-reply-box"><textarea id="cf-reply-text" rows="3"></textarea><button class="button cf-btn-primary cf-reply-send">Senden</button></div>');
+                                $replyBox.find('textarea').attr('placeholder', 'Deine Antwort…');
+                                $inner.append($replyBox);
 
-                                $view.html(html);
+                                $view.empty().append($inner);
 
                                 // Scroll nach unten
                                 var $thread = $('#cf-messages-thread');

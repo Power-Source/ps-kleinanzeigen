@@ -3,7 +3,7 @@
 Plugin Name: PS Kleinanzeigen
 Plugin URI: https://psource.eimen.net/wiki/ps-kleinanzeigen-dokumentation/
 Description: PS Kleinanzeigen stellt dir alles zur Verfügung was du benötigst um eine regionale Kleinanzeigen-Plattform zu erstellen. Durch die Integrationen mit anderen PSOURCE Plugins kannst du deine Kleinanzeigenplattform jederzeit flexibel erweitern und Hochskalieren.
-Version: 1.0.0
+Version: 1.0.1
 Author: PSOURCE
 Author URI: https://github.com/Power-Source
 License: GNU General Public License (Version 2 - GPLv2)
@@ -39,7 +39,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
 /* Define plugin version */
-define ( 'CF_VERSION', '1.0.0' );
+define ( 'CF_VERSION', '1.0.1' );
 define ( 'CF_DB_VERSION', '1.0' );
 
 /* define the plugin folder url */
