@@ -22,6 +22,7 @@ $single_show_seller_card = isset( $options['single_show_seller_card'] ) ? (int) 
 $single_show_sticky_actions = isset( $options['single_show_sticky_actions'] ) ? (int) $options['single_show_sticky_actions'] : 1;
 $single_show_trust_block = isset( $options['single_show_trust_block'] ) ? (int) $options['single_show_trust_block'] : 1;
 $single_show_reserved_badge = isset( $options['single_show_reserved_badge'] ) ? (int) $options['single_show_reserved_badge'] : 1;
+$single_accent_color_value = isset( $options['single_accent_color'] ) && preg_match( '/^#[0-9a-f]{6}$/i', $options['single_accent_color'] ) ? $options['single_accent_color'] : '#0f6cbd';
 
 $user_show_favorites_tab = isset( $options['user_show_favorites_tab'] ) ? (int) $options['user_show_favorites_tab'] : 1;
 $user_allow_reserve_toggle = isset( $options['user_allow_reserve_toggle'] ) ? (int) $options['user_allow_reserve_toggle'] : 1;
@@ -233,6 +234,13 @@ $tarif_status_padding_value = isset( $options['tarif_status_padding'] ) ? absint
 							</label>
 						</td>
 					</tr>
+					<tr>
+						<th><label for="single_accent_color"><?php _e( 'Akzentfarbe (Preis, Buttons, Links)', $this->text_domain ); ?></label></th>
+						<td>
+							<input type="color" id="single_accent_color" name="single_accent_color" value="<?php echo esc_attr( $single_accent_color_value ); ?>" />
+							<span class="description"><?php _e( 'Hauptfarbe fuer Preis, primaere Buttons und Links auf der Anzeigen-Detailseite.', $this->text_domain ); ?></span>
+						</td>
+					</tr>
 				</table>
 			</div>
 		</div>
@@ -375,12 +383,14 @@ $tarif_status_padding_value = isset( $options['tarif_status_padding'] ) ? absint
 		}
 
 		function setByName(name, value) {
-			const field = document.querySelector('[name="' + name + '"]');
-			if (!field) {
+			// Checkboxen zuerst suchen: Ein hidden-Input gleichen Namens käme sonst zuerst.
+			const checkbox = document.querySelector('input[type="checkbox"][name="' + name + '"]');
+			if (checkbox) {
+				checkbox.checked = !!value;
 				return;
 			}
-			if (field.type === 'checkbox') {
-				field.checked = !!value;
+			const field = document.querySelector('[name="' + name + '"]');
+			if (!field) {
 				return;
 			}
 			field.value = value;
@@ -401,7 +411,8 @@ $tarif_status_padding_value = isset( $options['tarif_status_padding'] ) ? absint
 				single_show_sticky_actions: true,
 				single_show_reserved_badge: true,
 				user_allow_reserve_toggle: true,
-				user_show_favorites_tab: true
+				user_show_favorites_tab: true,
+				single_accent_color: '#0f6cbd'
 			},
 			premium: {
 				archive_columns: '2',
@@ -417,7 +428,8 @@ $tarif_status_padding_value = isset( $options['tarif_status_padding'] ) ? absint
 				single_show_sticky_actions: true,
 				single_show_reserved_badge: true,
 				user_allow_reserve_toggle: true,
-				user_show_favorites_tab: true
+				user_show_favorites_tab: true,
+				single_accent_color: '#7c3aed'
 			},
 			community: {
 				archive_columns: '3',
@@ -433,7 +445,8 @@ $tarif_status_padding_value = isset( $options['tarif_status_padding'] ) ? absint
 				single_show_sticky_actions: false,
 				single_show_reserved_badge: true,
 				user_allow_reserve_toggle: true,
-				user_show_favorites_tab: true
+				user_show_favorites_tab: true,
+				single_accent_color: '#16a34a'
 			}
 		};
 

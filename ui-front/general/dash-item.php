@@ -4,6 +4,8 @@
  */
 $post_id = get_the_ID();
 $status = get_post_status( $post_id );
+$_cf_frontend_opts = method_exists( $GLOBALS['Classifieds_Core'], 'get_options' ) ? $GLOBALS['Classifieds_Core']->get_options( 'frontend' ) : array();
+$_cf_allow_reserve = ! isset( $_cf_frontend_opts['user_allow_reserve_toggle'] ) || 1 === (int) $_cf_frontend_opts['user_allow_reserve_toggle'];
 $is_reserved = method_exists( $GLOBALS['Classifieds_Core'], 'is_reserved_post' ) && $GLOBALS['Classifieds_Core']->is_reserved_post( $post_id );
 $expiration = get_post_meta( $post_id, '_expiration_date', true );
 $expired = $expiration && $expiration < time();
@@ -45,5 +47,14 @@ $status_labels = array(
 	<div class="cf-card-actions">
 		<a href="<?php the_permalink(); ?>" class="cf-btn cf-btn-small"><?php _e( 'Ansehen', 'ps-kleinanzeigen' ); ?></a>
 		<a href="<?php echo esc_url( add_query_arg( 'post_id', $post_id, get_permalink( $GLOBALS['Classifieds_Core']->edit_classified_page_id ) ) ); ?>" class="cf-btn cf-btn-small cf-btn-secondary"><?php _e( 'Bearbeiten', 'ps-kleinanzeigen' ); ?></a>
+		<?php if ( $_cf_allow_reserve && 'publish' === $status ) : ?>
+		<button type="button"
+		        class="cf-btn cf-btn-small cf-btn-reserve <?php echo $is_reserved ? 'is-reserved' : ''; ?>"
+		        data-post-id="<?php echo esc_attr( $post_id ); ?>"
+		        data-action="cf_toggle_reserve"
+		        data-nonce="<?php echo esc_attr( wp_create_nonce( 'cf_frontend_actions' ) ); ?>">
+			<?php echo $is_reserved ? esc_html__( 'Reservierung aufheben', 'ps-kleinanzeigen' ) : esc_html__( 'Als reserviert markieren', 'ps-kleinanzeigen' ); ?>
+		</button>
+		<?php endif; ?>
 	</div>
 </div>

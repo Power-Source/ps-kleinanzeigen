@@ -107,7 +107,14 @@ Unter [ihredomain.com]/[kleinanzeigen] findest Du eine Liste aller veröffentlic
 auf der Webseite. Wenn Du auf die Autorenlinks klickst, erhältst Du alle Kleinanzeigen von
 diesem Autor. Wenn Du auf einen benutzerdefinierten Taxonomiebegriff für Kategorie/Steuern klickst, werden alle Kleinanzeigen mit diesem Begriff angezeigt.
 
-== Changelog ==0ocalization available ( You need to generate a PO/MO file )
+== Changelog ==
+
+= 1.0.1 =
+- and responsive design.
+- Updated contact form and seller profile display in single view.
+- Fixed localization issues in various text strings.
+- Enhanced gallery and media display in single classifieds.
+- Improved overall CSS for better visual consistency and responsiveness.
 
 = 1.0.0 =
 * PSOURCE Release.

@@ -135,7 +135,7 @@ $region_terms = get_terms(
 			<option value=""><?php _e( 'Gespeicherten Filter laden', CF_TEXT_DOMAIN ); ?></option>
 		</select>
 		<button type="button" class="button cf-apply-saved-filter"><?php _e( 'Laden', CF_TEXT_DOMAIN ); ?></button>
-		<button type="button" class="button cf-delete-saved-filter"><?php _e( 'Loeschen', CF_TEXT_DOMAIN ); ?></button>
+		<button type="button" class="button cf-delete-saved-filter"><?php _e( 'Löschen', CF_TEXT_DOMAIN ); ?></button>
 		<label class="cf-auto-restore-toggle" for="cf_filter_auto_restore">
 			<input type="checkbox" id="cf_filter_auto_restore" class="cf-auto-restore-input" />
 			<?php _e( 'Zuletzt genutzte Filter automatisch laden', CF_TEXT_DOMAIN ); ?>
@@ -230,7 +230,7 @@ $is_reserved   = method_exists( $cf, 'is_reserved_post' ) ? $cf->is_reserved_pos
 
 				<div class="cf-card-meta-compact">
 					<span class="cf-card-pill"><?php _e( 'Von', CF_TEXT_DOMAIN ); ?>: <?php the_author(); ?></span>
-					<span class="cf-card-pill"><?php _e( 'Laeuft ab', CF_TEXT_DOMAIN ); ?>: <?php echo esc_html( $cf->get_expiration_date( get_the_ID() ) ); ?></span>
+					<span class="cf-card-pill"><?php _e( 'Läuft ab', CF_TEXT_DOMAIN ); ?>: <?php echo esc_html( $cf->get_expiration_date( get_the_ID() ) ); ?></span>
 					<?php if ( ! empty( $cat_list ) ) : ?>
 						<span class="cf-card-pill"><?php echo wp_kses_post( $cat_list ); ?></span>
 					<?php endif; ?>

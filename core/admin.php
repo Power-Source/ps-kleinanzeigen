@@ -360,8 +360,8 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 						$params['single_show_sticky_actions'] = empty( $params['single_show_sticky_actions'] ) ? 0 : 1;
 						$params['single_show_reserved_badge'] = empty( $params['single_show_reserved_badge'] ) ? 0 : 1;
 						$params['user_show_favorites_tab'] = empty( $params['user_show_favorites_tab'] ) ? 0 : 1;
-						$params['user_allow_reserve_toggle'] = empty( $params['user_allow_reserve_toggle'] ) ? 0 : 1;
-					// Tarif-Status-Box Einstellungen (mit Legacy-Fallback von tariff_* auf tarif_*)
+						$params['user_allow_reserve_toggle'] = empty( $params['user_allow_reserve_toggle'] ) ? 0 : 1;					$raw_single_accent = isset( $params['single_accent_color'] ) ? $params['single_accent_color'] : '';
+					$params['single_accent_color'] = preg_match( '/^#[0-9a-f]{6}$/i', $raw_single_accent ) ? $raw_single_accent : '#0f6cbd';					// Tarif-Status-Box Einstellungen (mit Legacy-Fallback von tariff_* auf tarif_*)
 					$legacy_enabled = isset( $params['tariff_status_enabled'] ) ? (int) $params['tariff_status_enabled'] : 0;
 					$params['tarif_status_enabled'] = isset( $params['tarif_status_enabled'] ) ? ( empty( $params['tarif_status_enabled'] ) ? 0 : 1 ) : ( $legacy_enabled ? 1 : 0 );
 
@@ -826,21 +826,45 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 		die(1);
 	}
 
-	function on_restrict_manage_posts() {
+	function on_restrict_manage_posts( $post_type = '' ) {
 		global $typenow;
 		$taxonomy = 'classifieds_categories';
 		if( $typenow == "classifieds" ){
 
 			$filters = array($taxonomy);
 			foreach ($filters as $tax_slug) {
-				$tax_obj = get_taxonomy($tax_slug);
-				$tax_name = $tax_obj->labels->name;
-				$terms = get_terms($tax_slug);
+				$tax_obj = get_taxonomy( $tax_slug );
+				if ( ! is_object( $tax_obj ) || empty( $tax_obj->labels ) ) {
+					continue;
+				}
+
+				$terms = get_terms( array( 'taxonomy' => $tax_slug ) );
+				if ( is_wp_error( $terms ) || ! is_array( $terms ) ) {
+					$terms = array();
+				}
 				$current_tax = isset( $_GET[ $tax_slug ] ) ? sanitize_text_field( wp_unslash( $_GET[ $tax_slug ] ) ) : '';
-				echo "<select name='$tax_slug' id='$tax_slug' class='postform'>";
-				echo "<option value=''>{$tax_obj->labels->all_items}&nbsp;</option>";
+				echo "<select name='" . esc_attr( $tax_slug ) . "' id='" . esc_attr( $tax_slug ) . "' class='postform'>";
+				echo '<option value="">' . esc_html( $tax_obj->labels->all_items ) . '&nbsp;</option>';
 				foreach ($terms as $term) {
-					echo '<option value='. $term->slug, selected( $current_tax, $term->slug, false ),'>' . $term->name .' (' . $term->count .')</option>';
+					$term_slug = '';
+					$term_name = '';
+					$term_count = 0;
+
+					if ( is_object( $term ) ) {
+						$term_slug = isset( $term->slug ) ? (string) $term->slug : '';
+						$term_name = isset( $term->name ) ? (string) $term->name : '';
+						$term_count = isset( $term->count ) ? (int) $term->count : 0;
+					} elseif ( is_array( $term ) ) {
+						$term_slug = isset( $term['slug'] ) ? (string) $term['slug'] : '';
+						$term_name = isset( $term['name'] ) ? (string) $term['name'] : '';
+						$term_count = isset( $term['count'] ) ? (int) $term['count'] : 0;
+					}
+
+					if ( '' === $term_slug ) {
+						continue;
+					}
+
+					echo '<option value="' . esc_attr( $term_slug ) . '"' . selected( $current_tax, $term_slug, false ) . '>' . esc_html( $term_name ) . ' (' . esc_html( (string) $term_count ) . ')</option>';
 				}
 				echo "</select>";
 			}

@@ -284,10 +284,16 @@ if (!class_exists('Classifieds_Core_Main')):
             }
 
             if (file_exists(get_template_directory() . '/style-classifieds.css')) {
-                wp_enqueue_style('style-classifieds', get_template_directory() . '/style-classifieds.css');
+                wp_enqueue_style('style-classifieds', get_template_directory_uri() . '/style-classifieds.css', array(), filemtime(get_template_directory() . '/style-classifieds.css'));
             } elseif (file_exists($this->plugin_dir . 'ui-front/general/style-classifieds.css')) {
-                wp_enqueue_style('style-classifieds', $this->plugin_url . 'ui-front/general/style-classifieds.css');
+                wp_enqueue_style('style-classifieds', $this->plugin_url . 'ui-front/general/style-classifieds.css', array(), filemtime($this->plugin_dir . 'ui-front/general/style-classifieds.css'));
             }
+
+            // Akzentfarbe der Single-View aus Admin-Settings als CSS-Custom-Property injizieren.
+            $fe_opts      = $this->get_options( 'frontend' );
+            $accent_raw   = isset( $fe_opts['single_accent_color'] ) ? $fe_opts['single_accent_color'] : '';
+            $accent_color = preg_match( '/^#[0-9a-f]{6}$/i', $accent_raw ) ? $accent_raw : '#0f6cbd';
+            wp_add_inline_style( 'style-classifieds', '.cf-single-page{--cf-accent:' . esc_attr( $accent_color ) . ';}' );
         }
 
         function on_author_link($link = '')

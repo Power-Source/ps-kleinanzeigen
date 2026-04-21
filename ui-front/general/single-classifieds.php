@@ -36,6 +36,13 @@ $single_show_seller_card = ! isset( $frontend_options['single_show_seller_card']
 $single_show_sticky_actions = ! isset( $frontend_options['single_show_sticky_actions'] ) || 1 === (int) $frontend_options['single_show_sticky_actions'];
 $single_show_reserved_badge = ! isset( $frontend_options['single_show_reserved_badge'] ) || 1 === (int) $frontend_options['single_show_reserved_badge'];
 $is_reserved = method_exists( $this, 'is_reserved_post' ) ? $this->is_reserved_post( $post->ID ) : ( '1' === (string) get_post_meta( $post->ID, '_cf_reserved', true ) );
+$published_date = get_the_date();
+$expiration_date = '';
+
+global $Classifieds_Core;
+if ( is_object( $Classifieds_Core ) && method_exists( $Classifieds_Core, 'get_expiration_date' ) ) {
+	$expiration_date = $Classifieds_Core->get_expiration_date( get_the_ID() );
+}
 
 /**
 * $content is already filled with the database html.
@@ -50,7 +57,7 @@ wp_localize_script( 'cf-frontend', 'cfFrontend', array(
 	'nonce'      => wp_create_nonce( 'cf_send_message' ),
 	'textDomain' => $this->text_domain,
 	'strings'    => array(
-		'sending' => __( 'Wird gesendet\u2026', $this->text_domain ),
+		'sending' => __( 'Wird gesendet...', $this->text_domain ),
 		'sent'    => __( 'Nachricht gesendet!', $this->text_domain ),
 		'error'   => __( 'Ups, da ist was schiefgelaufen.', $this->text_domain ),
 	),
@@ -79,104 +86,105 @@ $open_contact_form = isset( $_GET['cf_contact'] ) && '1' === wp_unslash( $_GET['
 </div>
 <br clear="all" />
 <?php endif; ?>
-<div class="cf-post">
-
-	<div class="cf-image">
-		<?php
-		if(has_post_thumbnail()){
-			$thumbnail = get_the_post_thumbnail( $post->ID, array( 300, 300 ) );
-		} else {
-			$thumbnail = '<img title="no image" alt="no image" class="cf-no-image wp-post-image" src="' . $field_image . '">';
-		}
-		?>
-		<?php if ( ! empty( $featured_image_url ) ) : ?>
-			<a href="<?php echo esc_url( $featured_image_url ); ?>" class="cf-lightbox-trigger" data-lightbox-group="classifieds-gallery" data-lightbox-caption="<?php echo esc_attr( get_the_title() ); ?>"><?php echo $thumbnail; ?></a>
-		<?php else : ?>
-			<?php echo $thumbnail; ?>
-		<?php endif; ?>
-	</div>
-	<?php if ( $single_show_gallery && ! empty( $gallery_ids ) ) : ?>
-	<div class="cf-gallery-grid">
-		<?php foreach ( $gallery_ids as $gallery_id ) : ?>
-			<?php $gallery_image = wp_get_attachment_image_src( (int) $gallery_id, 'thumbnail' ); ?>
-			<?php if ( ! empty( $gallery_image[0] ) ) : ?>
-				<a class="cf-gallery-item cf-lightbox-trigger" href="<?php echo esc_url( wp_get_attachment_url( (int) $gallery_id ) ); ?>" data-lightbox-group="classifieds-gallery" data-lightbox-caption="<?php echo esc_attr( get_the_title() ); ?>">
-					<img src="<?php echo esc_url( $gallery_image[0] ); ?>" alt="<?php esc_attr_e( 'Galeriebild', $this->text_domain ); ?>" />
-				</a>
-			<?php endif; ?>
-		<?php endforeach; ?>
-	</div>
-	<?php endif; ?>
-	<div class="clear"></div>
-	<div class="cf-ad-info">
-		<table>
-			<tr>
-				<th><?php _e( 'Angeboten von', $this->text_domain ); ?></th>
-				<td>
-					<?php echo the_author_classifieds_link(); ?>
-				</td>
-			</tr>
-			<tr>
-				<th><?php _e( 'Kategorien', $this->text_domain ); ?></th>
-				<td>
-					<?php $taxonomies = get_object_taxonomies( 'classifieds', 'names' ); ?>
-					<?php foreach ( $taxonomies as $taxonomy ): ?>
-					<?php echo get_the_term_list( $post->ID, $taxonomy, '', ', ', '' ) . ' '; ?>
-					<?php endforeach; ?>
-				</td>
-			</tr>
-			<tr>
-				<th><?php _e( 'Kategorisiert in', $this->text_domain ); ?></th>
-				<td><?php the_date(); ?></td>
-			</tr>
-			<tr>
-				<th><?php _e( 'Läuft aus am', $this->text_domain ); ?></th>
-				<td><?php if ( class_exists('Classifieds_Core') ) echo Classifieds_Core::get_expiration_date( get_the_ID() ); ?></td>
-			</tr>
-		</table>
-		<div class="clear"></div>
-		<div class="cf-custom-block">
-			<table>
-				<?php if ( '' !== $duration ): ?>
-				<tr>
-					<th><?php _e( 'Laufzeit', $this->text_domain ); ?></th>
-					<td><?php echo esc_html( $duration ); ?></td>
-				</tr>
+<div class="cf-post cf-single-page">
+	<section class="cf-single-hero">
+		<div class="cf-single-media-card">
+			<div class="cf-single-media-stage">
+				<?php
+				if(has_post_thumbnail()){
+					$thumbnail = get_the_post_thumbnail( $post->ID, array( 900, 900 ) );
+				} else {
+					$thumbnail = '<img title="no image" alt="no image" class="cf-no-image wp-post-image" src="' . $field_image . '">';
+				}
+				?>
+				<?php if ( ! empty( $featured_image_url ) ) : ?>
+					<a href="<?php echo esc_url( $featured_image_url ); ?>" class="cf-lightbox-trigger cf-single-featured-link" data-lightbox-group="classifieds-gallery" data-lightbox-caption="<?php echo esc_attr( get_the_title() ); ?>"><?php echo $thumbnail; ?></a>
+				<?php else : ?>
+					<?php echo $thumbnail; ?>
 				<?php endif; ?>
-				<?php if ( '' !== $cost_display ): ?>
-				<tr>
-					<th><?php _e( 'Preis', $this->text_domain ); ?></th>
-					<td><?php echo esc_html( $cost_display ); ?></td>
-				</tr>
-				<?php endif; ?>
-			</table>
+			</div>
+			<?php if ( $single_show_gallery && ! empty( $gallery_ids ) ) : ?>
+			<div class="cf-gallery-grid cf-single-gallery-grid">
+				<?php foreach ( $gallery_ids as $gallery_id ) : ?>
+					<?php $gallery_image = wp_get_attachment_image_src( (int) $gallery_id, 'thumbnail' ); ?>
+					<?php if ( ! empty( $gallery_image[0] ) ) : ?>
+						<a class="cf-gallery-item cf-lightbox-trigger" href="<?php echo esc_url( wp_get_attachment_url( (int) $gallery_id ) ); ?>" data-lightbox-group="classifieds-gallery" data-lightbox-caption="<?php echo esc_attr( get_the_title() ); ?>">
+							<img src="<?php echo esc_url( $gallery_image[0] ); ?>" alt="<?php esc_attr_e( 'Galeriebild', $this->text_domain ); ?>" />
+						</a>
+					<?php endif; ?>
+				<?php endforeach; ?>
+			</div>
+			<?php endif; ?>
 		</div>
-	</div>
 
-	<div class="cf-quick-actions">
-		<div class="cf-quick-actions-main">
-			<?php if ( empty( $options['disable_contact_form'] ) ) : ?>
-			<button type="button" class="button button-primary cf-cta-contact" onclick="classifieds.toggle_contact_form(); return false;"><?php _e( 'Jetzt Anbieter kontaktieren', $this->text_domain ); ?></button>
-			<?php endif; ?>
-			<button type="button" class="button cf-favorite-toggle <?php echo $is_favorite ? 'is-active' : ''; ?>" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
-				<span class="cf-favorite-label-default"><?php _e( 'Merken', $this->text_domain ); ?></span>
-				<span class="cf-favorite-label-active"><?php _e( 'Gemerkt', $this->text_domain ); ?></span>
-			</button>
-			<button type="button" class="button cf-cta-share" data-copy-url="<?php echo esc_url( get_permalink() ); ?>"><?php _e( 'Link teilen', $this->text_domain ); ?></button>
+		<div class="cf-single-summary-card">
+			<div class="cf-single-summary-head">
+				<?php if ( $single_show_reserved_badge && $is_reserved ) : ?>
+					<span class="cf-status-badge is-reserved"><?php _e( 'Reserviert', $this->text_domain ); ?></span>
+				<?php endif; ?>
+				<?php if ( '' !== $cost_display ) : ?>
+					<div class="cf-single-price"><?php echo esc_html( $cost_display ); ?></div>
+				<?php endif; ?>
+			</div>
+
+			<dl class="cf-single-facts">
+				<div class="cf-single-fact">
+					<dt><?php _e( 'Angeboten von', $this->text_domain ); ?></dt>
+					<dd><?php echo the_author_classifieds_link(); ?></dd>
+				</div>
+				<div class="cf-single-fact">
+					<dt><?php _e( 'Kategorien', $this->text_domain ); ?></dt>
+					<dd>
+						<?php $taxonomies = get_object_taxonomies( 'classifieds', 'names' ); ?>
+						<?php foreach ( $taxonomies as $taxonomy ) : ?>
+							<?php echo get_the_term_list( $post->ID, $taxonomy, '', ', ', '' ) . ' '; ?>
+						<?php endforeach; ?>
+					</dd>
+				</div>
+				<div class="cf-single-fact">
+					<dt><?php _e( 'Veröffentlicht', $this->text_domain ); ?></dt>
+					<dd><?php echo esc_html( $published_date ); ?></dd>
+				</div>
+				<div class="cf-single-fact">
+					<dt><?php _e( 'Läuft aus am', $this->text_domain ); ?></dt>
+					<dd><?php echo esc_html( $expiration_date ); ?></dd>
+				</div>
+				<?php if ( '' !== $duration ) : ?>
+				<div class="cf-single-fact">
+					<dt><?php _e( 'Laufzeit', $this->text_domain ); ?></dt>
+					<dd><?php echo esc_html( $duration ); ?></dd>
+				</div>
+				<?php endif; ?>
+				<?php if ( '' !== $region_name ) : ?>
+				<div class="cf-single-fact">
+					<dt><?php _e( 'Standort', $this->text_domain ); ?></dt>
+					<dd><?php echo esc_html( $region_name ); ?></dd>
+				</div>
+				<?php endif; ?>
+			</dl>
+
+			<div class="cf-quick-actions cf-single-actions">
+				<div class="cf-quick-actions-main">
+					<?php if ( empty( $options['disable_contact_form'] ) ) : ?>
+					<button type="button" class="button button-primary cf-cta-contact" onclick="classifieds.toggle_contact_form(); return false;"><?php _e( 'Jetzt Anbieter kontaktieren', $this->text_domain ); ?></button>
+					<?php endif; ?>
+					<button type="button" class="button cf-favorite-toggle <?php echo $is_favorite ? 'is-active' : ''; ?>" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
+						<span class="cf-favorite-label-default"><?php _e( 'Merken', $this->text_domain ); ?></span>
+						<span class="cf-favorite-label-active"><?php _e( 'Gemerkt', $this->text_domain ); ?></span>
+					</button>
+					<button type="button" class="button cf-cta-share" data-copy-url="<?php echo esc_url( get_permalink() ); ?>"><?php _e( 'Link teilen', $this->text_domain ); ?></button>
+				</div>
+				<div class="cf-quick-meta">
+					<?php if ( '' !== $cost_display ) : ?>
+						<span class="cf-meta-chip"><?php _e( 'Preis:', $this->text_domain ); ?> <?php echo esc_html( $cost_display ); ?></span>
+					<?php endif; ?>
+					<?php if ( '' !== $duration ) : ?>
+						<span class="cf-meta-chip"><?php _e( 'Laufzeit:', $this->text_domain ); ?> <?php echo esc_html( $duration ); ?></span>
+					<?php endif; ?>
+				</div>
+			</div>
 		</div>
-		<div class="cf-quick-meta">
-			<?php if ( $single_show_reserved_badge && $is_reserved ) : ?>
-				<span class="cf-meta-chip cf-meta-chip-reserved"><?php _e( 'Reserviert', $this->text_domain ); ?></span>
-			<?php endif; ?>
-			<?php if ( '' !== $cost_display ) : ?>
-				<span class="cf-meta-chip"><?php _e( 'Preis:', $this->text_domain ); ?> <?php echo esc_html( $cost_display ); ?></span>
-			<?php endif; ?>
-			<?php if ( '' !== $duration ) : ?>
-				<span class="cf-meta-chip"><?php _e( 'Laufzeit:', $this->text_domain ); ?> <?php echo esc_html( $duration ); ?></span>
-			<?php endif; ?>
-		</div>
-	</div>
-	<div class="clear"></div>
+	</section>
 
 	<?php
 	$trust_block_content = '';
@@ -186,35 +194,19 @@ $open_contact_form = isset( $_GET['cf_contact'] ) && '1' === wp_unslash( $_GET['
 		$trust_block_content = trim( $options['trust_block_content'] );
 	}
 	?>
-	<?php if ( $single_show_trust_block || $single_show_seller_card ) : ?>
-	<div class="cf-trust-layout">
-		<?php if ( $single_show_trust_block && ( '' !== $trust_block_content || '' !== $region_name ) ) : ?>
-		<div class="cf-trust-card">
-			<?php if ( '' !== $trust_block_content ) : ?>
-			<div class="cf-trust-content"><?php echo wp_kses_post( wpautop( $trust_block_content ) ); ?></div>
-			<?php endif; ?>
-			<?php if ( '' !== $region_name ) : ?>
-			<p class="cf-trust-location"><strong><?php _e( 'Standort:', $this->text_domain ); ?></strong> <?php echo esc_html( $region_name ); ?></p>
-			<?php endif; ?>
-		</div>
-		<?php endif; ?>
-		<?php if ( $single_show_seller_card ) : ?>
-		<div class="cf-seller-card">
-			<h3><?php _e( 'Verkäuferprofil', $this->text_domain ); ?></h3>
-			<p class="cf-seller-name"><?php echo esc_html( $author_display_name ); ?></p>
-			<div class="cf-seller-meta">
-				<span class="cf-meta-chip"><?php echo esc_html( sprintf( _n( '%d aktive Anzeige', '%d aktive Anzeigen', (int) $author_active_ads, $this->text_domain ), (int) $author_active_ads ) ); ?></span>
-				<?php if ( '' !== $author_registered ) : ?>
-					<span class="cf-meta-chip"><?php _e( 'Mitglied seit:', $this->text_domain ); ?> <?php echo esc_html( $author_registered ); ?></span>
-				<?php endif; ?>
-			</div>
-			<p class="cf-seller-actions">
-				<a class="button cf-card-secondary" href="<?php echo esc_url( get_author_posts_url( $author_id ) ); ?>"><?php _e( 'Alle Anzeigen ansehen', $this->text_domain ); ?></a>
-			</p>
-		</div>
-		<?php endif; ?>
-	</div>
-	<?php endif; ?>
+	<div class="cf-single-content-grid">
+		<div class="cf-single-main">
+			<section class="cf-single-section cf-single-description-card">
+				<div class="cf-single-section-head">
+					<h2><?php _e( 'Beschreibung', $this->text_domain ); ?></h2>
+				</div>
+				<div class="cf-single-description-body">
+					<?php
+					//$content is already filled with the database text. This just add classified specfic code around it.
+					echo wp_kses($content, cf_wp_kses_allowed_html());
+					?>
+				</div>
+			</section>
 
 	<?php if ( empty( $options['disable_contact_form'] ) ) :
 		global $current_user;
@@ -236,19 +228,19 @@ $open_contact_form = isset( $_GET['cf_contact'] ) && '1' === wp_unslash( $_GET['
 				<form method="post" action="#" class="cf-contact-form cf-contact-classic" id="cf-contact-form-classic">
 					<div class="cf-form-row">
 						<label for="cf-name"><?php _e( 'Dein Name', $this->text_domain ); ?></label>
-						<input type="text" id="cf-name" name="name" value="<?php echo esc_attr( $_POST['name'] ?? '' ); ?>" required autocomplete="name">
+						<input type="text" id="cf-name" name="name" value="<?php echo esc_attr( isset( $_POST['name'] ) ? $_POST['name'] : '' ); ?>" required autocomplete="name">
 					</div>
 					<div class="cf-form-row">
 						<label for="cf-email"><?php _e( 'Deine E-Mail', $this->text_domain ); ?></label>
-						<input type="email" id="cf-email" name="email" value="<?php echo esc_attr( $_POST['email'] ?? '' ); ?>" required autocomplete="email">
+						<input type="email" id="cf-email" name="email" value="<?php echo esc_attr( isset( $_POST['email'] ) ? $_POST['email'] : '' ); ?>" required autocomplete="email">
 					</div>
 					<div class="cf-form-row">
 						<label for="cf-subject"><?php _e( 'Betreff', $this->text_domain ); ?></label>
-						<input type="text" id="cf-subject" name="subject" value="<?php echo esc_attr( $_POST['subject'] ?? sprintf( __( 'Anfrage zu: %s', $this->text_domain ), $ad_title ) ); ?>" required>
+						<input type="text" id="cf-subject" name="subject" value="<?php echo esc_attr( isset( $_POST['subject'] ) ? $_POST['subject'] : sprintf( __( 'Anfrage zu: %s', $this->text_domain ), $ad_title ) ); ?>" required>
 					</div>
 					<div class="cf-form-row">
 						<label for="cf-message"><?php _e( 'Deine Nachricht', $this->text_domain ); ?></label>
-						<textarea id="cf-message" name="message" rows="5" required><?php echo esc_textarea( $_POST['message'] ?? '' ); ?></textarea>
+						<textarea id="cf-message" name="message" rows="5" required><?php echo esc_textarea( isset( $_POST['message'] ) ? $_POST['message'] : '' ); ?></textarea>
 					</div>
 					<div class="cf-form-row cf-captcha-row">
 						<label for="cf_random_value"><?php _e( 'Sicherheitscode', $this->text_domain ); ?></label>
@@ -301,29 +293,39 @@ $open_contact_form = isset( $_GET['cf_contact'] ) && '1' === wp_unslash( $_GET['
 	<?php endif; ?>
 
 	<?php endif; ?>
-<?php
-//print_r( session_get_cookie_params()  );
+		</div>
 
-?>
-	<div class="clear"></div>
-
-	<table class="cf-description">
-		<thead>
-			<tr>
-				<th><?php _e( 'Beschreibung', $this->text_domain ); ?></th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr>
-				<td>
-					<?php
-					//$content is already filled with the database text. This just add classified specfic code around it.
-					echo wp_kses($content, cf_wp_kses_allowed_html());
-					?>
-				</td>
-			</tr>
-		</tbody>
-	</table>
+		<aside class="cf-single-sidebar">
+			<div class="cf-single-sidebar-stack">
+				<?php if ( $single_show_seller_card ) : ?>
+				<div class="cf-seller-card">
+					<h3><?php _e( 'Verkäuferprofil', $this->text_domain ); ?></h3>
+					<p class="cf-seller-name"><?php echo esc_html( $author_display_name ); ?></p>
+					<div class="cf-seller-meta">
+						<span class="cf-meta-chip"><?php echo esc_html( sprintf( _n( '%d aktive Anzeige', '%d aktive Anzeigen', (int) $author_active_ads, $this->text_domain ), (int) $author_active_ads ) ); ?></span>
+						<?php if ( '' !== $author_registered ) : ?>
+							<span class="cf-meta-chip"><?php _e( 'Mitglied seit:', $this->text_domain ); ?> <?php echo esc_html( $author_registered ); ?></span>
+						<?php endif; ?>
+					</div>
+					<p class="cf-seller-actions">
+						<a class="button cf-card-secondary" href="<?php echo esc_url( home_url( '/cf-author/' . get_the_author_meta( 'user_login', $author_id ) . '/' ) ); ?>"><?php _e( 'Alle Anzeigen ansehen', $this->text_domain ); ?></a>
+					</p>
+				</div>
+				<?php endif; ?>
+				<?php if ( $single_show_trust_block && ( '' !== $trust_block_content || '' !== $region_name ) ) : ?>
+				<div class="cf-trust-card">
+					<h3><?php _e( 'Hinweise', $this->text_domain ); ?></h3>
+					<?php if ( '' !== $trust_block_content ) : ?>
+					<div class="cf-trust-content"><?php echo wp_kses_post( wpautop( $trust_block_content ) ); ?></div>
+					<?php endif; ?>
+					<?php if ( '' !== $region_name ) : ?>
+					<p class="cf-trust-location"><strong><?php _e( 'Standort:', $this->text_domain ); ?></strong> <?php echo esc_html( $region_name ); ?></p>
+					<?php endif; ?>
+				</div>
+				<?php endif; ?>
+			</div>
+		</aside>
+	</div>
 </div>
 
 <?php if ( $single_show_sticky_actions ) : ?>

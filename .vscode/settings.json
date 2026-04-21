@@ -1,0 +1,7 @@
+{
+  "intelephense.environment.includePaths": [
+    "/home/dern3rd/Local Sites/ps-dev/app/public/wp-admin",
+    "/home/dern3rd/Local Sites/ps-dev/app/public/wp-includes"
+  ],
+  "intelephense.diagnostics.undefinedFunctions": false
+}
