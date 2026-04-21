@@ -56,8 +56,8 @@ if ( $step === 'disabled' ) : ?>
 		<div class="cf-banner-content">
 			<div class="cf-banner-icon">Shop</div>
 			<div class="cf-banner-text">
-				<h3><?php _e( 'Kaufe Deine Credits im Shop', $this->text_domain ); ?></h3>
-				<p><?php _e( 'Du wirst zum MarketPress-Produkt weitergeleitet und kaufst dort sicher ein.', $this->text_domain ); ?></p>
+				<h3><?php _e( 'Credits kaufen', $this->text_domain ); ?></h3>
+				<p><?php _e( 'Waehle dein passendes Paket und schliesse den Kauf sicher ab.', $this->text_domain ); ?></p>
 			</div>
 		</div>
 

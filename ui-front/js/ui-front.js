@@ -112,7 +112,21 @@ jQuery(document).ready(function($) {
 	}
 
 	function syncFavoriteButtons(postId, active) {
-		$('.cf-favorite-toggle[data-post-id="' + postId + '"]').toggleClass('is-active', !!active);
+		$('.cf-favorite-toggle[data-post-id="' + postId + '"]').each(function() {
+			var $button = $(this);
+			var isActive = !!active;
+			var defaultLabel = $button.data('labelDefault') || 'Merken';
+			var activeLabel = $button.data('labelActive') || 'Gemerkt';
+
+			$button.toggleClass('is-active', isActive);
+			$button.attr('aria-pressed', isActive ? 'true' : 'false');
+
+			if ($button.find('.cf-favorite-label-default, .cf-favorite-label-active').length) {
+				return;
+			}
+
+			$button.text(isActive ? activeLabel : defaultLabel);
+		});
 	}
 
 	function closeQuickView() {
@@ -506,11 +520,29 @@ var classifieds = {
 		jQuery('#confirm-form-'+key+' input[name="action"]').val('reserve');
 	},
 	toggle_contact_form: function() {
+		if (jQuery('#cf-contact-section').length) {
+			jQuery('#cf-contact-section').show();
+			var $toggle = jQuery('#cf-contact-toggle');
+			if ($toggle.length) {
+				$toggle.hide();
+			}
+			return;
+		}
+
 		jQuery('.cf-ad-info').hide();
 		jQuery('#action-form').hide();
 		jQuery('#confirm-form').show();
 	},
 	cancel_contact_form: function() {
+		if (jQuery('#cf-contact-section').length) {
+			jQuery('#cf-contact-section').hide();
+			var $toggle = jQuery('#cf-contact-toggle');
+			if ($toggle.length) {
+				$toggle.show();
+			}
+			return;
+		}
+
 		jQuery('#confirm-form').hide();
 		jQuery('.cf-ad-info').show();
 		jQuery('#action-form').show();

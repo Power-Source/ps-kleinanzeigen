@@ -51,13 +51,18 @@ $effective_status = ( 'publish' === $status && $expired ) ? 'expired' : $status;
 		<a href="<?php the_permalink(); ?>" class="cf-btn cf-btn-small"><?php _e( 'Ansehen', 'ps-kleinanzeigen' ); ?></a>
 		<a href="<?php echo esc_url( add_query_arg( 'post_id', $post_id, get_permalink( $GLOBALS['Classifieds_Core']->edit_classified_page_id ) ) ); ?>" class="cf-btn cf-btn-small cf-btn-secondary"><?php _e( 'Bearbeiten', 'ps-kleinanzeigen' ); ?></a>
 		<?php if ( $_cf_allow_reserve && 'publish' === $status ) : ?>
-		<button type="button"
-		        class="cf-btn cf-btn-small cf-btn-reserve <?php echo $is_reserved ? 'is-reserved' : ''; ?>"
-		        data-post-id="<?php echo esc_attr( $post_id ); ?>"
-		        data-action="cf_toggle_reserve"
-		        data-nonce="<?php echo esc_attr( wp_create_nonce( 'cf_frontend_actions' ) ); ?>">
-			<?php echo $is_reserved ? esc_html__( 'Reservierung aufheben', 'ps-kleinanzeigen' ) : esc_html__( 'Als reserviert markieren', 'ps-kleinanzeigen' ); ?>
-		</button>
+		<form method="post" action="<?php echo esc_url( get_permalink( $GLOBALS['Classifieds_Core']->my_classifieds_page_id ) ); ?>" class="cf-dashboard-inline-action">
+			<input type="hidden" name="action" value="reserve">
+			<input type="hidden" name="post_id" value="<?php echo esc_attr( $post_id ); ?>">
+			<input type="hidden" name="confirm" value="1">
+			<?php wp_nonce_field( 'verify' ); ?>
+			<button type="submit"
+			        class="cf-btn cf-btn-small cf-btn-reserve <?php echo $is_reserved ? 'is-reserved' : ''; ?>"
+			        aria-pressed="<?php echo $is_reserved ? 'true' : 'false'; ?>">
+				<span class="cf-btn-reserve-icon" aria-hidden="true"><?php echo $is_reserved ? '●' : '○'; ?></span>
+				<span class="cf-btn-reserve-label"><?php echo $is_reserved ? esc_html__( 'Freigeben', 'ps-kleinanzeigen' ) : esc_html__( 'Reservieren', 'ps-kleinanzeigen' ); ?></span>
+			</button>
+		</form>
 		<?php endif; ?>
 	</div>
 </div>

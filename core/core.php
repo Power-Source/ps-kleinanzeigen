@@ -1365,22 +1365,72 @@ $cost_meta_key     = '_cf_cost';
 		 *
 		 * @return int|string Number of credits
 		 **/
+		function parse_duration_interval_data( $duration ) {
+			$raw_duration = trim( (string) $duration );
+			if ( '' === $raw_duration ) {
+				return array(
+					'modifier' => '+1 week',
+					'weeks'    => 1,
+				);
+			}
+
+			$normalized_duration = wp_strip_all_tags( $raw_duration );
+			$normalized_duration = str_replace( '-', ' ', $normalized_duration );
+			$normalized_duration = preg_replace( '/\s+/', ' ', $normalized_duration );
+			$normalized_duration = trim( strtolower( $normalized_duration ) );
+
+			if ( preg_match( '/^(\d+)\s*([[:alpha:][:punct:]]+)/u', $normalized_duration, $matches ) ) {
+				$quantity = max( 1, absint( $matches[1] ) );
+				$unit_raw = trim( $matches[2], ". \t\n\r\0\x0B" );
+
+				$unit_map = array(
+					'tag'    => array( 'modifier' => 'day', 'weeks' => 1 / 7 ),
+					'tage'   => array( 'modifier' => 'day', 'weeks' => 1 / 7 ),
+					'day'    => array( 'modifier' => 'day', 'weeks' => 1 / 7 ),
+					'days'   => array( 'modifier' => 'day', 'weeks' => 1 / 7 ),
+					'woche'  => array( 'modifier' => 'week', 'weeks' => 1 ),
+					'wochen' => array( 'modifier' => 'week', 'weeks' => 1 ),
+					'week'   => array( 'modifier' => 'week', 'weeks' => 1 ),
+					'weeks'  => array( 'modifier' => 'week', 'weeks' => 1 ),
+					'monat'  => array( 'modifier' => 'month', 'weeks' => 4 ),
+					'monate' => array( 'modifier' => 'month', 'weeks' => 4 ),
+					'month'  => array( 'modifier' => 'month', 'weeks' => 4 ),
+					'months' => array( 'modifier' => 'month', 'weeks' => 4 ),
+				);
+
+				if ( isset( $unit_map[ $unit_raw ] ) ) {
+					return array(
+						'modifier' => sprintf( '+%d %s', $quantity, $unit_map[ $unit_raw ]['modifier'] ),
+						'weeks'    => (float) $quantity * (float) $unit_map[ $unit_raw ]['weeks'],
+					);
+				}
+			}
+
+			$timestamp_now = time();
+			$parsed = strtotime( '+' . $raw_duration, $timestamp_now );
+			if ( false !== $parsed && $parsed > $timestamp_now ) {
+				return array(
+					'modifier' => '+' . $raw_duration,
+					'weeks'    => ( $parsed - $timestamp_now ) / WEEK_IN_SECONDS,
+				);
+			}
+
+			return array(
+				'modifier' => '+1 week',
+				'weeks'    => 1,
+			);
+		}
+
 		function get_credits_from_duration( $duration ) {
 
-			if ( empty( $duration ) ) {
-				$duration = '1 Week';
-			}
 			$options = $this->get_options( 'payments' );
+			$duration_data = $this->parse_duration_interval_data( $duration );
 
-			if ( ! isset( $options['credits_per_week'] ) || $this->use_free ) {
+			if ( empty( $options['enable_credits'] ) || ! isset( $options['credits_per_week'] ) || $this->use_free ) {
 				$options['credits_per_week'] = 0;
 			}
 
-			$now      = time();
-			$interval = strtotime( "+{$duration}", $now ) - $now;
-			$weeks    = $interval / ( 60 * 60 * 24 * 7 ); // Weeks
-
-			return round( $weeks * $options['credits_per_week'] );
+			return round( (float) $duration_data['weeks'] * (float) $options['credits_per_week'] );
 		}
 
 
@@ -1500,8 +1550,9 @@ $cost_meta_key     = '_cf_cost';
 				return $expiration_date;
 			}
 			/* Process normal request */
+			$duration_data = $this->parse_duration_interval_data( $duration );
 			$publish_date = strtotime( get_the_date( 'Y-m-d H:i:s', $post_id ) );
-			$date         = strtotime( "+{$duration}", $publish_date );
+			$date         = strtotime( $duration_data['modifier'], $publish_date );
 
 			return $date;
 		}

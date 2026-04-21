@@ -10,6 +10,15 @@ $options_frontend = $this->get_options( 'frontend' );
 $user_intro = isset( $options_frontend['user_intro'] ) ? trim( $options_frontend['user_intro'] ) : '';
 $user_show_favorites_tab = ! isset( $options_frontend['user_show_favorites_tab'] ) || 1 === (int) $options_frontend['user_show_favorites_tab'];
 $unread_count = method_exists( $this, 'get_unread_message_count' ) ? $this->get_unread_message_count( $current_user->ID ) : 0;
+$dashboard_preset = isset( $options_frontend['frontend_preset'] ) ? sanitize_key( (string) $options_frontend['frontend_preset'] ) : '';
+if ( ! in_array( $dashboard_preset, array( 'b2c', 'premium', 'community' ), true ) ) {
+	$dashboard_preset = 'b2c';
+}
+$community_profile_url = function_exists( 'cpc_members_get_profile_url' ) ? cpc_members_get_profile_url( $current_user->ID ) : '';
+$dashboard_classes = 'cf-dashboard cf-dashboard-preset-' . $dashboard_preset;
+if ( ! empty( $community_profile_url ) ) {
+	$dashboard_classes .= ' has-community-profile';
+}
 
 $cf_path = get_permalink( $this->my_classifieds_page_id );
 $error = get_query_var( 'cf_error' );
@@ -99,7 +108,7 @@ wp_add_inline_script( 'cf-frontend', "(function(\$){
 })(jQuery);", 'after' );
 ?>
 
-<div class="cf-dashboard">
+<div class="<?php echo esc_attr( $dashboard_classes ); ?>">
 
 <?php if ( ! empty( $error ) ) : ?>
 <div class="cf-notice cf-notice-error"><?php echo esc_html( $error ); ?></div>
@@ -204,9 +213,21 @@ if ( $show_tarif_box ) {
 
 <aside class="cf-dashboard-sidebar">
 <div class="cf-dashboard-user">
+<?php if ( ! empty( $community_profile_url ) ) : ?>
+<a class="cf-dashboard-avatar-link" href="<?php echo esc_url( $community_profile_url ); ?>">
+	<?php echo get_avatar( $current_user->ID, 64, '', '', array( 'class' => 'cf-avatar' ) ); ?>
+</a>
+<?php else : ?>
 <?php echo get_avatar( $current_user->ID, 64, '', '', array( 'class' => 'cf-avatar' ) ); ?>
+<?php endif; ?>
 <div class="cf-dashboard-user-info">
+<?php if ( ! empty( $community_profile_url ) ) : ?>
+<a class="cf-dashboard-profile-link" href="<?php echo esc_url( $community_profile_url ); ?>">
+	<strong><?php echo esc_html( $current_user->display_name ); ?></strong>
+</a>
+<?php else : ?>
 <strong><?php echo esc_html( $current_user->display_name ); ?></strong>
+<?php endif; ?>
 <?php if ( $this->is_full_access() ) : ?>
 <span class="cf-user-badge"><?php _e( 'Voller Zugriff', $this->text_domain ); ?></span>
 <?php elseif ( $this->use_credits ) : ?>
@@ -241,10 +262,11 @@ if ( $show_tarif_box ) {
 <?php
 // Dashboard Credit-Status Card
 $options_payments = $this->get_options( 'payments' );
-$show_credit_status = ! empty( $options_payments['dashboard_show_credit_status'] ) && $this->use_credits;
+$credits_feature_enabled = ! empty( $options_payments['enable_credits'] );
+$show_credit_status = ! empty( $options_payments['dashboard_show_credit_status'] ) && $credits_feature_enabled;
 $warning_threshold = isset( $options_payments['dashboard_credit_warning_threshold'] ) ? absint( $options_payments['dashboard_credit_warning_threshold'] ) : 5;
 $featured_pkg_id = empty( $options_payments['featured_credit_package_id'] ) ? 0 : absint( $options_payments['featured_credit_package_id'] );
-$current_credits = $this->transactions->credits;
+$current_credits = isset( $this->transactions->credits ) ? (int) $this->transactions->credits : 0;
 $is_low = $current_credits <= $warning_threshold;
 
 if ( $show_credit_status ) :
@@ -262,29 +284,28 @@ if ( $show_credit_status ) :
 	?>
 <div class="cf-credit-status-card <?php echo $is_low ? 'cf-credit-low' : ''; ?>">
 	<div class="cf-credit-status-header">
-		<span class="cf-credit-icon">💳</span>
-		<span class="cf-credit-title"><?php _e( 'Deine Kleinanzeigen-Credits', $this->text_domain ); ?></span>
+		<span class="cf-credit-title"><?php _e( 'Deine Credits', $this->text_domain ); ?></span>
+	</div>
+	<div class="cf-credit-status-amount-row">
+		<strong><?php echo esc_html( $current_credits ); ?> Credits</strong>
+		<?php if ( $is_low ) : ?>
+			<span class="cf-credit-warning"><?php printf( __( 'Achtung: Nur noch %d!', $this->text_domain ), $current_credits ); ?></span>
+		<?php else : ?>
+			<span class="cf-credit-info"><?php _e( 'verfügbar', $this->text_domain ); ?></span>
+		<?php endif; ?>
 	</div>
 	<div class="cf-credit-status-body">
-		<div class="cf-credit-amount">
-			<strong><?php echo esc_html( $current_credits ); ?> Credits</strong>
-			<?php if ( $is_low ) : ?>
-				<span class="cf-credit-warning"><?php printf( __( 'Achtung: Nur noch %d Credits!', $this->text_domain ), $current_credits ); ?></span>
-			<?php else : ?>
-				<span class="cf-credit-info"><?php _e( 'verfügbar', $this->text_domain ); ?></span>
-			<?php endif; ?>
-		</div>
 		<?php if ( $featured_package && ! empty( $featured_package['product_id'] ) ) : ?>
 			<?php $feat_pkg_url = get_permalink( $featured_package['product_id'] ); ?>
 			<?php if ( $feat_pkg_url ) : ?>
-			<div class="cf-featured-package">
+			<div class="cf-featured-package-btn">
 				<?php if ( $is_low ) : ?>
 					<a href="<?php echo esc_url( $feat_pkg_url ); ?>" class="cf-btn cf-btn-featured cf-btn-alert">
-						<?php echo esc_html( $featured_package['label'] ); ?> (<?php echo esc_html( $featured_package['credits'] ); ?> Credits)
+						<?php echo esc_html( $featured_package['label'] ); ?>
 					</a>
 				<?php else : ?>
 					<a href="<?php echo esc_url( $feat_pkg_url ); ?>" class="cf-btn cf-btn-featured">
-						<?php echo esc_html( $featured_package['label'] ); ?> (<?php echo esc_html( $featured_package['credits'] ); ?> Credits)
+						<?php echo esc_html( $featured_package['label'] ); ?>
 					</a>
 				<?php endif; ?>
 			</div>

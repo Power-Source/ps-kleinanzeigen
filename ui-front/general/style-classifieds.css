@@ -1872,6 +1872,31 @@ ul.cf_tabs li.cf_active a {
     margin: 0 auto;
 }
 
+.cf-dashboard-avatar-link,
+.cf-dashboard-profile-link {
+	color: inherit;
+	text-decoration: none;
+}
+
+.cf-dashboard-avatar-link {
+	display: inline-flex;
+	border-radius: 999px;
+}
+
+.cf-dashboard-user .cf-avatar {
+	border-radius: 50%;
+	flex-shrink: 0;
+	border: 2px solid rgba(255,255,255,0.22);
+	box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+}
+
+.cf-dashboard-profile-meta {
+	display: block;
+	font-size: 11px;
+	opacity: .82;
+	margin-top: 2px;
+}
+
 .cf-dashboard-sidebar {
     width: 220px;
     flex-shrink: 0;
@@ -1891,7 +1916,6 @@ ul.cf_tabs li.cf_active a {
     background: linear-gradient(135deg, #0073aa 0%, #005a8e 100%);
     color: #fff;
 }
-.cf-dashboard-user .cf-avatar { border-radius: 50%; flex-shrink: 0; }
 .cf-dashboard-user-info { min-width: 0; }
 .cf-dashboard-user-info strong { display: block; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cf-user-badge, .cf-credit-count { font-size: 11px; opacity: .85; }
@@ -2037,18 +2061,255 @@ ul.cf_tabs li.cf_active a {
 }
 
 .cf-dashboard-item .cf-card-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
 	padding: 10px 12px 12px;
 	border-top: 1px solid #eef0f3;
 }
 
+.cf-dashboard-inline-action {
+	flex: 1 1 100%;
+	margin: 0;
+}
+
 .cf-dashboard-item .cf-card-actions .cf-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
 	flex: 1;
 	min-width: 0;
 	text-align: center;
+	min-height: 38px;
+	padding: 9px 12px;
+	border-radius: 10px;
+	border: 1px solid #d5dee8;
+	background: #fff;
+	color: #16324b;
+	text-decoration: none;
+	font-weight: 600;
+	line-height: 1.1;
+	cursor: pointer;
+	transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.cf-dashboard-item .cf-card-actions .cf-btn:hover,
+.cf-dashboard-item .cf-card-actions .cf-btn:focus-visible {
+	transform: translateY(-1px);
+	box-shadow: 0 8px 16px rgba(15, 23, 42, 0.10);
+	border-color: #bacbdb;
+	background: #f8fbff;
+}
+
+.cf-dashboard-item .cf-card-actions .cf-btn-secondary {
+	background: #f5f8fc;
+	color: #2f4c66;
+}
+
+.cf-btn-reserve {
+	width: 100%;
+	justify-content: center;
+	background: #fff8ea !important;
+	border-color: #f0d29a !important;
+	color: #6b4b0f !important;
+}
+
+.cf-btn-reserve.is-reserved {
+	background: #eef8f1 !important;
+	border-color: #9fcdab !important;
+	color: #1f6a32 !important;
+}
+
+.cf-btn-reserve-icon {
+	font-size: 11px;
+	line-height: 1;
+}
+
+.cf-credit-status-card {
+	margin: 12px 16px 0;
+}
+
+.cf-dashboard-actions .button {
+	width: 100%;
+	text-align: center;
+	border-radius: 10px;
+	min-height: 42px;
 }
 
 .cf-dashboard-tab-header { margin-bottom: 16px; }
 .cf-dashboard-tab-header h2 { margin: 0; font-size: 20px; }
+
+/* Dashboard Presets */
+.cf-dashboard-preset-b2c .cf-dashboard-sidebar {
+	border-radius: 16px;
+	border-color: #d4e0ea;
+	box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+	background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+}
+
+.cf-dashboard-preset-b2c .cf-dashboard-user {
+	padding: 18px;
+	background: linear-gradient(135deg, #0d74af 0%, #0b5884 100%);
+}
+
+.cf-dashboard-preset-b2c .cf-nav-item {
+	border-radius: 10px;
+	margin: 4px 10px;
+	padding: 11px 14px;
+}
+
+.cf-dashboard-preset-b2c .cf-nav-item.is-active {
+	background: #e7f1fb;
+	color: #0c6aa1;
+	box-shadow: inset 0 0 0 1px #cde0f2;
+}
+
+.cf-dashboard-preset-b2c .cf-dashboard-item {
+	border-radius: 16px;
+	box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
+	border-color: #d5e0ea;
+}
+
+.cf-dashboard-preset-b2c .cf-card-actions .cf-btn:first-child {
+	background: linear-gradient(180deg, #ff8f22 0%, #ef6107 100%);
+	border-color: #d65300;
+	color: #fff;
+}
+
+.cf-dashboard-preset-b2c .cf-card-actions .cf-btn:first-child:hover,
+.cf-dashboard-preset-b2c .cf-card-actions .cf-btn:first-child:focus-visible {
+	background: linear-gradient(180deg, #ff9d38 0%, #f46b10 100%);
+	border-color: #cf4f00;
+}
+
+.cf-dashboard-preset-premium .cf-dashboard-sidebar {
+	border-radius: 24px;
+	border-color: #e7d8bc;
+	background: linear-gradient(180deg, #fffefb 0%, #fbf5ea 100%);
+	box-shadow: 0 18px 34px rgba(120, 92, 54, 0.14);
+}
+
+.cf-dashboard-preset-premium .cf-dashboard-user {
+	padding: 22px;
+	background: linear-gradient(135deg, #8a6b3f 0%, #5e4524 100%);
+}
+
+.cf-dashboard-preset-premium .cf-nav-item {
+	margin: 5px 12px;
+	padding: 12px 15px;
+	border-radius: 14px;
+	color: #4b391d;
+}
+
+.cf-dashboard-preset-premium .cf-nav-item:hover {
+	background: #f9f1e5;
+	color: #5b4120;
+}
+
+.cf-dashboard-preset-premium .cf-nav-item.is-active {
+	background: linear-gradient(180deg, #f7e8cf 0%, #f1dcc0 100%);
+	color: #4b391d;
+	box-shadow: inset 0 0 0 1px #e3cda9;
+}
+
+.cf-dashboard-preset-premium .cf-dashboard-item {
+	border-radius: 24px;
+	border-color: #e6d5b8;
+	background: linear-gradient(180deg, #fffefb 0%, #fbf6eb 100%);
+	box-shadow: 0 18px 34px rgba(120, 92, 54, 0.12);
+}
+
+.cf-dashboard-preset-premium .cf-dashboard-item .cf-card-image {
+	aspect-ratio: 5 / 4;
+}
+
+.cf-dashboard-preset-premium .cf-dashboard-item .cf-card-body {
+	padding: 16px 16px 8px;
+}
+
+.cf-dashboard-preset-premium .cf-card-actions .cf-btn {
+	border-radius: 12px;
+	border-color: #d8bf95;
+	background: #fffaf2;
+	color: #4f3818;
+}
+
+.cf-dashboard-preset-premium .cf-card-actions .cf-btn:first-child {
+	background: linear-gradient(180deg, #8a6b3f 0%, #6e522d 100%);
+	border-color: #5e4524;
+	color: #fffdf8;
+}
+
+.cf-dashboard-preset-community .cf-dashboard {
+	max-width: 1060px;
+}
+
+.cf-dashboard-preset-community .cf-dashboard-sidebar {
+	border-radius: 8px;
+	box-shadow: none;
+	border-color: #d7dee6;
+	background: #fff;
+}
+
+.cf-dashboard-preset-community .cf-dashboard-user {
+	padding: 14px;
+	background: linear-gradient(135deg, #2d3748 0%, #1f2937 100%);
+}
+
+.cf-dashboard-preset-community .cf-nav-item {
+	margin: 0;
+	padding: 10px 14px;
+	border-top: 1px solid #edf1f5;
+	border-radius: 0;
+	font-size: 13px;
+}
+
+.cf-dashboard-preset-community .cf-nav-item.is-active {
+	background: #f3f6f9;
+	color: #1f2937;
+	box-shadow: inset 3px 0 0 #2d3748;
+	font-weight: 700;
+}
+
+.cf-dashboard-preset-community .cf-dashboard-item {
+	border-radius: 8px;
+	box-shadow: none;
+	border-color: #d6dde6;
+}
+
+.cf-dashboard-preset-community .cf-dashboard-item:hover {
+	box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+	transform: translateY(-1px);
+}
+
+.cf-dashboard-preset-community .cf-dashboard-item .cf-card-actions {
+	gap: 6px;
+}
+
+.cf-dashboard-preset-community .cf-card-actions .cf-btn {
+	border-radius: 6px;
+	font-size: 12px;
+	padding: 8px 10px;
+}
+
+@media (max-width: 860px) {
+	.cf-dashboard-preset-b2c .cf-dashboard-sidebar,
+	.cf-dashboard-preset-premium .cf-dashboard-sidebar,
+	.cf-dashboard-preset-community .cf-dashboard-sidebar {
+		position: static;
+	}
+
+	.cf-dashboard-item .cf-card-actions {
+		flex-direction: column;
+	}
+
+	.cf-dashboard-item .cf-card-actions .cf-btn,
+	.cf-dashboard-inline-action {
+		width: 100%;
+		flex: 1 1 100%;
+	}
+}
 
 /* Empty State */
 .cf-empty-state {
@@ -2614,90 +2875,97 @@ ul.cf_tabs li.cf_active a {
 
 /* Credit Status Card */
 .cf-credit-status-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border-radius: 8px;
+    background: #f8f9fa;
+    color: #1a1a1a;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
     padding: 16px;
     margin-bottom: 20px;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .cf-credit-status-card.cf-credit-low {
-    background: linear-gradient(135deg, #f97506 0%, #e63946 100%);
-    box-shadow: 0 4px 12px rgba(233, 69, 96, 0.3);
+    background: #fff4f1;
+    border-color: #ffb3a0;
 }
 
 .cf-credit-status-header {
-    display: flex;
-    align-items: center;
     margin-bottom: 12px;
 }
 
-.cf-credit-icon {
-    font-size: 24px;
-    margin-right: 12px;
-}
-
 .cf-credit-title {
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.cf-credit-status-body {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 16px;
-}
-
-.cf-credit-amount {
-    flex: 1;
-}
-
-.cf-credit-amount strong {
-    display: block;
-    font-size: 24px;
+    font-size: 14px;
     font-weight: 700;
-    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #666;
+}
+
+.cf-credit-status-amount-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.cf-credit-status-amount-row strong {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
 }
 
 .cf-credit-warning {
-    display: block;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    opacity: 0.95;
+    color: #d32f2f;
     animation: pulse 2s infinite;
 }
 
 .cf-credit-info {
-    display: block;
-    font-size: 13px;
-    opacity: 0.8;
+    font-size: 12px;
+    opacity: 0.7;
+    color: #666;
 }
 
-.cf-featured-package {
-    flex-shrink: 0;
+.cf-credit-status-body {
+    display: flex;
+    justify-content: center;
+}
+
+.cf-featured-package-btn {
+    width: 100%;
 }
 
 .cf-btn-featured {
-    background: rgba(255, 255, 255, 0.95) !important;
-    color: #667eea !important;
+    background: #0f6cbd !important;
+    color: #ffffff !important;
     border: none !important;
     font-weight: 600;
-    padding: 10px 16px !important;
-    border-radius: 4px;
-    display: inline-block;
+    padding: 11px 20px !important;
+    border-radius: 6px;
+    display: block;
+    width: 100%;
+    text-align: center;
     text-decoration: none !important;
+    font-size: 14px;
 }
 
 .cf-btn-featured:hover {
-    background: #ffffff !important;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+    background: #0a4a8a !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 108, 189, 0.3) !important;
 }
 
 .cf-credit-status-card.cf-credit-low .cf-btn-featured {
-    color: #e63946 !important;
+    background: #d32f2f !important;
+    color: #ffffff !important;
+}
+
+.cf-credit-status-card.cf-credit-low .cf-btn-featured:hover {
+    background: #b71c1c !important;
 }
 
 .cf-btn-featured.cf-btn-alert {

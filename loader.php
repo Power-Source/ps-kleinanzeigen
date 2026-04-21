@@ -2,7 +2,7 @@
 /*
 Plugin Name: PS Kleinanzeigen
 Plugin URI: https://psource.eimen.net/wiki/ps-kleinanzeigen-dokumentation/
-Description: PS Kleinanzeigen stellt dir alles zur Verfügung was du benötigst um eine regionale Kleinanzeigen-Plattform zu erstellen. Durch die Integrationen mit anderen PSOURCE Plugins, kannst du deine Kleinanzeigenplattform jederzeit flexibel erweitern und Hochskalieren.
+Description: PS Kleinanzeigen stellt dir alles zur Verfügung was du benötigst um eine regionale Kleinanzeigen-Plattform zu erstellen. Durch die Integrationen mit anderen PSOURCE Plugins kannst du deine Kleinanzeigenplattform jederzeit flexibel erweitern und Hochskalieren.
 Version: 1.0.0
 Author: PSOURCE
 Author URI: https://github.com/Power-Source
@@ -13,7 +13,7 @@ Network: false
 */
 
 $plugin_header_translate = array(
-__('PS Kleinanzeigen stellt dir alles zur Verfügung was du benötigst um eine regionale Kleinanzeigen-Plattform zu erstellen. Durch die Integrationen mit anderen PSOURCE Plugins, kannst du deine Kleinanzeigenplattform jederzeit flexibel erweitern und Hochskalieren.', 'classifieds'),
+__('PS Kleinanzeigen stellt dir alles zur Verfügung was du benötigst um eine regionale Kleinanzeigen-Plattform zu erstellen. Durch die Integrationen mit anderen PSOURCE Plugins kannst du deine Kleinanzeigenplattform jederzeit flexibel erweitern und Hochskalieren.', 'classifieds'),
 __('PSOURCE', 'classifieds'),
 __('https://psource.eimen.net/wiki/ps-kleinanzeigen-dokumentation/', 'classifieds'),
 __('PS Kleinanzeigen', 'classifieds'),

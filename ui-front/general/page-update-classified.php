@@ -252,6 +252,13 @@ window.cfGalleryEditor = <?php echo wp_json_encode( array(
 				$now_timestamp = current_time( 'timestamp' );
 				$days_remaining = ( $expiration_timestamp > $now_timestamp ) ? (int) ceil( ( $expiration_timestamp - $now_timestamp ) / DAY_IN_SECONDS ) : 0;
 			$options  = get_option( CF_OPTIONS_NAME );
+				$payments_options = isset( $options['payments'] ) && is_array( $options['payments'] ) ? $options['payments'] : array();
+				$expired_restart_mode = isset( $payments_options['expired_restart_mode'] ) ? sanitize_key( (string) $payments_options['expired_restart_mode'] ) : 'credits';
+				if ( ! in_array( $expired_restart_mode, array( 'none', 'free', 'credits' ), true ) ) {
+					$expired_restart_mode = 'credits';
+				}
+				$is_expired_listing = ( $expiration_timestamp > 0 && $days_remaining <= 0 );
+				$duration_label = $is_expired_listing ? __( 'Anzeige erneut starten fuer', $this->text_domain ) : __( 'Laufzeit', $this->text_domain );
 			$dur_opts = isset( $options['general']['duration_options'] ) ? $options['general']['duration_options'] : array( '1 Woche', '2 Wochen', '4 Wochen', '8 Wochen' );
 				if ( empty( $duration ) || '0' === (string) $duration ) {
 					$duration = ! empty( $dur_opts ) ? reset( $dur_opts ) : '';
@@ -261,7 +268,7 @@ window.cfGalleryEditor = <?php echo wp_json_encode( array(
 				<h3><?php _e( 'Anzeigen-Details', $this->text_domain ); ?></h3>
 
 				<div class="field">
-					<label><?php _e( 'Laufzeit', $this->text_domain ); ?></label>
+					<label><?php echo esc_html( $duration_label ); ?></label>
 					<select name="duration">
 						<?php foreach ( $dur_opts as $opt ) : ?>
 						<option value="<?php echo esc_attr( $opt ); ?>" <?php selected( $duration, $opt ); ?>><?php echo esc_html( $opt ); ?></option>
@@ -272,6 +279,13 @@ window.cfGalleryEditor = <?php echo wp_json_encode( array(
 							<p class="description"><?php printf( __( 'Restlaufzeit: %d Tage.', $this->text_domain ), $days_remaining ); ?></p>
 						<?php else : ?>
 							<p class="description"><?php _e( 'Anzeige ist abgelaufen.', $this->text_domain ); ?></p>
+							<?php if ( 'free' === $expired_restart_mode ) : ?>
+								<p class="description"><?php _e( 'Die Anzeige kann gratis mit der gewaehlten Laufzeit erneut gestartet werden.', $this->text_domain ); ?></p>
+							<?php elseif ( 'credits' === $expired_restart_mode ) : ?>
+								<p class="description"><?php _e( 'Die Anzeige wird mit der gewaehlten Laufzeit erneut gestartet und dabei nach deinem Credit-Modell berechnet.', $this->text_domain ); ?></p>
+							<?php else : ?>
+								<p class="description"><?php _e( 'Ein erneutes Starten nach Ablauf ist aktuell deaktiviert.', $this->text_domain ); ?></p>
+							<?php endif; ?>
 						<?php endif; ?>
 					<?php endif; ?>
 				</div>
