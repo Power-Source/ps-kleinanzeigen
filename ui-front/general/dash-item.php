@@ -15,10 +15,13 @@ $image_url = get_the_post_thumbnail_url( $post_id, 'medium' ) ?: $GLOBALS['Class
 
 $status_labels = array(
 	'publish'  => __( 'Aktiv', 'ps-kleinanzeigen' ),
+	'expired'  => __( 'Abgelaufen', 'ps-kleinanzeigen' ),
 	'draft'    => __( 'Entwurf', 'ps-kleinanzeigen' ),
 	'pending'  => __( 'Entwurf', 'ps-kleinanzeigen' ),
 	'private'  => __( 'Beendet', 'ps-kleinanzeigen' ),
 );
+
+$effective_status = ( 'publish' === $status && $expired ) ? 'expired' : $status;
 ?>
 <div class="cf-dashboard-item cf-card">
 	<div class="cf-card-image">
@@ -27,8 +30,8 @@ $status_labels = array(
 			<?php if ( $is_reserved ) : ?>
 				<span class="cf-badge-reserved"><?php _e( 'Reserviert', 'ps-kleinanzeigen' ); ?></span>
 			<?php endif; ?>
-			<span class="cf-badge-status cf-badge-<?php echo esc_attr( $status ); ?>">
-				<?php echo isset( $status_labels[ $status ] ) ? esc_html( $status_labels[ $status ] ) : esc_html( ucfirst( $status ) ); ?>
+			<span class="cf-badge-status cf-badge-<?php echo esc_attr( $effective_status ); ?>">
+				<?php echo isset( $status_labels[ $effective_status ] ) ? esc_html( $status_labels[ $effective_status ] ) : esc_html( ucfirst( $effective_status ) ); ?>
 			</span>
 		</div>
 		<?php if ( '' !== (string) $price ) : ?>

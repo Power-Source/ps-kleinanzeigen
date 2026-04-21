@@ -35,6 +35,10 @@ if ( $memberships_active ) {
 }
 $payment_type_options = $this->get_options( 'payment_types' );
 $use_free_checked = ! empty( $options['use_free'] ) || ( is_array( $payment_type_options ) && ! empty( $payment_type_options['use_free'] ) );
+$expired_restart_mode = isset( $options['expired_restart_mode'] ) ? sanitize_key( $options['expired_restart_mode'] ) : 'credits';
+if ( ! in_array( $expired_restart_mode, array( 'none', 'free', 'credits' ), true ) ) {
+	$expired_restart_mode = 'credits';
+}
 ?>
 
 <div class="wrap">
@@ -332,6 +336,25 @@ $use_free_checked = ! empty( $options['use_free'] ) || ( is_array( $payment_type
 								<?php endif; ?>
 							</select>
 							<span class="description"><?php _e( 'Dieses Paket wird hervorgehoben und prominent im User-Dashboard angezeigt.', $this->text_domain ); ?></span>
+						</td>
+					</tr>
+				</table>
+			</div>
+		</div>
+
+		<div class="postbox">
+			<h3 class='hndle'><span><?php _e( 'Ablauf-Neustart', $this->text_domain ) ?></span></h3>
+			<div class="inside">
+				<table class="form-table">
+					<tr>
+						<th><label for="expired_restart_mode"><?php _e( 'Erneutes Starten nach Ablauf', $this->text_domain ); ?></label></th>
+						<td>
+							<select id="expired_restart_mode" name="expired_restart_mode">
+								<option value="none" <?php selected( $expired_restart_mode, 'none' ); ?>><?php _e( 'Nicht erlaubt', $this->text_domain ); ?></option>
+								<option value="free" <?php selected( $expired_restart_mode, 'free' ); ?>><?php _e( 'Gratis', $this->text_domain ); ?></option>
+								<option value="credits" <?php selected( $expired_restart_mode, 'credits' ); ?>><?php _e( 'Credit-pflichtig', $this->text_domain ); ?></option>
+							</select>
+							<br /><span class="description"><?php _e( 'Steuert, wie abgelaufene Anzeigen wieder aktiviert werden koennen.', $this->text_domain ); ?></span>
 						</td>
 					</tr>
 				</table>

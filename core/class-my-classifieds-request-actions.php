@@ -38,12 +38,25 @@ class CF_My_Classifieds_Request_Actions {
 			$duration_key = isset( $this->core->custom_fields['duration'] ) ? $this->core->custom_fields['duration'] : 'duration';
 			$duration = isset( $request[ $duration_key ] ) ? $request[ $duration_key ] : ( $request['duration'] ?? '' );
 			$credits_required = $this->core->get_credits_from_duration( $duration );
+			$payment_options = (array) $this->core->get_options( 'payments' );
+			$restart_mode = isset( $payment_options['expired_restart_mode'] ) ? sanitize_key( $payment_options['expired_restart_mode'] ) : 'credits';
+			if ( ! in_array( $restart_mode, array( 'none', 'free', 'credits' ), true ) ) {
+				$restart_mode = 'credits';
+			}
 
-			if ( $this->core->is_full_access() || ( $this->core->user_credits >= $credits_required ) ) {
+			if ( 'none' === $restart_mode ) {
+				set_query_var( 'cf_error', __( 'Neustart nach Ablauf ist deaktiviert.', $this->core->text_domain ) );
+				return;
+			}
+
+			$requires_credits = ( 'credits' === $restart_mode );
+			$has_access = $this->core->is_full_access() || ! $requires_credits || ( $this->core->user_credits >= $credits_required );
+
+			if ( $has_access ) {
 				$this->core->process_status( $post_id, 'publish' );
-				$this->core->save_expiration_date( $post_id );
+				$this->core->save_expiration_date( $post_id, true );
 
-				if ( ! $this->core->is_full_access() ) {
+				if ( ! $this->core->is_full_access() && $requires_credits ) {
 					$this->core->transactions->credits -= $credits_required;
 				} elseif ( $this->core->transactions->billing_type == 'one_time' ) {
 					$this->core->transactions->status = 'used';

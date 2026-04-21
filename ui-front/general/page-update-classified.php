@@ -43,21 +43,12 @@ require_once(ABSPATH . 'wp-admin/includes/template.php');
 require_once(ABSPATH . 'wp-admin/includes/media.php');
 require_once(ABSPATH . 'wp-admin/includes/post.php');
 
-$editor_settings =   array(
-'wpautop' => true, // use wpautop?
-'media_buttons' => true, // show insert/upload button(s)
-'textarea_name' => 'classified_data[post_content]', // set the textarea name to something different, square brackets [] can be used here
-'textarea_rows' => 10, //get_option('default_post_edit_rows', 10), // rows="..."
-'tabindex' => '',
-'editor_css' => '', // intended for extra styles for both visual and HTML editors buttons, needs to include the <style> tags, can use "scoped".
-'editor_class' => 'required', // add extra class(es) to the editor textarea
-'teeny' => false, // output the minimal editor config used in Press This
-'dfw' => false, // replace the default fullscreen with DFW (needs specific css)
-'tinymce' => true, // load TinyMCE, can be used to pass settings directly to TinyMCE using an array()
-'quicktags' => true // load Quicktags, can be used to pass settings directly to Quicktags using an array()
-);
-
 $classified_content = (empty( $classified_data['post_content'] ) ) ? '' : $classified_data['post_content'];
+$existing_gallery_ids = get_post_meta( (int) $post_ID, '_cf_gallery_ids', true );
+if ( ! is_array( $existing_gallery_ids ) ) {
+	$existing_gallery_ids = array();
+}
+$existing_gallery_ids = array_values( array_filter( array_map( 'absint', $existing_gallery_ids ) ) );
 
 wp_enqueue_script('set-post-thumbnail');
 ?>
@@ -65,6 +56,13 @@ wp_enqueue_script('set-post-thumbnail');
 <!-- Begin Update Classifieds -->
 <script type="text/javascript" src="<?php echo $this->plugin_url . 'ui-front/js/jquery.tagsinput.min.js?ver=2'; ?>" ></script>
 <script type="text/javascript" src="<?php echo $this->plugin_url . 'ui-front/js/media-post.js'; ?>" ></script>
+<script type="text/javascript">
+window.cfGalleryEditor = <?php echo wp_json_encode( array(
+	'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+	'nonce'   => wp_create_nonce( 'cf_manage_gallery' ),
+	'postId'  => (int) $post_ID,
+) ); ?>;
+</script>
 <script type="text/javascript" src="<?php echo $this->plugin_url . 'ui-front/js/ui-front.js'; ?>" >
 </script>
 
@@ -113,10 +111,29 @@ wp_enqueue_script('set-post-thumbnail');
 			<div class="cf-image-preview" data-for="image"></div>
 			<div class="cf-gallery-upload">
 				<label for="feature_gallery"><?php _e( 'Weitere Bilder', $this->text_domain ); ?></label>
-				<input type="file" id="feature_gallery" name="feature_gallery[]" accept="image/*" multiple />
-				<p class="description"><?php _e( 'Du kannst mehrere Bilder auswählen. Das macht Deine Anzeige deutlich attraktiver.', $this->text_domain ); ?></p>
+				<input type="file" id="feature_gallery" class="cf-gallery-picker" name="feature_gallery[]" accept="image/*" multiple />
+				<p class="description"><?php _e( 'Du kannst mehrere Bilder auf einmal oder nacheinander (z. B. Kamera) hinzufuegen.', $this->text_domain ); ?></p>
 				<div class="cf-gallery-preview" data-for="feature_gallery"></div>
 			</div>
+
+			<?php if ( ! empty( $existing_gallery_ids ) ) : ?>
+			<div class="cf-existing-gallery">
+				<label><?php _e( 'Bereits hochgeladene Bilder', $this->text_domain ); ?></label>
+				<p class="description"><?php _e( 'Bilder verwalten.', $this->text_domain ); ?></p>
+				<div class="cf-existing-gallery-grid">
+					<?php foreach ( $existing_gallery_ids as $existing_gallery_id ) : ?>
+						<?php $existing_gallery_image = wp_get_attachment_image_src( (int) $existing_gallery_id, 'thumbnail' ); ?>
+						<?php if ( empty( $existing_gallery_image[0] ) ) : ?>
+							<?php continue; ?>
+						<?php endif; ?>
+						<div class="cf-existing-gallery-item" data-attachment-id="<?php echo esc_attr( $existing_gallery_id ); ?>">
+							<img src="<?php echo esc_url( $existing_gallery_image[0] ); ?>" alt="<?php esc_attr_e( 'Galeriebild', $this->text_domain ); ?>" class="cf-gallery-preview-img" />
+							<button type="button" class="cf-gallery-remove-existing" aria-label="<?php esc_attr_e( 'Bild entfernen', $this->text_domain ); ?>" data-attachment-id="<?php echo esc_attr( $existing_gallery_id ); ?>">&#128465;</button>
+						</div>
+					<?php endforeach; ?>
+				</div>
+			</div>
+			<?php endif; ?>
 			<br />
 
 			<?php else: ?>
@@ -136,8 +153,13 @@ wp_enqueue_script('set-post-thumbnail');
 
 		<?php if(post_type_supports('classifieds','editor') ): ?>
 		<label for="classifiedcontent"><?php _e( 'Deine Kleinanzeige', $this->text_domain ); ?></label>
-
-		<?php wp_editor( $classified_content, 'classifiedcontent', $editor_settings); ?>
+		<div class="cf-simple-editor-toolbar" data-markup-target="classifiedcontent">
+			<button type="button" class="button" data-markup-action="bold"><strong>B</strong></button>
+			<button type="button" class="button" data-markup-action="italic"><em>I</em></button>
+			<button type="button" class="button" data-markup-action="ul"><?php _e( 'Liste', $this->text_domain ); ?></button>
+			<button type="button" class="button" data-markup-action="link"><?php _e( 'Link', $this->text_domain ); ?></button>
+		</div>
+		<textarea id="classifiedcontent" name="classified_data[post_content]" rows="12" class="required cf-simple-editor-textarea"><?php echo esc_textarea( $classified_content ); ?></textarea>
 
 		<p class="description"><?php _e( 'Beschreibe Deine Kleinanzeige im Detail.', $this->text_domain ); ?></p>
 		<?php endif; ?>
@@ -226,8 +248,14 @@ wp_enqueue_script('set-post-thumbnail');
 			<?php
 			$duration = get_post_meta( $post->ID, '_cf_duration', true );
 			$cost     = get_post_meta( $post->ID, '_cf_cost', true );
+				$expiration_timestamp = (int) get_post_meta( $post->ID, '_expiration_date', true );
+				$now_timestamp = current_time( 'timestamp' );
+				$days_remaining = ( $expiration_timestamp > $now_timestamp ) ? (int) ceil( ( $expiration_timestamp - $now_timestamp ) / DAY_IN_SECONDS ) : 0;
 			$options  = get_option( CF_OPTIONS_NAME );
 			$dur_opts = isset( $options['general']['duration_options'] ) ? $options['general']['duration_options'] : array( '1 Woche', '2 Wochen', '4 Wochen', '8 Wochen' );
+				if ( empty( $duration ) || '0' === (string) $duration ) {
+					$duration = ! empty( $dur_opts ) ? reset( $dur_opts ) : '';
+				}
 			?>
 			<div class="classified-custom-fields">
 				<h3><?php _e( 'Anzeigen-Details', $this->text_domain ); ?></h3>
@@ -239,6 +267,13 @@ wp_enqueue_script('set-post-thumbnail');
 						<option value="<?php echo esc_attr( $opt ); ?>" <?php selected( $duration, $opt ); ?>><?php echo esc_html( $opt ); ?></option>
 						<?php endforeach; ?>
 					</select>
+					<?php if ( $expiration_timestamp > 0 ) : ?>
+						<?php if ( $days_remaining > 0 ) : ?>
+							<p class="description"><?php printf( __( 'Restlaufzeit: %d Tage.', $this->text_domain ), $days_remaining ); ?></p>
+						<?php else : ?>
+							<p class="description"><?php _e( 'Anzeige ist abgelaufen.', $this->text_domain ); ?></p>
+						<?php endif; ?>
+					<?php endif; ?>
 				</div>
 
 				<div class="field">
@@ -262,7 +297,49 @@ wp_enqueue_script('set-post-thumbnail');
 </div><!-- .cf_update_form -->
 <!-- End Update Classifieds -->
 <script type="text/javascript">
-	jQuery(document).on('mousedown', 'input[name="update_classified"]', function() {
-		tinyMCE.triggerSave();
+	jQuery(function($) {
+		function wrapText($field, openTag, closeTag) {
+			var el = $field.get(0);
+			if (!el) {
+				return;
+			}
+
+			var start = el.selectionStart || 0;
+			var end = el.selectionEnd || 0;
+			var value = $field.val();
+			var selected = value.substring(start, end);
+			var replacement = openTag + selected + closeTag;
+			$field.val(value.substring(0, start) + replacement + value.substring(end));
+			el.focus();
+			el.selectionStart = start + openTag.length;
+			el.selectionEnd = start + openTag.length + selected.length;
+		}
+
+		$(document).on('click', '.cf-simple-editor-toolbar [data-markup-action]', function() {
+			var action = $(this).data('markup-action');
+			var target = $(this).closest('.cf-simple-editor-toolbar').data('markup-target');
+			var $field = $('#' + target);
+			if (!$field.length) {
+				return;
+			}
+
+			if (action === 'bold') {
+				wrapText($field, '<strong>', '</strong>');
+			}
+			if (action === 'italic') {
+				wrapText($field, '<em>', '</em>');
+			}
+			if (action === 'ul') {
+				wrapText($field, '<ul>\n<li>', '</li>\n</ul>');
+			}
+			if (action === 'link') {
+				var url = window.prompt('<?php echo esc_js( __( 'Link-URL eingeben (inkl. https://):', $this->text_domain ) ); ?>');
+				if (!url) {
+					return;
+				}
+				wrapText($field, '<a href="' + url.replace(/"/g, '&quot;') + '">', '</a>');
+			}
+		});
+
 	});
 </script>

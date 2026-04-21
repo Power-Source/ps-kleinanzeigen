@@ -36,6 +36,10 @@ $single_show_seller_card = ! isset( $frontend_options['single_show_seller_card']
 $single_show_sticky_actions = ! isset( $frontend_options['single_show_sticky_actions'] ) || 1 === (int) $frontend_options['single_show_sticky_actions'];
 $single_show_reserved_badge = ! isset( $frontend_options['single_show_reserved_badge'] ) || 1 === (int) $frontend_options['single_show_reserved_badge'];
 $is_reserved = method_exists( $this, 'is_reserved_post' ) ? $this->is_reserved_post( $post->ID ) : ( '1' === (string) get_post_meta( $post->ID, '_cf_reserved', true ) );
+$template_preset = isset( $GLOBALS['cf_frontend_template_preset'] ) ? sanitize_key( (string) $GLOBALS['cf_frontend_template_preset'] ) : '';
+if ( ! in_array( $template_preset, array( 'b2c', 'premium', 'community' ), true ) ) {
+	$template_preset = '';
+}
 $published_date = get_the_date();
 $expiration_date = '';
 
@@ -86,7 +90,7 @@ $open_contact_form = isset( $_GET['cf_contact'] ) && '1' === wp_unslash( $_GET['
 </div>
 <br clear="all" />
 <?php endif; ?>
-<div class="cf-post cf-single-page">
+<div class="cf-post cf-single-page<?php echo '' !== $template_preset ? ' cf-single-preset-' . esc_attr( $template_preset ) : ''; ?>">
 	<section class="cf-single-hero">
 		<div class="cf-single-media-card">
 			<div class="cf-single-media-stage">

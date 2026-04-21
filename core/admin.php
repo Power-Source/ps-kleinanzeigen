@@ -320,6 +320,10 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 						$params['dashboard_show_credit_status'] = empty( $params['dashboard_show_credit_status'] ) ? 0 : 1;
 						$params['dashboard_credit_warning_threshold'] = isset( $params['dashboard_credit_warning_threshold'] ) ? absint( $params['dashboard_credit_warning_threshold'] ) : 5;
 						$params['featured_credit_package_id'] = isset( $params['featured_credit_package_id'] ) ? absint( $params['featured_credit_package_id'] ) : 0;
+						$params['expired_restart_mode'] = isset( $params['expired_restart_mode'] ) ? sanitize_key( $params['expired_restart_mode'] ) : 'credits';
+						if ( ! in_array( $params['expired_restart_mode'], array( 'none', 'free', 'credits' ), true ) ) {
+							$params['expired_restart_mode'] = 'credits';
+						}
 						$params = $this->sync_marketpress_checkout_products( $params );
 						$this->sync_legacy_payment_types( $params );
 					}
@@ -360,8 +364,44 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 						$params['single_show_sticky_actions'] = empty( $params['single_show_sticky_actions'] ) ? 0 : 1;
 						$params['single_show_reserved_badge'] = empty( $params['single_show_reserved_badge'] ) ? 0 : 1;
 						$params['user_show_favorites_tab'] = empty( $params['user_show_favorites_tab'] ) ? 0 : 1;
-						$params['user_allow_reserve_toggle'] = empty( $params['user_allow_reserve_toggle'] ) ? 0 : 1;					$raw_single_accent = isset( $params['single_accent_color'] ) ? $params['single_accent_color'] : '';
-					$params['single_accent_color'] = preg_match( '/^#[0-9a-f]{6}$/i', $raw_single_accent ) ? $raw_single_accent : '#0f6cbd';					// Tarif-Status-Box Einstellungen (mit Legacy-Fallback von tariff_* auf tarif_*)
+						$params['user_allow_reserve_toggle'] = empty( $params['user_allow_reserve_toggle'] ) ? 0 : 1;
+						$raw_single_accent = isset( $params['single_accent_color'] ) ? $params['single_accent_color'] : '';
+						$params['single_accent_color'] = preg_match( '/^#[0-9a-f]{6}$/i', $raw_single_accent ) ? $raw_single_accent : '#0f6cbd';
+						$gallery_layout_allowed = array( 'image_only', 'slider', 'mosaic' );
+						$hero_media_mode_allowed = array( 'featured_only', 'slider', 'mosaic' );
+						$extra_gallery_position_allowed = array( 'above_description', 'below_description' );
+						$extra_gallery_display_allowed = array( 'grid', 'slider' );
+						$raw_gallery_layout_b2c = isset( $params['single_gallery_layout_b2c'] ) ? sanitize_key( (string) $params['single_gallery_layout_b2c'] ) : 'image_only';
+						$raw_gallery_layout_premium = isset( $params['single_gallery_layout_premium'] ) ? sanitize_key( (string) $params['single_gallery_layout_premium'] ) : 'slider';
+						$raw_gallery_layout_community = isset( $params['single_gallery_layout_community'] ) ? sanitize_key( (string) $params['single_gallery_layout_community'] ) : 'mosaic';
+						$params['single_gallery_layout_b2c'] = in_array( $raw_gallery_layout_b2c, $gallery_layout_allowed, true ) ? $raw_gallery_layout_b2c : 'image_only';
+						$params['single_gallery_layout_premium'] = in_array( $raw_gallery_layout_premium, $gallery_layout_allowed, true ) ? $raw_gallery_layout_premium : 'slider';
+						$params['single_gallery_layout_community'] = in_array( $raw_gallery_layout_community, $gallery_layout_allowed, true ) ? $raw_gallery_layout_community : 'mosaic';
+
+						$raw_single_hero_media_mode_b2c = isset( $params['single_hero_media_mode_b2c'] ) ? sanitize_key( (string) $params['single_hero_media_mode_b2c'] ) : 'featured_only';
+						$raw_single_hero_media_mode_premium = isset( $params['single_hero_media_mode_premium'] ) ? sanitize_key( (string) $params['single_hero_media_mode_premium'] ) : 'slider';
+						$raw_single_hero_media_mode_community = isset( $params['single_hero_media_mode_community'] ) ? sanitize_key( (string) $params['single_hero_media_mode_community'] ) : 'mosaic';
+						$params['single_hero_media_mode_b2c'] = in_array( $raw_single_hero_media_mode_b2c, $hero_media_mode_allowed, true ) ? $raw_single_hero_media_mode_b2c : 'featured_only';
+						$params['single_hero_media_mode_premium'] = in_array( $raw_single_hero_media_mode_premium, $hero_media_mode_allowed, true ) ? $raw_single_hero_media_mode_premium : 'slider';
+						$params['single_hero_media_mode_community'] = in_array( $raw_single_hero_media_mode_community, $hero_media_mode_allowed, true ) ? $raw_single_hero_media_mode_community : 'mosaic';
+
+						$raw_single_extra_gallery_position_b2c = isset( $params['single_extra_gallery_position_b2c'] ) ? sanitize_key( (string) $params['single_extra_gallery_position_b2c'] ) : 'below_description';
+						$raw_single_extra_gallery_position_premium = isset( $params['single_extra_gallery_position_premium'] ) ? sanitize_key( (string) $params['single_extra_gallery_position_premium'] ) : 'below_description';
+						$raw_single_extra_gallery_position_community = isset( $params['single_extra_gallery_position_community'] ) ? sanitize_key( (string) $params['single_extra_gallery_position_community'] ) : 'below_description';
+						$params['single_extra_gallery_position_b2c'] = in_array( $raw_single_extra_gallery_position_b2c, $extra_gallery_position_allowed, true ) ? $raw_single_extra_gallery_position_b2c : 'below_description';
+						$params['single_extra_gallery_position_premium'] = in_array( $raw_single_extra_gallery_position_premium, $extra_gallery_position_allowed, true ) ? $raw_single_extra_gallery_position_premium : 'below_description';
+						$params['single_extra_gallery_position_community'] = in_array( $raw_single_extra_gallery_position_community, $extra_gallery_position_allowed, true ) ? $raw_single_extra_gallery_position_community : 'below_description';
+
+						$raw_single_extra_gallery_display_mode_b2c = isset( $params['single_extra_gallery_display_mode_b2c'] ) ? sanitize_key( (string) $params['single_extra_gallery_display_mode_b2c'] ) : 'grid';
+						$raw_single_extra_gallery_display_mode_premium = isset( $params['single_extra_gallery_display_mode_premium'] ) ? sanitize_key( (string) $params['single_extra_gallery_display_mode_premium'] ) : 'grid';
+						$raw_single_extra_gallery_display_mode_community = isset( $params['single_extra_gallery_display_mode_community'] ) ? sanitize_key( (string) $params['single_extra_gallery_display_mode_community'] ) : 'grid';
+						$params['single_extra_gallery_display_mode_b2c'] = in_array( $raw_single_extra_gallery_display_mode_b2c, $extra_gallery_display_allowed, true ) ? $raw_single_extra_gallery_display_mode_b2c : 'grid';
+						$params['single_extra_gallery_display_mode_premium'] = in_array( $raw_single_extra_gallery_display_mode_premium, $extra_gallery_display_allowed, true ) ? $raw_single_extra_gallery_display_mode_premium : 'grid';
+						$params['single_extra_gallery_display_mode_community'] = in_array( $raw_single_extra_gallery_display_mode_community, $extra_gallery_display_allowed, true ) ? $raw_single_extra_gallery_display_mode_community : 'grid';
+						$raw_frontend_preset = isset( $params['frontend_preset'] ) ? sanitize_key( (string) $params['frontend_preset'] ) : '';
+						$params['frontend_preset'] = in_array( $raw_frontend_preset, array( 'b2c', 'premium', 'community' ), true ) ? $raw_frontend_preset : '';
+
+						// Tarif-Status-Box Einstellungen (mit Legacy-Fallback von tariff_* auf tarif_*)
 					$legacy_enabled = isset( $params['tariff_status_enabled'] ) ? (int) $params['tariff_status_enabled'] : 0;
 					$params['tarif_status_enabled'] = isset( $params['tarif_status_enabled'] ) ? ( empty( $params['tarif_status_enabled'] ) ? 0 : 1 ) : ( $legacy_enabled ? 1 : 0 );
 

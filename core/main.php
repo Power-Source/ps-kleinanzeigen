@@ -85,23 +85,35 @@ if (!class_exists('Classifieds_Core_Main')):
                         die(__('Security check failed!', $this->text_domain));
                     }
                     $post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+                    $expiration_timestamp = $post_id ? (int) get_post_meta( $post_id, '_expiration_date', true ) : 0;
+                    $is_started_listing = ( $expiration_timestamp > 0 );
+                    $is_expired_listing = ( $is_started_listing && $expiration_timestamp <= current_time( 'timestamp' ) );
+                    $payments_options = (array) $this->get_options( 'payments' );
+                    $expired_restart_mode = isset( $payments_options['expired_restart_mode'] ) ? sanitize_key( $payments_options['expired_restart_mode'] ) : 'credits';
+                    if ( ! in_array( $expired_restart_mode, array( 'none', 'free', 'credits' ), true ) ) {
+                        $expired_restart_mode = 'credits';
+                    }
+
+                    $requires_credits = ! $is_started_listing || ( $is_expired_listing && 'credits' === $expired_restart_mode );
                     $validation = $this->classified_submit_validator->validate_update_submission( $_POST );
                     $credits_required = $validation['credits_required'];
+                    $can_restart_expired = ! $is_expired_listing || 'none' !== $expired_restart_mode;
+                    $has_required_credits = ! $requires_credits || $validation['has_credits'];
                     // If user have more credits of the required credits proceed with renewing the ad
-                    if ( $validation['has_credits'] ) {
+                    if ( $can_restart_expired && $has_required_credits ) {
                         // Update ad
                         $this->update_ad($_POST);
                         // Save the expiration date
                         if ( $post_id ) {
-                            $this->save_expiration_date($post_id);
+                            $this->save_expiration_date($post_id, ! $is_started_listing || $is_expired_listing);
                         }
                         // Set the proper step which will be loaded by "page-my-classifieds.php"
                         set_query_var('cf_action', 'my-classifieds');
 
-                        if (!$this->is_full_access()) {
+                        if ( $requires_credits && ! $this->is_full_access() ) {
                             // Update new credits amount
                             $this->transactions->credits -= $credits_required;
-                        } else {
+                        } elseif ( $requires_credits ) {
                             //Check one_time
                             if ($this->transactions->billing_type == 'one_time') $this->transactions->status = 'used';
                         }
@@ -123,7 +135,9 @@ if (!class_exists('Classifieds_Core_Main')):
                         set_query_var('cf_post_id', absint( $_POST['post_id'] ?? 0 ));
                         /* Set the proper step which will be loaded by "page-my-classifieds.php" */
                         set_query_var('cf_action', 'edit');
-                        $error = __('Du hast nicht genug Credits fuer die ausgewaehlte Laufzeit. Waehle, wenn moeglich, eine kuerzere Laufzeit oder kauf mehr Credits.<br />Deine Anzeige wurde als Entwurf gespeichert.', $this->text_domain);
+                        $error = $is_expired_listing && 'none' === $expired_restart_mode
+                            ? __('Neustart nach Ablauf ist deaktiviert. Deine Anzeige wurde als Entwurf gespeichert.', $this->text_domain)
+                            : __('Du hast nicht genug Credits fuer die ausgewaehlte Laufzeit. Waehle, wenn moeglich, eine kuerzere Laufzeit oder kauf mehr Credits.<br />Deine Anzeige wurde als Entwurf gespeichert.', $this->text_domain);
                         set_query_var('cf_error', $error);
                     }
                 }

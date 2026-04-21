@@ -200,6 +200,7 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 			$this->reserved_status_service = new CF_Reserved_Status_Service( $this );
 			add_action( 'wp_ajax_cf_toggle_favorite', array( $this->favorites_manager, 'ajax_toggle_favorite' ) );
 			add_action( 'wp_ajax_nopriv_cf_toggle_favorite', array( $this->favorites_manager, 'ajax_toggle_favorite' ) );
+			add_action( 'wp_ajax_cf_remove_gallery_image', array( $this, 'ajax_remove_gallery_image' ) );
 			require_once $this->plugin_dir . 'core/class-quick-view-service.php';
 			$this->quick_view_service = new CF_Quick_View_Service( $this );
 			add_action( 'wp_ajax_cf_quick_view', array( $this->quick_view_service, 'ajax_quick_view' ) );
@@ -235,6 +236,53 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 
 		function on_enqueue_scripts() {
 			wp_enqueue_style( 'jquery-taginput', $this->plugin_url . 'ui-front/css/jquery.tagsinput.css' );
+		}
+
+		/**
+		 * Remove one gallery image from a classifieds post via AJAX.
+		 *
+		 * @return void
+		 */
+		function ajax_remove_gallery_image() {
+			check_ajax_referer( 'cf_manage_gallery', 'nonce' );
+
+			if ( ! is_user_logged_in() ) {
+				wp_send_json_error( array( 'message' => __( 'Bitte zuerst einloggen.', $this->text_domain ) ), 401 );
+			}
+
+			$post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+			$attachment_id = isset( $_POST['attachment_id'] ) ? absint( $_POST['attachment_id'] ) : 0;
+
+			if ( $post_id <= 0 || $attachment_id <= 0 ) {
+				wp_send_json_error( array( 'message' => __( 'Ungueltige Anfrage.', $this->text_domain ) ), 400 );
+			}
+
+			$post = get_post( $post_id );
+			if ( ! $post || 'classifieds' !== $post->post_type ) {
+				wp_send_json_error( array( 'message' => __( 'Anzeige wurde nicht gefunden.', $this->text_domain ) ), 404 );
+			}
+
+			if ( ! current_user_can( 'edit_post', $post_id ) ) {
+				wp_send_json_error( array( 'message' => __( 'Keine Berechtigung fuer diese Anzeige.', $this->text_domain ) ), 403 );
+			}
+
+			$gallery_ids = get_post_meta( $post_id, '_cf_gallery_ids', true );
+			if ( ! is_array( $gallery_ids ) ) {
+				$gallery_ids = array();
+			}
+			$gallery_ids = array_values( array_filter( array_map( 'absint', $gallery_ids ) ) );
+
+			if ( ! in_array( $attachment_id, $gallery_ids, true ) ) {
+				wp_send_json_error( array( 'message' => __( 'Bild ist nicht mehr in der Galerie.', $this->text_domain ) ), 409 );
+			}
+
+			$gallery_ids = array_values( array_diff( $gallery_ids, array( $attachment_id ) ) );
+			update_post_meta( $post_id, '_cf_gallery_ids', $gallery_ids );
+
+			wp_send_json_success( array(
+				'gallery_ids' => $gallery_ids,
+				'removed_id' => $attachment_id,
+			) );
 		}
 
 		/**
@@ -1230,6 +1278,18 @@ $cost_meta_key     = '_cf_cost';
 					set_post_thumbnail( $post_id, $thumbnail_id );
 				}
 
+				$existing_gallery_ids = get_post_meta( $post_id, '_cf_gallery_ids', true );
+				if ( ! is_array( $existing_gallery_ids ) ) {
+					$existing_gallery_ids = array();
+				}
+				$existing_gallery_ids = array_values( array_filter( array_map( 'absint', $existing_gallery_ids ) ) );
+
+				$remove_gallery_ids = isset( $params['remove_gallery_ids'] ) ? array_values( array_filter( array_map( 'absint', (array) $params['remove_gallery_ids'] ) ) ) : array();
+				if ( ! empty( $remove_gallery_ids ) ) {
+					$existing_gallery_ids = array_values( array_diff( $existing_gallery_ids, $remove_gallery_ids ) );
+					update_post_meta( $post_id, '_cf_gallery_ids', $existing_gallery_ids );
+				}
+
 				if ( isset( $_FILES['feature_gallery'] ) && ! empty( $_FILES['feature_gallery']['name'] ) && is_array( $_FILES['feature_gallery']['name'] ) ) {
 					require_once( ABSPATH . '/wp-admin/includes/media.php' );
 					require_once( ABSPATH . '/wp-admin/includes/image.php' );
@@ -1260,7 +1320,8 @@ $cost_meta_key     = '_cf_cost';
 					unset( $_FILES['cf_gallery_upload'] );
 
 					if ( ! empty( $gallery_ids ) ) {
-						update_post_meta( $post_id, '_cf_gallery_ids', $gallery_ids );
+						$merged_gallery_ids = array_values( array_unique( array_merge( $existing_gallery_ids, array_map( 'absint', $gallery_ids ) ) ) );
+						update_post_meta( $post_id, '_cf_gallery_ids', $merged_gallery_ids );
 					}
 				}
 
@@ -1372,26 +1433,36 @@ $cost_meta_key     = '_cf_cost';
 		 *
 		 * @return NULL If there is autosave attempt
 		 **/
-		function save_expiration_date( $post_id ) {
+		function save_expiration_date( $post_id, $force_restart = false ) {
 			/* prevent autosave from deleting the custom fields */
 			if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
 				return;
 			}
-			/* Update  */
 
+			$current_expiration = (int) get_post_meta( $post_id, '_expiration_date', true );
+			$now = current_time( 'timestamp' );
+
+			// Keep the running countdown stable while a listing is active.
+			if ( ! $force_restart && $current_expiration > $now ) {
+				return;
+			}
+
+			$duration = '';
 			if ( isset( $_POST[ $this->custom_fields['duration'] ] ) ) {
-				$date = $this->calculate_expiration_date( $post_id, $_POST[ $this->custom_fields['duration'] ] );
-				update_post_meta( $post_id, '_expiration_date', $date );
-				//we will need to reset the expiry value on form in cause user can click on the save form again, and accident extend it
-				update_post_meta( $post_id, $this->custom_fields['duration'], '0' );
+				$duration = sanitize_text_field( wp_unslash( $_POST[ $this->custom_fields['duration'] ] ) );
 			} elseif ( isset( $_POST['custom_fields'][ $this->custom_fields['duration'] ] ) ) {
-				$date = $this->calculate_expiration_date( $post_id, $_POST['custom_fields'][ $this->custom_fields['duration'] ] );
-				update_post_meta( $post_id, '_expiration_date', $date );
-				update_post_meta( $post_id, $this->custom_fields['duration'], '0' );
+				$duration = sanitize_text_field( wp_unslash( $_POST['custom_fields'][ $this->custom_fields['duration'] ] ) );
 			} elseif ( isset( $_POST['duration'] ) ) {
-				$date = $this->calculate_expiration_date( $post_id, $_POST['duration'] );
+				$duration = sanitize_text_field( wp_unslash( $_POST['duration'] ) );
+			}
+
+			if ( '' === $duration ) {
+				return;
+			}
+
+			$date = $this->calculate_expiration_date( $post_id, $duration );
+			if ( ! empty( $date ) ) {
 				update_post_meta( $post_id, '_expiration_date', $date );
-				update_post_meta( $post_id, $this->custom_fields['duration'], '0' );
 			}
 		}
 

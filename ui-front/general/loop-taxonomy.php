@@ -28,6 +28,10 @@ $cf = $Classifieds_Core; //shorthand
 $cf_options = $cf->get_options( 'general' );
 $frontend_options = $cf->get_options( 'frontend' );
 $favorite_ids = method_exists( $cf, 'get_favorite_ids' ) ? $cf->get_favorite_ids() : array();
+$template_preset = isset( $GLOBALS['cf_frontend_template_preset'] ) ? sanitize_key( (string) $GLOBALS['cf_frontend_template_preset'] ) : '';
+if ( ! in_array( $template_preset, array( 'b2c', 'premium', 'community' ), true ) ) {
+	$template_preset = '';
+}
 
 $archive_columns = isset( $frontend_options['archive_columns'] ) ? (int) $frontend_options['archive_columns'] : 3;
 if ( ! in_array( $archive_columns, array( 2, 3, 4 ), true ) ) {
@@ -173,7 +177,7 @@ $region_terms = get_terms(
 *
 * Without further ado, the loop:
 */  ?>
-<div class="cf-listing-grid cf-grid-cols-<?php echo esc_attr( $archive_columns ); ?>">
+<div class="cf-listing-grid cf-grid-cols-<?php echo esc_attr( $archive_columns ); ?><?php echo '' !== $template_preset ? ' cf-archive-preset-' . esc_attr( $template_preset ) : ''; ?>">
 <?php while ( have_posts() ) : the_post(); ?>
 
 <?php

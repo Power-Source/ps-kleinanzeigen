@@ -16,6 +16,10 @@ $archive_show_quickview = isset( $options['archive_show_quickview'] ) ? (int) $o
 $archive_show_favorites = isset( $options['archive_show_favorites'] ) ? (int) $options['archive_show_favorites'] : 1;
 $archive_show_contact_cta = isset( $options['archive_show_contact_cta'] ) ? (int) $options['archive_show_contact_cta'] : 1;
 $archive_show_reserved_badge = isset( $options['archive_show_reserved_badge'] ) ? (int) $options['archive_show_reserved_badge'] : 1;
+$frontend_preset_value = isset( $options['frontend_preset'] ) ? sanitize_key( $options['frontend_preset'] ) : '';
+if ( ! in_array( $frontend_preset_value, array( 'b2c', 'premium', 'community' ), true ) ) {
+	$frontend_preset_value = '';
+}
 
 $single_show_gallery = isset( $options['single_show_gallery'] ) ? (int) $options['single_show_gallery'] : 1;
 $single_show_seller_card = isset( $options['single_show_seller_card'] ) ? (int) $options['single_show_seller_card'] : 1;
@@ -23,6 +27,51 @@ $single_show_sticky_actions = isset( $options['single_show_sticky_actions'] ) ? 
 $single_show_trust_block = isset( $options['single_show_trust_block'] ) ? (int) $options['single_show_trust_block'] : 1;
 $single_show_reserved_badge = isset( $options['single_show_reserved_badge'] ) ? (int) $options['single_show_reserved_badge'] : 1;
 $single_accent_color_value = isset( $options['single_accent_color'] ) && preg_match( '/^#[0-9a-f]{6}$/i', $options['single_accent_color'] ) ? $options['single_accent_color'] : '#0f6cbd';
+$hero_mode_allowed = array( 'featured_only', 'slider', 'mosaic' );
+$extra_position_allowed = array( 'above_description', 'below_description' );
+$extra_display_allowed = array( 'grid', 'slider' );
+
+$single_hero_media_mode_b2c = isset( $options['single_hero_media_mode_b2c'] ) ? sanitize_key( $options['single_hero_media_mode_b2c'] ) : 'featured_only';
+$single_hero_media_mode_premium = isset( $options['single_hero_media_mode_premium'] ) ? sanitize_key( $options['single_hero_media_mode_premium'] ) : 'slider';
+$single_hero_media_mode_community = isset( $options['single_hero_media_mode_community'] ) ? sanitize_key( $options['single_hero_media_mode_community'] ) : 'mosaic';
+
+$single_extra_gallery_position_b2c = isset( $options['single_extra_gallery_position_b2c'] ) ? sanitize_key( $options['single_extra_gallery_position_b2c'] ) : 'below_description';
+$single_extra_gallery_position_premium = isset( $options['single_extra_gallery_position_premium'] ) ? sanitize_key( $options['single_extra_gallery_position_premium'] ) : 'below_description';
+$single_extra_gallery_position_community = isset( $options['single_extra_gallery_position_community'] ) ? sanitize_key( $options['single_extra_gallery_position_community'] ) : 'below_description';
+
+$single_extra_gallery_display_mode_b2c = isset( $options['single_extra_gallery_display_mode_b2c'] ) ? sanitize_key( $options['single_extra_gallery_display_mode_b2c'] ) : 'grid';
+$single_extra_gallery_display_mode_premium = isset( $options['single_extra_gallery_display_mode_premium'] ) ? sanitize_key( $options['single_extra_gallery_display_mode_premium'] ) : 'grid';
+$single_extra_gallery_display_mode_community = isset( $options['single_extra_gallery_display_mode_community'] ) ? sanitize_key( $options['single_extra_gallery_display_mode_community'] ) : 'grid';
+
+if ( ! in_array( $single_hero_media_mode_b2c, $hero_mode_allowed, true ) ) {
+	$single_hero_media_mode_b2c = 'featured_only';
+}
+if ( ! in_array( $single_hero_media_mode_premium, $hero_mode_allowed, true ) ) {
+	$single_hero_media_mode_premium = 'slider';
+}
+if ( ! in_array( $single_hero_media_mode_community, $hero_mode_allowed, true ) ) {
+	$single_hero_media_mode_community = 'mosaic';
+}
+
+if ( ! in_array( $single_extra_gallery_position_b2c, $extra_position_allowed, true ) ) {
+	$single_extra_gallery_position_b2c = 'below_description';
+}
+if ( ! in_array( $single_extra_gallery_position_premium, $extra_position_allowed, true ) ) {
+	$single_extra_gallery_position_premium = 'below_description';
+}
+if ( ! in_array( $single_extra_gallery_position_community, $extra_position_allowed, true ) ) {
+	$single_extra_gallery_position_community = 'below_description';
+}
+
+if ( ! in_array( $single_extra_gallery_display_mode_b2c, $extra_display_allowed, true ) ) {
+	$single_extra_gallery_display_mode_b2c = 'grid';
+}
+if ( ! in_array( $single_extra_gallery_display_mode_premium, $extra_display_allowed, true ) ) {
+	$single_extra_gallery_display_mode_premium = 'grid';
+}
+if ( ! in_array( $single_extra_gallery_display_mode_community, $extra_display_allowed, true ) ) {
+	$single_extra_gallery_display_mode_community = 'grid';
+}
 
 $user_show_favorites_tab = isset( $options['user_show_favorites_tab'] ) ? (int) $options['user_show_favorites_tab'] : 1;
 $user_allow_reserve_toggle = isset( $options['user_allow_reserve_toggle'] ) ? (int) $options['user_allow_reserve_toggle'] : 1;
@@ -52,10 +101,10 @@ $tarif_status_padding_value = isset( $options['tarif_status_padding'] ) ? absint
 			<div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
 				<label for="cf_frontend_preset"><strong><?php _e( 'Preset waehlen', $this->text_domain ); ?></strong></label>
 				<select id="cf_frontend_preset">
-					<option value=""><?php _e( 'Bitte auswaehlen', $this->text_domain ); ?></option>
-					<option value="b2c"><?php _e( 'B2C Marktplatz (schnell, kompakt)', $this->text_domain ); ?></option>
-					<option value="premium"><?php _e( 'Premium/hochpreisig (mehr Vertrauen)', $this->text_domain ); ?></option>
-					<option value="community"><?php _e( 'Community/Forum (fokussiert, reduziert)', $this->text_domain ); ?></option>
+					<option value="" <?php selected( '', $frontend_preset_value ); ?>><?php _e( 'Bitte auswaehlen', $this->text_domain ); ?></option>
+					<option value="b2c" <?php selected( 'b2c', $frontend_preset_value ); ?>><?php _e( 'B2C Marktplatz (schnell, kompakt)', $this->text_domain ); ?></option>
+					<option value="premium" <?php selected( 'premium', $frontend_preset_value ); ?>><?php _e( 'Premium/hochpreisig (mehr Vertrauen)', $this->text_domain ); ?></option>
+					<option value="community" <?php selected( 'community', $frontend_preset_value ); ?>><?php _e( 'Community/Forum (fokussiert, reduziert)', $this->text_domain ); ?></option>
 				</select>
 				<button type="button" class="button" id="cf_apply_frontend_preset"><?php _e( 'Preset anwenden', $this->text_domain ); ?></button>
 			</div>
@@ -241,6 +290,69 @@ $tarif_status_padding_value = isset( $options['tarif_status_padding'] ) ? absint
 							<span class="description"><?php _e( 'Hauptfarbe fuer Preis, primaere Buttons und Links auf der Anzeigen-Detailseite.', $this->text_domain ); ?></span>
 						</td>
 					</tr>
+					<tr>
+						<th><?php _e( 'B2C Medienlayout', $this->text_domain ); ?></th>
+						<td>
+							<p><strong><?php _e( 'Header/Hero', $this->text_domain ); ?></strong></p>
+							<select name="single_hero_media_mode_b2c">
+								<option value="featured_only" <?php selected( 'featured_only', $single_hero_media_mode_b2c ); ?>><?php _e( 'Nur Anzeigenbild', $this->text_domain ); ?></option>
+								<option value="slider" <?php selected( 'slider', $single_hero_media_mode_b2c ); ?>><?php _e( 'Nur Slider (alle Bilder)', $this->text_domain ); ?></option>
+								<option value="mosaic" <?php selected( 'mosaic', $single_hero_media_mode_b2c ); ?>><?php _e( 'Mosaik (Anzeigenbild prominent)', $this->text_domain ); ?></option>
+							</select>
+							<p><strong><?php _e( 'Zusatzbilder Position', $this->text_domain ); ?></strong></p>
+							<select name="single_extra_gallery_position_b2c">
+								<option value="above_description" <?php selected( 'above_description', $single_extra_gallery_position_b2c ); ?>><?php _e( 'Oberhalb der Beschreibung', $this->text_domain ); ?></option>
+								<option value="below_description" <?php selected( 'below_description', $single_extra_gallery_position_b2c ); ?>><?php _e( 'Unterhalb der Beschreibung', $this->text_domain ); ?></option>
+							</select>
+							<p><strong><?php _e( 'Zusatzbilder Darstellung', $this->text_domain ); ?></strong></p>
+							<select name="single_extra_gallery_display_mode_b2c">
+								<option value="grid" <?php selected( 'grid', $single_extra_gallery_display_mode_b2c ); ?>><?php _e( 'Einzelbilder (Grid)', $this->text_domain ); ?></option>
+								<option value="slider" <?php selected( 'slider', $single_extra_gallery_display_mode_b2c ); ?>><?php _e( 'Slider', $this->text_domain ); ?></option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><?php _e( 'Premium Medienlayout', $this->text_domain ); ?></th>
+						<td>
+							<p><strong><?php _e( 'Header/Hero', $this->text_domain ); ?></strong></p>
+							<select name="single_hero_media_mode_premium">
+								<option value="featured_only" <?php selected( 'featured_only', $single_hero_media_mode_premium ); ?>><?php _e( 'Nur Anzeigenbild', $this->text_domain ); ?></option>
+								<option value="slider" <?php selected( 'slider', $single_hero_media_mode_premium ); ?>><?php _e( 'Nur Slider (alle Bilder)', $this->text_domain ); ?></option>
+								<option value="mosaic" <?php selected( 'mosaic', $single_hero_media_mode_premium ); ?>><?php _e( 'Mosaik (Anzeigenbild prominent)', $this->text_domain ); ?></option>
+							</select>
+							<p><strong><?php _e( 'Zusatzbilder Position', $this->text_domain ); ?></strong></p>
+							<select name="single_extra_gallery_position_premium">
+								<option value="above_description" <?php selected( 'above_description', $single_extra_gallery_position_premium ); ?>><?php _e( 'Oberhalb der Beschreibung', $this->text_domain ); ?></option>
+								<option value="below_description" <?php selected( 'below_description', $single_extra_gallery_position_premium ); ?>><?php _e( 'Unterhalb der Beschreibung', $this->text_domain ); ?></option>
+							</select>
+							<p><strong><?php _e( 'Zusatzbilder Darstellung', $this->text_domain ); ?></strong></p>
+							<select name="single_extra_gallery_display_mode_premium">
+								<option value="grid" <?php selected( 'grid', $single_extra_gallery_display_mode_premium ); ?>><?php _e( 'Einzelbilder (Grid)', $this->text_domain ); ?></option>
+								<option value="slider" <?php selected( 'slider', $single_extra_gallery_display_mode_premium ); ?>><?php _e( 'Slider', $this->text_domain ); ?></option>
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<th><?php _e( 'Community Medienlayout', $this->text_domain ); ?></th>
+						<td>
+							<p><strong><?php _e( 'Header/Hero', $this->text_domain ); ?></strong></p>
+							<select name="single_hero_media_mode_community">
+								<option value="featured_only" <?php selected( 'featured_only', $single_hero_media_mode_community ); ?>><?php _e( 'Nur Anzeigenbild', $this->text_domain ); ?></option>
+								<option value="slider" <?php selected( 'slider', $single_hero_media_mode_community ); ?>><?php _e( 'Nur Slider (alle Bilder)', $this->text_domain ); ?></option>
+								<option value="mosaic" <?php selected( 'mosaic', $single_hero_media_mode_community ); ?>><?php _e( 'Mosaik (Anzeigenbild prominent)', $this->text_domain ); ?></option>
+							</select>
+							<p><strong><?php _e( 'Zusatzbilder Position', $this->text_domain ); ?></strong></p>
+							<select name="single_extra_gallery_position_community">
+								<option value="above_description" <?php selected( 'above_description', $single_extra_gallery_position_community ); ?>><?php _e( 'Oberhalb der Beschreibung', $this->text_domain ); ?></option>
+								<option value="below_description" <?php selected( 'below_description', $single_extra_gallery_position_community ); ?>><?php _e( 'Unterhalb der Beschreibung', $this->text_domain ); ?></option>
+							</select>
+							<p><strong><?php _e( 'Zusatzbilder Darstellung', $this->text_domain ); ?></strong></p>
+							<select name="single_extra_gallery_display_mode_community">
+								<option value="grid" <?php selected( 'grid', $single_extra_gallery_display_mode_community ); ?>><?php _e( 'Einzelbilder (Grid)', $this->text_domain ); ?></option>
+								<option value="slider" <?php selected( 'slider', $single_extra_gallery_display_mode_community ); ?>><?php _e( 'Slider', $this->text_domain ); ?></option>
+							</select>
+						</td>
+					</tr>
 				</table>
 			</div>
 		</div>
@@ -369,6 +481,7 @@ $tarif_status_padding_value = isset( $options['tarif_status_padding'] ) ? absint
 			<p class="submit">
 				<?php wp_nonce_field( 'verify' ); ?>
 				<input type="hidden" name="key" value="frontend" />
+				<input type="hidden" name="frontend_preset" id="frontend_preset" value="<?php echo esc_attr( $frontend_preset_value ); ?>" />
 				<input type="submit" class="button-primary" name="save" value="<?php _e( 'Aenderungen speichern', $this->text_domain ); ?>" />
 			</p>
 		</form>
@@ -377,6 +490,7 @@ $tarif_status_padding_value = isset( $options['tarif_status_padding'] ) ? absint
 	(function() {
 		const presetSelect = document.getElementById('cf_frontend_preset');
 		const applyButton = document.getElementById('cf_apply_frontend_preset');
+		const presetHidden = document.getElementById('frontend_preset');
 
 		if (!presetSelect || !applyButton) {
 			return;
@@ -412,7 +526,10 @@ $tarif_status_padding_value = isset( $options['tarif_status_padding'] ) ? absint
 				single_show_reserved_badge: true,
 				user_allow_reserve_toggle: true,
 				user_show_favorites_tab: true,
-				single_accent_color: '#0f6cbd'
+				single_accent_color: '#0f6cbd',
+				single_hero_media_mode_b2c: 'featured_only',
+				single_extra_gallery_position_b2c: 'below_description',
+				single_extra_gallery_display_mode_b2c: 'grid'
 			},
 			premium: {
 				archive_columns: '2',
@@ -429,7 +546,10 @@ $tarif_status_padding_value = isset( $options['tarif_status_padding'] ) ? absint
 				single_show_reserved_badge: true,
 				user_allow_reserve_toggle: true,
 				user_show_favorites_tab: true,
-				single_accent_color: '#7c3aed'
+				single_accent_color: '#7c3aed',
+				single_hero_media_mode_premium: 'slider',
+				single_extra_gallery_position_premium: 'below_description',
+				single_extra_gallery_display_mode_premium: 'grid'
 			},
 			community: {
 				archive_columns: '3',
@@ -446,19 +566,35 @@ $tarif_status_padding_value = isset( $options['tarif_status_padding'] ) ? absint
 				single_show_reserved_badge: true,
 				user_allow_reserve_toggle: true,
 				user_show_favorites_tab: true,
-				single_accent_color: '#16a34a'
+				single_accent_color: '#16a34a',
+				single_hero_media_mode_community: 'mosaic',
+				single_extra_gallery_position_community: 'below_description',
+				single_extra_gallery_display_mode_community: 'grid'
 			}
 		};
 
 		applyButton.addEventListener('click', function() {
 			const selected = presetSelect.value;
 			if (!selected || !presets[selected]) {
+				if (presetHidden) {
+					presetHidden.value = '';
+				}
 				return;
+			}
+
+			if (presetHidden) {
+				presetHidden.value = selected;
 			}
 
 			Object.keys(presets[selected]).forEach(function(key) {
 				setByName(key, presets[selected][key]);
 			});
+		});
+
+		presetSelect.addEventListener('change', function() {
+			if (presetHidden) {
+				presetHidden.value = presetSelect.value || '';
+			}
 		});
 	})();
 	</script>

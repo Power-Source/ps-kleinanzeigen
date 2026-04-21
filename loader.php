@@ -1,8 +1,8 @@
 <?php
 /*
-Plugin Name: Kleinanzeigen
+Plugin Name: PS Kleinanzeigen
 Plugin URI: https://psource.eimen.net/wiki/ps-kleinanzeigen-dokumentation/
-Description: Füge Kleinanzeigen zu Deinem Blog oder Netzwerk hinzu. Erstelle und verwalte Anzeigen, lade Bilder hoch, sende E-Mails, aktiviere das Kreditsystem und berechne Deinen Benutzern die Platzierung von Anzeigen in Deinem Netzwerk.
+Description: PS Kleinanzeigen stellt dir alles zur Verfügung was du benötigst um eine regionale Kleinanzeigen-Plattform zu erstellen. Durch die Integrationen mit anderen PSOURCE Plugins, kannst du deine Kleinanzeigenplattform jederzeit flexibel erweitern und Hochskalieren.
 Version: 1.0.0
 Author: PSOURCE
 Author URI: https://github.com/Power-Source
@@ -13,16 +13,16 @@ Network: false
 */
 
 $plugin_header_translate = array(
-__('Kleinanzeigen - Füge Kleinanzeigen zu Deinem Blog oder Netzwerk hinzu. Erstelle und verwalte Anzeigen, lade Bilder hoch, sende E-Mails, aktiviere das Kreditsystem und berechne Deinen Benutzern die Platzierung von Anzeigen in Deinem Netzwerk.', 'classifieds'),
+__('PS Kleinanzeigen stellt dir alles zur Verfügung was du benötigst um eine regionale Kleinanzeigen-Plattform zu erstellen. Durch die Integrationen mit anderen PSOURCE Plugins, kannst du deine Kleinanzeigenplattform jederzeit flexibel erweitern und Hochskalieren.', 'classifieds'),
 __('PSOURCE', 'classifieds'),
 __('https://psource.eimen.net/wiki/ps-kleinanzeigen-dokumentation/', 'classifieds'),
-__('Kleinanzeigen', 'classifieds'),
+__('PS Kleinanzeigen', 'classifieds'),
 );
 
 /*
 Authors - DerN3rd
 
-Copyright 2012-2024 PSOURCE (https://github.com/Power-Source)
+Copyright 2012-2026 PSOURCE (https://github.com/Power-Source)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License (Version 2 - GPLv2) as published by

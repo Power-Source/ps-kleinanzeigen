@@ -7,6 +7,9 @@ class CF_Template_Content_Service {
 	/** @var Classifieds_Core */
 	private $core;
 
+	/** @var array<string> */
+	private $supported_presets = array( 'b2c', 'premium', 'community' );
+
 	public function __construct( $core ) {
 		$this->core = $core;
 	}
@@ -25,14 +28,30 @@ class CF_Template_Content_Service {
 		$tpldir = get_stylesheet_directory();
 		$subdir = apply_filters( 'classifieds_custom_templates_dir', $tpldir . '/classifieds' );
 
-		$candidates = array(
+		$preset = $this->get_frontend_preset();
+		$preset_templates = array( 'loop-taxonomy', 'single-classifieds' );
+
+		$candidates = array();
+		if ( '' !== $preset && in_array( $template, $preset_templates, true ) ) {
+			$preset_template = $template . '-' . $preset;
+			$candidates = array(
+				$tpldir . '/' . $preset_template . '.php',
+				$tpldir . '/page-' . $preset_template . '.php',
+				$subdir . '/' . $preset_template . '.php',
+				$subdir . '/page-' . $preset_template . '.php',
+				CF_PLUGIN_DIR . 'ui-front/general/page-' . $preset_template . '.php',
+				CF_PLUGIN_DIR . 'ui-front/general/' . $preset_template . '.php',
+			);
+		}
+
+		$candidates = array_merge( $candidates, array(
 			$tpldir . '/' . $template . '.php',
 			$tpldir . '/page-' . $template . '.php',
 			$subdir . '/' . $template . '.php',
 			$subdir . '/page-' . $template . '.php',
 			CF_PLUGIN_DIR . 'ui-front/general/page-' . $template . '.php',
 			CF_PLUGIN_DIR . 'ui-front/general/' . $template . '.php',
-		);
+		) );
 
 		foreach ( $candidates as $template_path ) {
 			if ( file_exists( $template_path ) ) {
@@ -42,6 +61,25 @@ class CF_Template_Content_Service {
 
 		$page_template = get_page_template();
 		return ! empty( $page_template ) ? $page_template : $template;
+	}
+
+	/**
+	 * Resolve active frontend preset from options.
+	 *
+	 * @return string
+	 */
+	private function get_frontend_preset() {
+		$frontend_options = $this->core->get_options( 'frontend' );
+		if ( ! is_array( $frontend_options ) ) {
+			return '';
+		}
+
+		$preset = isset( $frontend_options['frontend_preset'] ) ? sanitize_key( (string) $frontend_options['frontend_preset'] ) : '';
+		if ( in_array( $preset, $this->supported_presets, true ) ) {
+			return $preset;
+		}
+
+		return '';
 	}
 
 	/**
