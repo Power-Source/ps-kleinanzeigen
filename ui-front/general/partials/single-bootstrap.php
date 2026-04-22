@@ -24,6 +24,21 @@ $author_registered = ! empty( $author_registered_raw ) ? date_i18n( get_option( 
 $author_active_ads = count_user_posts( $author_id, 'classifieds', true );
 $region_terms = get_the_terms( $post->ID, 'kleinanzeigen-region' );
 $region_name = ( ! is_wp_error( $region_terms ) && ! empty( $region_terms ) ) ? implode( ', ', wp_list_pluck( $region_terms, 'name' ) ) : '';
+$maps_options = (array) $this->get_options( 'maps' );
+$show_single_region_map = ! isset( $maps_options['maps_show_single_region_map'] ) || 1 === (int) $maps_options['maps_show_single_region_map'];
+$single_region_map_label = isset( $maps_options['maps_single_region_map_label'] ) && '' !== trim( (string) $maps_options['maps_single_region_map_label'] )
+	? (string) $maps_options['maps_single_region_map_label']
+	: __( 'Region auf der Karte', $this->text_domain );
+$single_region_map_html = '';
+if ( $show_single_region_map && ! is_wp_error( $region_terms ) && ! empty( $region_terms ) && shortcode_exists( 'cf_regions_map' ) ) {
+	$region_ids = array_values( array_unique( array_filter( array_map( 'absint', wp_list_pluck( $region_terms, 'term_id' ) ) ) ) );
+	if ( ! empty( $region_ids ) ) {
+		$inline_map_html = do_shortcode( '[cf_regions_map regions="' . implode( ',', $region_ids ) . '"]' );
+		if ( '' !== trim( (string) $inline_map_html ) ) {
+			$single_region_map_html = '<p class="cf-single-region-map-title">' . esc_html( $single_region_map_label ) . '</p>' . $inline_map_html;
+		}
+	}
+}
 
 $single_show_gallery = ! isset( $frontend_options['single_show_gallery'] ) || 1 === (int) $frontend_options['single_show_gallery'];
 $single_show_trust_block = ! isset( $frontend_options['single_show_trust_block'] ) || 1 === (int) $frontend_options['single_show_trust_block'];

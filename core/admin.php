@@ -242,6 +242,7 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 	* @return void
 	**/
 	function handle_admin_requests() {
+		$maps_available = class_exists( 'AgmMapModel' ) && class_exists( 'AgmMarkerReplacer' );
 		$valid_tabs = array(
 		'general',
 		'frontend',
@@ -250,6 +251,9 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 		'affiliate',
 		'shortcodes',
 		);
+		if ( $maps_available ) {
+			$valid_tabs[] = 'maps';
+		}
 
 		$params = stripslashes_deep($_POST);
 
@@ -442,6 +446,17 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 					$params['tarif_status_padding'] = absint( $raw_padding );
 						$archive_columns = isset( $params['archive_columns'] ) ? (int) $params['archive_columns'] : 3;
 						$params['archive_columns'] = in_array( $archive_columns, array( 2, 3, 4 ), true ) ? $archive_columns : 3;
+					}
+					if ( 'maps' === $tab ) {
+						$params['maps_enable_regions_map'] = empty( $params['maps_enable_regions_map'] ) ? 0 : 1;
+						$params['maps_show_single_region_map'] = empty( $params['maps_show_single_region_map'] ) ? 0 : 1;
+						$params['maps_auto_geocode_regions'] = empty( $params['maps_auto_geocode_regions'] ) ? 0 : 1;
+						$preview_count = isset( $params['maps_region_preview_count'] ) ? (int) $params['maps_region_preview_count'] : 3;
+						$params['maps_region_preview_count'] = max( 1, min( 12, $preview_count ) );
+						$params['maps_geocode_hint'] = isset( $params['maps_geocode_hint'] ) ? sanitize_text_field( $params['maps_geocode_hint'] ) : '';
+						$params['maps_single_region_map_label'] = isset( $params['maps_single_region_map_label'] ) ? sanitize_text_field( $params['maps_single_region_map_label'] ) : '';
+						$default_zoom = isset( $params['maps_default_zoom'] ) ? (int) $params['maps_default_zoom'] : 6;
+						$params['maps_default_zoom'] = max( 2, min( 18, $default_zoom ) );
 					}
 					unset($params['new_role'],
 					$params['add_role'],

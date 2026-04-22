@@ -22,6 +22,12 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 		</div>
 	</section>
 
+	<?php if ( '' !== $single_region_map_html ) : ?>
+	<section class="cf-community-region-map cf-single-section">
+		<div class="cf-single-region-map"><?php echo $single_region_map_html; ?></div>
+	</section>
+	<?php endif; ?>
+
 	<section class="cf-community-media-wrap cf-single-section">
 		<div class="cf-single-media-stage">
 			<?php if ( has_post_thumbnail() ) : ?>

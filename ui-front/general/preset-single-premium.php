@@ -49,6 +49,9 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 					<div class="cf-single-fact"><dt><?php _e( 'Läuft aus', $this->text_domain ); ?></dt><dd><?php echo esc_html( $expiration_date ); ?></dd></div>
 					<?php if ( '' !== $region_name ) : ?><div class="cf-single-fact"><dt><?php _e( 'Standort', $this->text_domain ); ?></dt><dd><?php echo esc_html( $region_name ); ?></dd></div><?php endif; ?>
 				</dl>
+				<?php if ( '' !== $single_region_map_html ) : ?>
+				<div class="cf-single-region-map"><?php echo $single_region_map_html; ?></div>
+				<?php endif; ?>
 				<div class="cf-quick-actions cf-single-actions cf-premium-actions">
 					<?php if ( empty( $options['disable_contact_form'] ) ) : ?><button type="button" class="button cf-btn-premium-primary cf-cta-contact" onclick="classifieds.toggle_contact_form(); return false;"><?php _e( 'Kontakt', $this->text_domain ); ?></button><?php endif; ?>
 					<button type="button" class="button cf-btn-premium-secondary cf-favorite-toggle <?php echo $is_favorite ? 'is-active' : ''; ?>" data-post-id="<?php echo esc_attr( $post->ID ); ?>"><?php _e( 'Merken', $this->text_domain ); ?></button>

@@ -17,6 +17,9 @@
 
 
 	<a class="nav-tab <?php if ( $tab == 'shortcodes' ) echo 'nav-tab-active'; ?>" href="<?php echo esc_attr('admin.php?page=classifieds_settings&tab=shortcodes' ); ?>"><?php _e( 'Shortcodes', $this->text_domain ); ?></a>
+	<?php if ( class_exists( 'AgmMapModel' ) && class_exists( 'AgmMarkerReplacer' ) ) : ?>
+	<a class="nav-tab <?php if ( $tab == 'maps' ) echo 'nav-tab-active'; ?>" href="<?php echo esc_attr('admin.php?page=classifieds_settings&tab=maps'); ?>"><?php _e( 'Maps', $this->text_domain ); ?></a>
+	<?php endif; ?>
 
 	<?php endif; ?>
 

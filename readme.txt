@@ -111,6 +111,13 @@ diesem Autor. Wenn Du auf einen benutzerdefinierten Taxonomiebegriff für Katego
 
 = 1.0.3 =
 - Fixed undefined variable $single_gallery_layout in single gallery section
+- Sticky Actions mobil: Bottom-Bar wird nur angezeigt, wenn die Option aktiv ist
+- Sticky Actions mobil: Anzeige und Nutzung auf registrierte/eingeloggte User begrenzt
+- Sticky Actions mobil (B2C): Teilen-Button in der Bottom-Bar ergänzt
+- Neue PS-Maps-Integration: Zusätzlicher Settings-Tab "Maps" wird angezeigt, sobald PS Maps aktiv ist
+- Neuer Shortcode [cf_regions_map] für Regionen-Marker inkl. Anzeigenanzahl und Vorschau im Marker-Popup
+- Single-Ansicht: Regionskarte wird direkt bei der Standort-Anzeige eingeblendet (ohne separate Shortcode-Seite)
+- Maps-Settings: Neue Option zum Ein-/Ausblenden der Single-Regionskarte inkl. frei definierbarem Karten-Titel
 
 = 1.0.2 =
 - Validierung von Klassifizierungsbeiträgen hinzugefügt und Standardbilder für leere Thumbnails festgelegt 

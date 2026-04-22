@@ -108,6 +108,14 @@
 						<br /><span class="description"><?php _e( 'Link zur Abmeldeseite. Erzeugt einen &lt;button&gt; &lt;/button&gt; mit den von Dir definierten Inhalten. Das Attribut "redirect" ist die URL, zu der nach dem Abmelden weitergeleitet wird.', $this->text_domain ) ?></span>
 					</td>
 				</tr>
+				<tr>
+					<th scope="row"><?php _e( 'Regionen-Karte (PS Maps):', $this->text_domain ) ?></th>
+					<td>
+						<code><strong>[cf_regions_map]</strong></code>
+						<br /><code><strong>[cf_regions_map preview="5" zoom="7" regions="12,18"]</strong></code>
+						<br /><span class="description"><?php _e( 'Zeigt eine Regionenkarte mit Marker-Popups (Anzahl + Anzeigenvorschau). Verfuegbar, wenn PS Maps aktiv ist und in den Karten-Einstellungen aktiviert wurde.', $this->text_domain ) ?></span>
+					</td>
+				</tr>
 			</table>
 		</div>
 	</div>

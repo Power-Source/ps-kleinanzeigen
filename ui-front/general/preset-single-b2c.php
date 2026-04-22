@@ -62,6 +62,9 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 					<?php if ( '' !== $duration ) : ?><div class="cf-single-fact"><dt><?php _e( 'Laufzeit', $this->text_domain ); ?></dt><dd><?php echo esc_html( $duration ); ?></dd></div><?php endif; ?>
 					<?php if ( '' !== $region_name ) : ?><div class="cf-single-fact"><dt><?php _e( 'Standort', $this->text_domain ); ?></dt><dd><?php echo esc_html( $region_name ); ?></dd></div><?php endif; ?>
 				</dl>
+				<?php if ( '' !== $single_region_map_html ) : ?>
+				<div class="cf-single-region-map"><?php echo $single_region_map_html; ?></div>
+				<?php endif; ?>
 				<div class="cf-quick-actions cf-single-actions cf-b2c-actions">
 					<div class="cf-quick-actions-main">
 						<?php if ( empty( $options['disable_contact_form'] ) ) : ?>

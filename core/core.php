@@ -238,6 +238,7 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 			add_shortcode( 'cf_logout_btn', array( $this->shortcode_service, 'logout_btn_sc' ) );
 			add_shortcode( 'cf_signin_btn', array( $this->shortcode_service, 'signin_btn_sc' ) );
 			add_shortcode( 'cf_custom_fields', array( $this->shortcode_service, 'custom_fields_sc' ) );
+			add_shortcode( 'cf_regions_map', array( $this->shortcode_service, 'regions_map_sc' ) );
 		}
 
 
