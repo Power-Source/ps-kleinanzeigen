@@ -19,6 +19,27 @@ $archive_show_favorites = ! isset( $frontend_options['archive_show_favorites'] )
 $archive_show_contact_cta = ! isset( $frontend_options['archive_show_contact_cta'] ) || 1 === (int) $frontend_options['archive_show_contact_cta'];
 $archive_show_reserved_badge = ! isset( $frontend_options['archive_show_reserved_badge'] ) || 1 === (int) $frontend_options['archive_show_reserved_badge'];
 
+// Resolve active frontend preset for filter-bar styling
+$_cf_filter_preset = '';
+$_cf_filter_preset_raw = isset( $frontend_options['frontend_preset'] ) ? sanitize_key( (string) $frontend_options['frontend_preset'] ) : '';
+if ( in_array( $_cf_filter_preset_raw, array( 'b2c', 'premium', 'community' ), true ) ) {
+	$_cf_filter_preset = $_cf_filter_preset_raw;
+}
+// Inherit preset from template global (set by preset loop wrappers)
+if ( '' === $_cf_filter_preset && isset( $GLOBALS['cf_frontend_template_preset'] ) ) {
+	$_tmp = sanitize_key( (string) $GLOBALS['cf_frontend_template_preset'] );
+	if ( in_array( $_tmp, array( 'b2c', 'premium', 'community' ), true ) ) {
+		$_cf_filter_preset = $_tmp;
+	}
+}
+$_cf_filter_bar_class   = 'cf-filter-bar' . ( '' !== $_cf_filter_preset ? ' cf-filter-bar--' . $_cf_filter_preset : '' );
+$_cf_btn_primary_class  = '' !== $_cf_filter_preset ? 'button cf-btn-' . $_cf_filter_preset . '-primary' : 'button';
+$_cf_btn_ghost_class    = '' !== $_cf_filter_preset ? 'button cf-btn-' . $_cf_filter_preset . '-ghost'   : 'button';
+// premium has no ghost variant, use secondary instead
+if ( 'premium' === $_cf_filter_preset ) {
+	$_cf_btn_ghost_class = 'button cf-btn-premium-secondary';
+}
+
 $archive_intro = isset( $frontend_options['archive_intro'] ) ? trim( $frontend_options['archive_intro'] ) : '';
 $field_image = ( empty( $cf_options['field_image_def'] ) ) ? $cf->plugin_url . 'ui-front/general/images/blank.gif' : $cf_options['field_image_def'];
 
@@ -52,7 +73,7 @@ $region_terms = get_terms(
 </div>
 <?php endif; ?>
 
-<form method="get" class="cf-filter-bar" action="<?php echo esc_url( get_permalink( $cf->classifieds_page_id ) ); ?>">
+<form method="get" class="<?php echo esc_attr( $_cf_filter_bar_class ); ?>" action="<?php echo esc_url( get_permalink( $cf->classifieds_page_id ) ); ?>">
 	<div class="cf-filter-grid">
 		<div class="cf-filter-field">
 			<label for="cf_filter_q"><?php _e( 'Suchbegriff', CF_TEXT_DOMAIN ); ?></label>
@@ -93,17 +114,17 @@ $region_terms = get_terms(
 		</div>
 	</div>
 	<div class="cf-filter-actions">
-		<button type="submit" class="button"><?php _e( 'Filtern', CF_TEXT_DOMAIN ); ?></button>
-		<a class="button cf-filter-reset" href="<?php echo esc_url( get_permalink( $cf->classifieds_page_id ) ); ?>"><?php _e( 'Zuruecksetzen', CF_TEXT_DOMAIN ); ?></a>
+		<button type="submit" class="<?php echo esc_attr( $_cf_btn_primary_class ); ?>"><?php _e( 'Filtern', CF_TEXT_DOMAIN ); ?></button>
+		<a class="<?php echo esc_attr( $_cf_btn_ghost_class ); ?> cf-filter-reset" href="<?php echo esc_url( get_permalink( $cf->classifieds_page_id ) ); ?>"><?php _e( 'Zuruecksetzen', CF_TEXT_DOMAIN ); ?></a>
 	</div>
 	<?php if ( $archive_show_filter_tools ) : ?>
 	<div class="cf-filter-tools">
-		<button type="button" class="button cf-save-filter"><?php _e( 'Filter merken', CF_TEXT_DOMAIN ); ?></button>
+		<button type="button" class="<?php echo esc_attr( $_cf_btn_ghost_class ); ?> cf-save-filter"><?php _e( 'Filter merken', CF_TEXT_DOMAIN ); ?></button>
 		<select class="cf-saved-filter-select" aria-label="<?php esc_attr_e( 'Gespeicherte Filter', CF_TEXT_DOMAIN ); ?>">
 			<option value=""><?php _e( 'Gespeicherten Filter laden', CF_TEXT_DOMAIN ); ?></option>
 		</select>
-		<button type="button" class="button cf-apply-saved-filter"><?php _e( 'Laden', CF_TEXT_DOMAIN ); ?></button>
-		<button type="button" class="button cf-delete-saved-filter"><?php _e( 'Loeschen', CF_TEXT_DOMAIN ); ?></button>
+		<button type="button" class="<?php echo esc_attr( $_cf_btn_ghost_class ); ?> cf-apply-saved-filter"><?php _e( 'Laden', CF_TEXT_DOMAIN ); ?></button>
+		<button type="button" class="<?php echo esc_attr( $_cf_btn_ghost_class ); ?> cf-delete-saved-filter"><?php _e( 'Loeschen', CF_TEXT_DOMAIN ); ?></button>
 		<label class="cf-auto-restore-toggle" for="cf_filter_auto_restore">
 			<input type="checkbox" id="cf_filter_auto_restore" class="cf-auto-restore-input" />
 			<?php _e( 'Zuletzt genutzte Filter automatisch laden', CF_TEXT_DOMAIN ); ?>

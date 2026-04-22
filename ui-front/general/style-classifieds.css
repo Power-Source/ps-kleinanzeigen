@@ -4702,3 +4702,187 @@ ul.cf_tabs li.cf_active a {
 		flex-wrap: wrap;
 	}
 }
+
+/* ============================================================
+   PRESET-AWARE FILTER-BAR — b2c / premium / community
+   ============================================================ */
+
+/* --- B2C --- */
+.cf-filter-bar--b2c {
+background: linear-gradient(180deg, #fff8f3 0%, #ffffff 100%);
+border-color: #f2c4a0;
+box-shadow: 0 6px 20px rgba(220, 90, 0, 0.08);
+}
+.cf-filter-bar--b2c .cf-filter-field label {
+color: #7a3300;
+}
+.cf-filter-bar--b2c .cf-filter-field input,
+.cf-filter-bar--b2c .cf-filter-field select {
+border-color: #f2c4a0;
+border-radius: 9px;
+}
+.cf-filter-bar--b2c .cf-filter-field input:focus,
+.cf-filter-bar--b2c .cf-filter-field select:focus {
+border-color: #ea5d00;
+outline: 2px solid rgba(234, 93, 0, 0.2);
+outline-offset: 0;
+}
+.cf-filter-bar--b2c .cf-saved-filter-select {
+border-color: #f2c4a0;
+border-radius: 9px;
+}
+
+/* --- Premium --- */
+.cf-filter-bar--premium {
+background: linear-gradient(180deg, #fdf8f0 0%, #ffffff 100%);
+border-color: #cfb692;
+box-shadow: 0 6px 20px rgba(111, 81, 41, 0.08);
+}
+.cf-filter-bar--premium .cf-filter-field label {
+color: #4f3818;
+}
+.cf-filter-bar--premium .cf-filter-field input,
+.cf-filter-bar--premium .cf-filter-field select {
+border-color: #cfb692;
+border-radius: 11px;
+}
+.cf-filter-bar--premium .cf-filter-field input:focus,
+.cf-filter-bar--premium .cf-filter-field select:focus {
+border-color: #8a6b3f;
+outline: 2px solid rgba(138, 107, 63, 0.2);
+outline-offset: 0;
+}
+.cf-filter-bar--premium .cf-saved-filter-select {
+border-color: #cfb692;
+border-radius: 11px;
+}
+
+/* --- Community --- */
+.cf-filter-bar--community {
+background: #f9fafb;
+border-color: #d1d5db;
+border-radius: 6px;
+box-shadow: none;
+}
+.cf-filter-bar--community .cf-filter-field label {
+color: #1f2937;
+}
+.cf-filter-bar--community .cf-filter-field input,
+.cf-filter-bar--community .cf-filter-field select {
+border-color: #d1d5db;
+border-radius: 6px;
+}
+.cf-filter-bar--community .cf-filter-field input:focus,
+.cf-filter-bar--community .cf-filter-field select:focus {
+border-color: #2d3748;
+outline: 2px solid rgba(45, 55, 72, 0.18);
+outline-offset: 0;
+}
+.cf-filter-bar--community .cf-saved-filter-select {
+border-color: #d1d5db;
+border-radius: 6px;
+}
+
+/* ============================================================
+   EMPTY STATE — Kategorie-Grid
+   ============================================================ */
+
+.cf-empty-state-hint {
+font-size: 14px;
+color: #666;
+margin-bottom: 16px;
+}
+
+.cf-empty-cat-grid {
+display: flex;
+flex-wrap: wrap;
+gap: 10px;
+justify-content: center;
+max-width: 680px;
+margin: 0 auto;
+}
+
+.cf-empty-cat-item {
+display: inline-flex;
+align-items: center;
+gap: 8px;
+padding: 8px 14px;
+border-radius: 8px;
+background: #f3f4f6;
+border: 1px solid #d1d5db;
+color: #374151;
+text-decoration: none;
+font-size: 14px;
+font-weight: 500;
+transition: background .15s, border-color .15s, transform .1s;
+}
+.cf-empty-cat-item:hover {
+background: #e9ecef;
+border-color: #adb5bd;
+color: #111827;
+transform: translateY(-1px);
+}
+.cf-empty-cat-count {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+min-width: 22px;
+height: 22px;
+padding: 0 6px;
+border-radius: 999px;
+background: #6b7280;
+color: #fff;
+font-size: 11px;
+font-weight: 700;
+}
+
+/* B2C variant */
+.cf-empty-cat-item--b2c {
+background: #fff5ef;
+border-color: #f2c4a0;
+color: #7a3300;
+}
+.cf-empty-cat-item--b2c:hover {
+background: #fdeede;
+border-color: #ea5d00;
+color: #5a2200;
+}
+.cf-empty-cat-item--b2c .cf-empty-cat-count {
+background: linear-gradient(180deg, #ff8c1a 0%, #ea5d00 100%);
+}
+
+/* Premium variant */
+.cf-empty-cat-item--premium {
+background: #fdf8f0;
+border-color: #cfb692;
+color: #4f3818;
+}
+.cf-empty-cat-item--premium:hover {
+background: #f8eddc;
+border-color: #8a6b3f;
+color: #352610;
+}
+.cf-empty-cat-item--premium .cf-empty-cat-count {
+background: linear-gradient(180deg, #8a6b3f 0%, #6e522d 100%);
+}
+
+/* Community variant */
+.cf-empty-cat-item--community {
+background: #f3f4f6;
+border-color: #d1d5db;
+color: #374151;
+border-radius: 6px;
+}
+.cf-empty-cat-item--community:hover {
+background: #e5e7eb;
+border-color: #2d3748;
+color: #1f2937;
+}
+.cf-empty-cat-item--community .cf-empty-cat-count {
+background: #2d3748;
+}
+
+/* Empty state preset overrides */
+.cf-empty-state--b2c { border-left: 3px solid #ea5d00; }
+.cf-empty-state--premium { border-left: 3px solid #8a6b3f; }
+.cf-empty-state--community { border-left: 3px solid #2d3748; border-radius: 6px; }

@@ -6,7 +6,29 @@ if ( ! defined( 'ABSPATH' ) ) {
 require CF_PLUGIN_DIR . 'ui-front/general/partials/archive-bootstrap.php';
 ?>
 <?php if ( ! have_posts() ) : ?>
-<div id="post-0" class="post error404 not-found"><h1 class="entry-title"><?php _e( 'Nicht gefunden', CF_TEXT_DOMAIN ); ?></h1></div>
+<?php
+$_cf_empty_cats = get_terms( array(
+	'taxonomy'   => 'kleinenanzeigen-cat',
+	'hide_empty' => true,
+	'orderby'    => 'count',
+	'order'      => 'DESC',
+) );
+?>
+<div class="cf-empty-state cf-empty-state--premium">
+	<span>&#x1F4DC;</span>
+	<p><?php _e( 'In dieser Kategorie gibt es aktuell keine Anzeigen.', CF_TEXT_DOMAIN ); ?></p>
+	<?php if ( ! is_wp_error( $_cf_empty_cats ) && ! empty( $_cf_empty_cats ) ) : ?>
+	<p class="cf-empty-state-hint"><?php _e( 'Schau in anderen Kategorien vorbei:', CF_TEXT_DOMAIN ); ?></p>
+	<div class="cf-empty-cat-grid cf-empty-cat-grid--premium">
+		<?php foreach ( $_cf_empty_cats as $_cf_empty_term ) : ?>
+		<a href="<?php echo esc_url( get_term_link( $_cf_empty_term ) ); ?>" class="cf-empty-cat-item cf-empty-cat-item--premium">
+			<span class="cf-empty-cat-name"><?php echo esc_html( $_cf_empty_term->name ); ?></span>
+			<span class="cf-empty-cat-count"><?php echo (int) $_cf_empty_term->count; ?></span>
+		</a>
+		<?php endforeach; ?>
+	</div>
+	<?php endif; ?>
+</div>
 <?php else : ?>
 <section class="cf-listing-grid cf-grid-cols-<?php echo esc_attr( $archive_columns ); ?> cf-archive-preset-premium cf-archive-premium-layout">
 <?php while ( have_posts() ) : the_post();

@@ -147,15 +147,33 @@ $region_terms = get_terms(
 <?php /* Display navigation to next/previous pages when applicable */ ?>
 <?php echo $cf->pagination( $cf->pagination_top ); ?>
 <div class="clear"></div>
-<?php /* If there are no posts to display, such as an empty archive page */ ?>
 <?php if ( ! have_posts() ) : ?>
-<div id="post-0" class="post error404 not-found">
-	<h1 class="entry-title"><?php _e( 'Nicht gefunden', CF_TEXT_DOMAIN ); ?></h1>
-	<div class="entry-content">
-		<p><?php _e( 'Entschuldigung, aber für die angeforderten Kleinanzeigen wurden keine Ergebnisse gefunden. Vielleicht hilft die Suche dabei, eine entsprechende Kleinanzeige zu finden.', CF_TEXT_DOMAIN ); ?></p>
-		<?php get_search_form(); ?>
-	</div><!-- .entry-content -->
-</div><!-- #post-0 -->
+<?php
+$_cf_empty_cats = get_terms( array(
+	'taxonomy'   => 'kleinenanzeigen-cat',
+	'hide_empty' => true,
+	'orderby'    => 'count',
+	'order'      => 'DESC',
+) );
+$_cf_es_preset = '' !== $template_preset ? ' cf-empty-state--' . $template_preset : '';
+$_cf_cg_preset = '' !== $template_preset ? ' cf-empty-cat-grid--' . $template_preset : '';
+$_cf_ci_preset = '' !== $template_preset ? ' cf-empty-cat-item--' . $template_preset : '';
+?>
+<div class="cf-empty-state<?php echo esc_attr( $_cf_es_preset ); ?>">
+	<span>&#x1F4CB;</span>
+	<p><?php _e( 'In dieser Kategorie gibt es aktuell keine Anzeigen.', CF_TEXT_DOMAIN ); ?></p>
+	<?php if ( ! is_wp_error( $_cf_empty_cats ) && ! empty( $_cf_empty_cats ) ) : ?>
+	<p class="cf-empty-state-hint"><?php _e( 'Schau in anderen Kategorien vorbei:', CF_TEXT_DOMAIN ); ?></p>
+	<div class="cf-empty-cat-grid<?php echo esc_attr( $_cf_cg_preset ); ?>">
+		<?php foreach ( $_cf_empty_cats as $_cf_empty_term ) : ?>
+		<a href="<?php echo esc_url( get_term_link( $_cf_empty_term ) ); ?>" class="cf-empty-cat-item<?php echo esc_attr( $_cf_ci_preset ); ?>">
+			<span class="cf-empty-cat-name"><?php echo esc_html( $_cf_empty_term->name ); ?></span>
+			<span class="cf-empty-cat-count"><?php echo (int) $_cf_empty_term->count; ?></span>
+		</a>
+		<?php endforeach; ?>
+	</div>
+	<?php endif; ?>
+</div>
 <?php endif; ?>
 
 <?php

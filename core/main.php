@@ -243,9 +243,18 @@ if (!class_exists('Classifieds_Core_Main')):
                 $this->is_classifieds_page = true;
             } elseif (is_archive() && in_array($taxonomy, array('kleinenanzeigen-cat', 'kleinanzeigen-region'))) {
                 /* Set the proper step which will be loaded by "page-my-classifieds.php" */
-                $templates = array("taxonomy-{$taxonomy}.php");
+                $templates = array("taxonomy-{$taxonomy}.php", 'taxonomy.php');
                 if (!$this->classifieds_template = locate_template($templates)) {
                     $this->classifieds_template = $page_template;
+                    // Ensure the loop runs once so the_content filter fires.
+                    // If the taxonomy query returned no posts, seed with the classifieds page
+                    // post to avoid "Undefined array key 0" from WP_Query internals.
+                    if ( empty( $wp_query->posts ) ) {
+                        $cf_page = get_post( $this->classifieds_page_id );
+                        if ( $cf_page ) {
+                            $wp_query->posts = array( $cf_page );
+                        }
+                    }
                     $wp_query->post_count = 1;
                     add_filter('the_title', array(&$this, 'page_title_output'), 10, 2);
                     add_filter('the_content', array(&$this, 'classifieds_content'));
