@@ -115,17 +115,17 @@ class Classifieds_Core_Data {
 		if(empty($options['payment_types']) ) {
 			$options['payment_types'] = array(
 			'use_free'         => 1,
-			'use_paypal'       => 0,
-			'use_authorizenet' => 0,
-			'paypal'           => array('api_url' => 'sandbox', 'api_username' => '', 'api_password' => '', 'api_signature' => '', 'currency' => 'USD'),
-			'authorizenet'     => array('mode' => 'sandbox', 'delim_char' => ',', 'encap_char' => '', 'email_customer' => 'yes', 'header_email_receipt' => 'Thanks for your payment!', 'delim_data' => 'yes'),
 			);
 		}
 
-		if ( ! empty($options['paypal']) ){
-			$options['payment_types']['paypal'] = array_replace($options['paypal']);
-			unset($options['paypal']);
-		}
+		unset(
+			$options['paypal'],
+			$options['authorizenet'],
+			$options['payment_types']['paypal'],
+			$options['payment_types']['authorizenet'],
+			$options['payment_types']['use_paypal'],
+			$options['payment_types']['use_authorizenet']
+		);
 
 		update_option( CF_OPTIONS_NAME, $options );
 	}

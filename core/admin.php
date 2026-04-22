@@ -699,8 +699,13 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 		$payment_types = ( isset( $options['payment_types'] ) && is_array( $options['payment_types'] ) ) ? $options['payment_types'] : array();
 
 		$payment_types['use_free'] = empty( $payments_params['use_free'] ) ? 0 : 1;
-		$payment_types['use_paypal'] = 0;
-		$payment_types['use_authorizenet'] = 0;
+		unset(
+			$payment_types['use_paypal'],
+			$payment_types['use_authorizenet'],
+			$payment_types['paypal'],
+			$payment_types['authorizenet']
+		);
+		unset( $options['paypal'], $options['authorizenet'] );
 
 		$options['payment_types'] = $payment_types;
 		update_option( $this->options_name, $options );

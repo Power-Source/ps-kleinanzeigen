@@ -98,8 +98,6 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 		public $my_credits_page_id = 0;
 
 		public $use_credits = false;
-		public $use_paypal = false;
-		public $use_authorizenet = false;
 
 		public $use_free = false;
 		public $use_recurring = false;
@@ -358,10 +356,6 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 
 			$this->use_free = ( ! empty( $options['use_free'] ) );
 			if ( ! $this->use_free ) { //Can't use gateways if it's free.
-				// Legacy-Gateways sind in der aktuellen Checkout-Architektur deaktiviert.
-				$this->use_paypal = false;
-				$this->use_authorizenet = false;
-
 				$options = $this->get_options( 'payments' );
 
 				$this->use_credits   = ( ! empty( $options['enable_credits'] ) );
