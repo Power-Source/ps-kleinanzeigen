@@ -1,5 +1,5 @@
 === Kleinanzeigen ===
-Contributors: DerN3rd (WMS N@W)
+Contributors: DerN3rd (PSOURCE)
 Tags: post types, taxonomies, custom fields, kleinanzeigen, ads, paypal, payments
 Requires at least: 4.9
 Tested up to: 5.8.0
