@@ -112,6 +112,7 @@ diesem Autor. Wenn Du auf einen benutzerdefinierten Taxonomiebegriff für Katego
 = 1.0.2 =
 - Validierung von Klassifizierungsbeiträgen hinzugefügt und Standardbilder für leere Thumbnails festgelegt 
 - Aktualisierte nonce für Frontend-Aktionen
+- Nicht verwendete Skripte und passe das Stylesheet entfernt, um die Benutzeroberfläche zu optimieren
 
 
 = 1.0.1 =

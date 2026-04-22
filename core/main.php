@@ -329,11 +329,6 @@ if (!class_exists('Classifieds_Core_Main')):
          **/
         function enqueue_scripts()
         {
-            if (is_page($this->add_classified_page_id) || is_page($this->edit_classified_page_id)) {
-                wp_enqueue_script('thickbox');
-                wp_enqueue_style('thickbox');
-            }
-
             if (file_exists(get_template_directory() . '/style-classifieds.css')) {
                 wp_enqueue_style('style-classifieds', get_template_directory_uri() . '/style-classifieds.css', array(), filemtime(get_template_directory() . '/style-classifieds.css'));
             } elseif (file_exists($this->plugin_dir . 'ui-front/general/style-classifieds.css')) {

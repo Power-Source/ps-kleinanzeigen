@@ -53,13 +53,10 @@ if ( ! is_array( $existing_gallery_ids ) ) {
 	$existing_gallery_ids = array();
 }
 $existing_gallery_ids = array_values( array_filter( array_map( 'absint', $existing_gallery_ids ) ) );
-
-wp_enqueue_script('set-post-thumbnail');
 ?>
 
 <!-- Begin Update Classifieds -->
 <script type="text/javascript" src="<?php echo esc_url( $this->plugin_url . 'ui-front/js/cf-tagsinput.js' ); ?>" ></script>
-<script type="text/javascript" src="<?php echo $this->plugin_url . 'ui-front/js/media-post.js'; ?>" ></script>
 <script type="text/javascript">
 window.cfGalleryEditor = <?php echo wp_json_encode( array(
 	'ajaxUrl' => admin_url( 'admin-ajax.php' ),
@@ -102,8 +99,6 @@ window.cfGalleryEditor = <?php echo wp_json_encode( array(
 		<div class="editfield <?php echo ! empty( $inline_errors['feature_image'] ) ? 'cf-invalid-field' : ''; ?>">
 			<label for="image"><?php _e( 'Beitragsbild', $this->text_domain ); ?></label>
 
-			<?php if(empty($options['media_manager']) ): ?>
-
 			<?php if(has_post_thumbnail()) the_post_thumbnail('thumbnail'); ?><br />
 			<script type="text/javascript">js_translate.image_chosen = '<?php _e("Kleinanzeigen-Bild ausgewählt", $this->text_domain); ?>';</script>
 			<script type="text/javascript">js_translate.image_preview_ready = '<?php _e("Vorschau aktualisiert", $this->text_domain); ?>';</script>
@@ -145,18 +140,6 @@ window.cfGalleryEditor = <?php echo wp_json_encode( array(
 			<p class="cf-inline-error"><?php echo esc_html( $inline_errors['feature_image'] ); ?></p>
 			<?php endif; ?>
 			<br />
-
-			<?php else: ?>
-
-			<div id="postimagediv">
-				<div class="inside">
-					<?php
-					$thumbnail_id = get_post_meta( $post_ID, '_thumbnail_id', true );
-					echo _wp_post_thumbnail_html($thumbnail_id, $post_ID);
-					?>
-				</div>
-			</div>
-			<?php endif; ?>
 
 		</div>
 		<?php endif; ?>

@@ -2019,23 +2019,6 @@ ul.cf_tabs li.cf_active a {
 	font-size: .8em;
 }
 
-/** Thickbox layer adjustment */
-#TB_overlay {
-	z-index:10000;
-}
-
-#TB_window {
-	z-index: 10002;
-}
-
-#TB_load{
-	z-index:10003;
-}
-
-#TB_HideSelect{
-	z-index:9999;
-}
-
 /* #cf_listing_list */
 
 #cf_listing_list .entry-title{
