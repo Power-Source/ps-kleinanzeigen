@@ -1630,6 +1630,28 @@ $cost_meta_key     = '_cf_cost';
 		}
 
 		/**
+		 * Validate a classifieds post id before featured meta operations.
+		 *
+		 * @param int $post_id The candidate post ID.
+		 * @return bool True when post exists and matches classifieds post type.
+		 */
+		function is_valid_post( $post_id ) {
+			$post_id = absint( $post_id );
+
+			if ( $post_id <= 0 ) {
+				return false;
+			}
+
+			$post = get_post( $post_id );
+
+			if ( ! ( $post instanceof WP_Post ) ) {
+				return false;
+			}
+
+			return $this->post_type === $post->post_type;
+		}
+
+		/**
 		 * Activate featured status for a classified listing.
 		 *
 		 * @param int $post_id The classified post ID.

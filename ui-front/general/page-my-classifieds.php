@@ -32,7 +32,7 @@ wp_enqueue_script( 'cf-frontend', $this->plugin_url . 'ui-front/js/ui-front.js',
 wp_localize_script( 'cf-frontend', 'cfFrontend', array(
 	'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
 	'nonce'            => wp_create_nonce( 'cf_send_message' ),
-	'dashboardNonce'   => wp_create_nonce( 'cf_dashboard_nonce' ),
+	'dashboardNonce'   => wp_create_nonce( 'cf_frontend_actions' ),
 	'textDomain'       => $this->text_domain,
 	'strings'          => array(
 		'sending'    => __( 'Wird gesendet...', $this->text_domain ),

@@ -42,7 +42,7 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/archive-bootstrap.php';
 			<footer class="cf-premium-card-actions">
 				<?php if ( $archive_show_contact_cta ) : ?><a class="button cf-btn-premium-secondary" href="<?php echo esc_url( add_query_arg( 'cf_contact', '1', get_permalink() ) . '#confirm-form' ); ?>"><?php _e( 'Kontakt', CF_TEXT_DOMAIN ); ?></a><?php endif; ?>
 				<?php if ( $archive_show_favorites ) : ?><button type="button" class="button cf-btn-premium-secondary cf-favorite-toggle <?php echo $is_favorite ? 'is-active' : ''; ?>" data-post-id="<?php the_ID(); ?>"><?php _e( 'Merken', CF_TEXT_DOMAIN ); ?></button><?php endif; ?>
-				<a class="button cf-btn-premium-primary" href="<?php the_permalink(); ?>"><?php _e( 'Expose ansehen', CF_TEXT_DOMAIN ); ?></a>
+				<a class="button cf-btn-premium-primary" href="<?php the_permalink(); ?>"><?php _e( 'Inserat ansehen', CF_TEXT_DOMAIN ); ?></a>
 			</footer>
 		</div>
 	</div>

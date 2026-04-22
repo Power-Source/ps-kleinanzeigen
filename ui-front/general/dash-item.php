@@ -11,7 +11,14 @@ $expiration = get_post_meta( $post_id, '_expiration_date', true );
 $expired = $expiration && $expiration < time();
 $price = get_post_meta( $post_id, '_cf_cost', true ) ?: get_post_meta( $post_id, 'cost', true );
 $duration = get_post_meta( $post_id, '_cf_duration', true ) ?: get_post_meta( $post_id, 'duration', true );
-$image_url = get_the_post_thumbnail_url( $post_id, 'medium' ) ?: $GLOBALS['Classifieds_Core']->plugin_url . 'ui-front/images/placeholder.png';
+$image_url = get_the_post_thumbnail_url( $post_id, 'medium' );
+$cf_frontend_options = method_exists( $GLOBALS['Classifieds_Core'], 'get_options' ) ? $GLOBALS['Classifieds_Core']->get_options( 'frontend' ) : array();
+$default_image_url = ! empty( $cf_frontend_options['field_image_def'] )
+	? esc_url_raw( $cf_frontend_options['field_image_def'] )
+	: $GLOBALS['Classifieds_Core']->plugin_url . 'ui-front/general/images/blank.gif';
+if ( empty( $image_url ) ) {
+	$image_url = $default_image_url;
+}
 $payments_options = method_exists( $GLOBALS['Classifieds_Core'], 'get_options' ) ? $GLOBALS['Classifieds_Core']->get_options( 'payments' ) : array();
 $featured_enabled = ! empty( $payments_options['enable_featured'] );
 $is_featured = $featured_enabled && method_exists( $GLOBALS['Classifieds_Core'], 'is_featured' ) && $GLOBALS['Classifieds_Core']->is_featured( $post_id );
