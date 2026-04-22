@@ -109,6 +109,9 @@ diesem Autor. Wenn Du auf einen benutzerdefinierten Taxonomiebegriff für Katego
 
 == Changelog ==
 
+= 1.0.3 =
+- Fixed undefined variable $single_gallery_layout in single gallery section
+
 = 1.0.2 =
 - Validierung von Klassifizierungsbeiträgen hinzugefügt und Standardbilder für leere Thumbnails festgelegt 
 - Aktualisierte nonce für Frontend-Aktionen

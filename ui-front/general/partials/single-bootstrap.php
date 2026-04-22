@@ -93,6 +93,8 @@ if ( ! $single_show_gallery ) {
 	$single_hero_media_mode = 'featured_only';
 }
 
+$single_gallery_layout = $legacy_single_gallery_layout;
+
 $featured_image_id = has_post_thumbnail() ? (int) get_post_thumbnail_id( $post->ID ) : 0;
 $single_extra_gallery_ids = $gallery_ids;
 $single_hero_gallery_ids = $single_extra_gallery_ids;
