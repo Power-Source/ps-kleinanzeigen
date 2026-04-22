@@ -77,6 +77,291 @@ Description: You can override this file in your active theme.
 	margin-right: 3%;
 }
 
+.cf-taxonomy-panel-modern {
+	height: auto;
+	min-height: 0;
+	overflow: visible;
+	padding: 14px;
+	border-radius: 14px;
+	border: 1px solid #dbe5f0;
+	background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+	box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.cf-taxonomy-panel-modern .cf-taxonomy-select-pair {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(220px, 1fr));
+	gap: 12px;
+	align-items: center;
+}
+
+.cf-taxonomy-panel-modern .cf-taxonomy-select-pair select {
+	width: 100%;
+	height: 46px;
+	padding: 0 42px 0 14px;
+	border: 1px solid #c9d8e8;
+	border-radius: 12px;
+	background: #fff;
+	color: #1f2937;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.2;
+	box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+	transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.cf-taxonomy-panel-modern .cf-taxonomy-select-pair select:focus {
+	border-color: #0f6cbd;
+	box-shadow: 0 0 0 3px rgba(15, 108, 189, 0.18);
+	outline: none;
+}
+
+.cf-taxonomy-panel-modern .cf-taxonomy-select-pair select:disabled {
+	background: #f3f6fa;
+	color: #8a98a8;
+	cursor: not-allowed;
+}
+
+.cf-listing-actions .cf-listing-action-buttons {
+	display: flex;
+	gap: 10px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.cf-listing-actions .cf-listing-action-end,
+.cf-listing-actions .cf-listing-action-delete {
+	min-height: 40px;
+	padding: 0 16px;
+	border-radius: 10px;
+	font-weight: 700;
+	line-height: 38px;
+	border-width: 1px;
+	border-style: solid;
+	transition: transform .12s ease, box-shadow .12s ease, background-color .2s ease, border-color .2s ease;
+}
+
+.cf-listing-actions .cf-listing-action-end {
+	background: #f4f7fb;
+	border-color: #cbd9e7;
+	color: #21405f;
+}
+
+.cf-listing-actions .cf-listing-action-end:hover,
+.cf-listing-actions .cf-listing-action-end:focus {
+	background: #e8f0f8;
+	border-color: #9fb8d1;
+	color: #1a3550;
+}
+
+.cf-listing-actions .cf-listing-action-delete {
+	margin-left: auto;
+	background: #fff5f5;
+	border-color: #f2b6b6;
+	color: #9e1c1c;
+}
+
+.cf-listing-actions .cf-listing-action-delete:hover,
+.cf-listing-actions .cf-listing-action-delete:focus {
+	background: #ffe8e8;
+	border-color: #e98f8f;
+	color: #7f1111;
+	box-shadow: 0 6px 16px rgba(177, 32, 32, 0.16);
+}
+
+@media (max-width: 900px) {
+	.cf-taxonomy-panel-modern .cf-taxonomy-select-pair {
+		grid-template-columns: 1fr;
+	}
+
+	.cf-taxonomy-panel-modern .cf-taxonomy-select-pair select {
+		font-size: 15px;
+	}
+
+	.cf-listing-actions .cf-listing-action-delete {
+		margin-left: 0;
+	}
+}
+
+.cf_update_form {
+	max-width: none;
+	width: 100%;
+	padding: 22px;
+	border: 1px solid #dbe5f0;
+	border-radius: 16px;
+	background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+	box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+	box-sizing: border-box;
+}
+
+.cf_update_form .editfield,
+.cf_update_form .classified-custom-fields .field,
+.cf_update_form .cf-editor-field,
+.cf_update_form .cf_taxonomydiv,
+.cf_update_form .cf_taxonomy {
+	margin-bottom: 18px;
+	padding: 14px;
+	border: 1px solid #e3ebf4;
+	border-radius: 14px;
+	background: #fff;
+}
+
+.cf_update_form .editfield label,
+.cf_update_form .classified-custom-fields label,
+.cf_update_form .cf_taxonomydiv > label,
+.cf_update_form .cf_taxonomy label {
+	font-size: 15px;
+	font-weight: 700;
+	color: #23374d;
+	margin-bottom: 8px;
+}
+
+.cf_update_form input[type="text"],
+.cf_update_form input[type="number"],
+.cf_update_form textarea,
+.cf_update_form select {
+	border: 1px solid #c8d8e8;
+	border-radius: 12px;
+	background: #fff;
+	color: #1f2937;
+	padding: 11px 13px;
+	font-size: 15px;
+	line-height: 1.35;
+	box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+	transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.cf_update_form textarea {
+	min-height: 220px;
+	resize: vertical;
+}
+
+.cf_update_form select,
+.cf_update_form #classified_data\[post_status\] {
+	height: 46px;
+	padding-top: 0;
+	padding-bottom: 0;
+	font-weight: 600;
+}
+
+.cf_update_form input[type="text"]:focus,
+.cf_update_form input[type="number"]:focus,
+.cf_update_form textarea:focus,
+.cf_update_form select:focus {
+	outline: none;
+	border-color: #0f6cbd;
+	box-shadow: 0 0 0 3px rgba(15, 108, 189, 0.18);
+}
+
+.cf_update_form .cf-simple-editor-toolbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin: 8px 0 10px;
+}
+
+.cf_update_form .cf-simple-editor-toolbar .button {
+	min-width: 42px;
+	padding: 8px 12px;
+	border-radius: 10px;
+	border: 1px solid #c5d6e6;
+	background: #f4f8fc;
+	font-weight: 600;
+	color: #23415f;
+}
+
+.cf_update_form .cf-simple-editor-toolbar .button:hover,
+.cf_update_form .cf-simple-editor-toolbar .button:focus {
+	background: #e9f2fb;
+	border-color: #9fb8d1;
+}
+
+.cf_update_form .upload-button {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px;
+	border: 1px dashed #9fc0db;
+	border-radius: 12px;
+	background: #f6fbff;
+}
+
+.cf_update_form .upload-button .button {
+	border-radius: 10px;
+	border: 1px solid #0f6cbd;
+	background: #0f6cbd;
+	color: #fff;
+	font-weight: 700;
+	padding: 8px 14px;
+}
+
+.cf_update_form .upload-button .button:hover,
+.cf_update_form .upload-button .button:focus {
+	background: #0d5d9f;
+	border-color: #0d5d9f;
+}
+
+.cf_update_form .cf-inline-error {
+	margin: 8px 0 0;
+	font-size: 13px;
+	font-weight: 600;
+	color: #b42318;
+}
+
+.cf_update_form .cf-invalid-field {
+	border-color: #f1b3b3;
+	background: #fff8f8;
+}
+
+.cf_update_form .cf-invalid-field input[type="text"],
+.cf_update_form .cf-invalid-field textarea,
+.cf_update_form .cf-invalid-field select {
+	border-color: #e58f8f;
+	background: #fff;
+}
+
+.cf_update_form .cf-submit-row {
+	display: flex;
+	gap: 10px;
+	flex-wrap: wrap;
+	align-items: center;
+	padding-top: 8px;
+}
+
+.cf_update_form .cf-submit-row input[type="submit"],
+.cf_update_form .cf-submit-row input[type="button"] {
+	min-height: 42px;
+	padding: 0 18px;
+	border-radius: 10px;
+	font-weight: 700;
+	cursor: pointer;
+	transition: background-color .2s ease, border-color .2s ease;
+}
+
+.cf_update_form .cf-btn-primary {
+	background: #0f6cbd;
+	border: 1px solid #0f6cbd;
+	color: #fff;
+}
+
+.cf_update_form .cf-btn-primary:hover,
+.cf_update_form .cf-btn-primary:focus {
+	background: #0d5d9f;
+	border-color: #0d5d9f;
+}
+
+.cf_update_form .cf-btn-secondary {
+	background: #eef3f8;
+	border: 1px solid #c7d6e5;
+	color: #29435e;
+}
+
+.cf_update_form .cf-btn-secondary:hover,
+.cf_update_form .cf-btn-secondary:focus {
+	background: #e0eaf4;
+	border-color: #a9bfd4;
+}
+
 
 .entry-content .cf-ad input {
 	margin: 0;

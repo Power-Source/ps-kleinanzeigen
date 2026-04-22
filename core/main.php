@@ -80,11 +80,48 @@ if (!class_exists('Classifieds_Core_Main')):
                 //Updating Classifieds
             } elseif (is_page($this->add_classified_page_id) || is_page($this->edit_classified_page_id)) {
 
+                if (isset($_POST['cf_end_listing']) || isset($_POST['cf_delete_listing'])) {
+                    if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'verify' ) ) {
+                        die(__('Security check failed!', $this->text_domain));
+                    }
+
+                    $post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+                    if ( $post_id > 0 ) {
+                        if ( isset( $_POST['cf_end_listing'] ) && current_user_can( 'edit_post', $post_id ) ) {
+                            $expiration_timestamp = (int) get_post_meta( $post_id, '_expiration_date', true );
+                            $has_remaining_runtime = ( $expiration_timestamp > current_time( 'timestamp' ) );
+                            if ( ! $has_remaining_runtime ) {
+                                set_query_var('cf_post_id', $post_id);
+                                set_query_var('cf_action', 'edit');
+                                set_query_var('cf_error', __( 'Anzeige beenden ist nur mit Restlaufzeit moeglich.', $this->text_domain ));
+                                return;
+                            }
+                            $this->process_status( $post_id, 'private' );
+                            wp_safe_redirect( get_permalink( $this->my_classifieds_page_id ) );
+                            exit;
+                        }
+
+                        if ( isset( $_POST['cf_delete_listing'] ) && current_user_can( 'delete_post', $post_id ) ) {
+                            wp_delete_post( $post_id );
+                            wp_safe_redirect( get_permalink( $this->my_classifieds_page_id ) );
+                            exit;
+                        }
+                    }
+                }
+
                 if (isset($_POST['update_classified'])) {
                     if ( empty( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'verify' ) ) {
                         die(__('Security check failed!', $this->text_domain));
                     }
                     $post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
+                    $required_validation = $this->classified_submit_validator->validate_frontend_required_fields( $_POST, $post_id );
+                    if ( empty( $required_validation['valid'] ) ) {
+                        set_query_var('cf_post_id', absint( $_POST['post_id'] ?? 0 ));
+                        set_query_var('cf_action', 'edit');
+                        set_query_var('cf_inline_errors', $required_validation['errors']);
+                        set_query_var('cf_error', __( 'Bitte pruefe die markierten Felder.', $this->text_domain ));
+                        return;
+                    }
                     $expiration_timestamp = $post_id ? (int) get_post_meta( $post_id, '_expiration_date', true ) : 0;
                     $is_started_listing = ( $expiration_timestamp > 0 );
                     $is_expired_listing = ( $is_started_listing && $expiration_timestamp <= current_time( 'timestamp' ) );

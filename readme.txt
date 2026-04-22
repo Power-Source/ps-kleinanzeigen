@@ -109,6 +109,11 @@ diesem Autor. Wenn Du auf einen benutzerdefinierten Taxonomiebegriff für Katego
 
 == Changelog ==
 
+= 1.0.2 =
+- Validierung von Klassifizierungsbeiträgen hinzugefügt und Standardbilder für leere Thumbnails festgelegt 
+- Aktualisierte nonce für Frontend-Aktionen
+
+
 = 1.0.1 =
 - and responsive design.
 - Updated contact form and seller profile display in single view.
