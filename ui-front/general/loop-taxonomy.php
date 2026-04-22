@@ -21,10 +21,6 @@
 global $bp, $Classifieds_Core;
 $cf = $Classifieds_Core; //shorthand
 
-?>
-<script type="text/javascript" src="<?php echo esc_url( $cf->plugin_url . 'ui-front/js/ui-front.js' ); ?>"></script>
-<?php
-
 $cf_options = $cf->get_options( 'general' );
 $frontend_options = $cf->get_options( 'frontend' );
 $favorite_ids = method_exists( $cf, 'get_favorite_ids' ) ? $cf->get_favorite_ids() : array();

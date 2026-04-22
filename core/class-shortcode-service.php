@@ -145,7 +145,7 @@ class CF_Shortcode_Service {
 			(array) $atts
 		);
 
-		if ( ! $this->core->use_credits || ( ! $this->core->use_paypal && ! $this->core->use_authorizenet ) ) {
+		if ( ! $this->core->use_credits ) {
 			return '';
 		}
 		if ( ! $this->should_render_for_view( $atts['view'] ) ) {

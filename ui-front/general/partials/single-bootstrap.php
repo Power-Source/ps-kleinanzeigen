@@ -118,18 +118,6 @@ if ( isset( $frontend_options['trust_block_content'] ) && '' !== trim( $frontend
 	$trust_block_content = trim( $options['trust_block_content'] );
 }
 
-wp_enqueue_script( 'cf-frontend', $this->plugin_url . 'ui-front/js/ui-front.js', array( 'jquery' ), false, true );
-wp_localize_script( 'cf-frontend', 'cfFrontend', array(
-	'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
-	'nonce'      => wp_create_nonce( 'cf_send_message' ),
-	'textDomain' => $this->text_domain,
-	'strings'    => array(
-		'sending' => __( 'Wird gesendet...', $this->text_domain ),
-		'sent'    => __( 'Nachricht gesendet!', $this->text_domain ),
-		'error'   => __( 'Ups, da ist was schiefgelaufen.', $this->text_domain ),
-	),
-) );
-
 $open_contact_form = isset( $_GET['cf_contact'] ) && '1' === wp_unslash( $_GET['cf_contact'] );
 
 if ( isset( $_POST['_wpnonce'] ) ) : ?>

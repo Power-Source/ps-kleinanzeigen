@@ -793,7 +793,8 @@ js_translate.image_chosen = 'Bild ausgewaehlt';
 
                 openConversation: function(threadId) {
                         var cfg = window.cfFrontend || {};
-                        if (!cfg.ajaxUrl || !cfg.nonce) return;
+				var messageNonce = cfg.messageNonce || cfg.nonce || '';
+				if (!cfg.ajaxUrl || !messageNonce) return;
 
                         this.currentThreadId = threadId;
 
@@ -807,7 +808,7 @@ js_translate.image_chosen = 'Bild ausgewaehlt';
 
                         $.post(cfg.ajaxUrl, {
                                 action: 'cf_get_conversation',
-                                nonce: cfg.nonce,
+								nonce: messageNonce,
                                 thread_id: threadId
                         }, function(res) {
                                 if (!res.success) {
@@ -888,6 +889,7 @@ js_translate.image_chosen = 'Bild ausgewaehlt';
 
                 sendReply: function() {
                         var cfg = window.cfFrontend || {};
+				var messageNonce = cfg.messageNonce || cfg.nonce || '';
                         var text = $('#cf-reply-text').val().trim();
                         if (!text) return;
 
@@ -896,7 +898,7 @@ js_translate.image_chosen = 'Bild ausgewaehlt';
 
                         $.post(cfg.ajaxUrl, {
                                 action: 'cf_send_message',
-                                nonce: cfg.nonce,
+								nonce: messageNonce,
                                 message: text,
                                 thread_id: this.currentThreadId,
                                 recipient_id: this.currentRecipientId
@@ -975,7 +977,8 @@ js_translate.image_chosen = 'Bild ausgewaehlt';
         $(document).on('submit', '#cf-contact-form-ajax', function(e) {
                 e.preventDefault();
                 var cfg = window.cfFrontend || {};
-                if (!cfg.ajaxUrl || !cfg.nonce) return;
+				var messageNonce = cfg.messageNonce || cfg.nonce || '';
+				if (!cfg.ajaxUrl || !messageNonce) return;
 
                 var $form    = $(this);
                 var $btn     = $form.find('.cf-ajax-send');
@@ -988,7 +991,7 @@ js_translate.image_chosen = 'Bild ausgewaehlt';
 
                 $.post(cfg.ajaxUrl, {
                         action:       'cf_send_message',
-                        nonce:        cfg.nonce,
+								nonce:        messageNonce,
                         post_id:      postId,
                         recipient_id: recipientId,
                         subject:      $form.find('[name="subject"]').val(),

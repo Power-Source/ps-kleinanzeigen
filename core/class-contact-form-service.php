@@ -21,7 +21,7 @@ class CF_Contact_Form_Service {
 			return;
 		}
 
-		$captcha = get_transient( CF_CAPTCHA . $_SERVER['REMOTE_ADDR'] );
+		$captcha = get_transient( $this->core->get_captcha_transient_key() );
 
 		if ( ! isset( $_POST['contact_form_send'] ) || ! wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'send_message' ) ) {
 			return;

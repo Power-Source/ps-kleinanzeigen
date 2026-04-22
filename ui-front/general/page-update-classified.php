@@ -56,15 +56,12 @@ $existing_gallery_ids = array_values( array_filter( array_map( 'absint', $existi
 ?>
 
 <!-- Begin Update Classifieds -->
-<script type="text/javascript" src="<?php echo esc_url( $this->plugin_url . 'ui-front/js/cf-tagsinput.js' ); ?>" ></script>
 <script type="text/javascript">
 window.cfGalleryEditor = <?php echo wp_json_encode( array(
 	'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 	'nonce'   => wp_create_nonce( 'cf_manage_gallery' ),
 	'postId'  => (int) $post_ID,
 ) ); ?>;
-</script>
-<script type="text/javascript" src="<?php echo $this->plugin_url . 'ui-front/js/ui-front.js'; ?>" >
 </script>
 
 <?php if ( !empty( $error ) ): ?>

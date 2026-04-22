@@ -28,20 +28,6 @@ $active_tab = isset( $_GET['messages'] ) ? 'messages' : ( isset( $_GET['favorite
 
 remove_filter( 'the_content', array( &$this, 'my_classifieds_content' ) );
 
-wp_enqueue_script( 'cf-frontend', $this->plugin_url . 'ui-front/js/ui-front.js', array( 'jquery' ), filemtime( $this->plugin_dir . 'ui-front/js/ui-front.js' ), true );
-wp_localize_script( 'cf-frontend', 'cfFrontend', array(
-	'ajaxUrl'          => admin_url( 'admin-ajax.php' ),
-	'nonce'            => wp_create_nonce( 'cf_send_message' ),
-	'dashboardNonce'   => wp_create_nonce( 'cf_frontend_actions' ),
-	'textDomain'       => $this->text_domain,
-	'strings'          => array(
-		'sending'    => __( 'Wird gesendet...', $this->text_domain ),
-		'sent'       => __( 'Nachricht gesendet!', $this->text_domain ),
-		'error'      => __( 'Ups, da ist was schiefgelaufen.', $this->text_domain ),
-		'noMessages' => __( 'Noch keine Nachrichten.', $this->text_domain ),
-	),
-) );
-
 wp_add_inline_script( 'cf-frontend', "(function(\$){
 	function getActiveTabFromUrl(){
 		var params = new URLSearchParams(window.location.search || '');

@@ -164,6 +164,9 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 
 			/* Handle login requests */
 			add_action( 'template_redirect', array( &$this, 'handle_login_requests' ) );
+			add_action( 'admin_init', array( &$this, 'register_privacy_policy_content' ) );
+			add_filter( 'wp_privacy_personal_data_exporters', array( &$this, 'register_privacy_exporter' ) );
+			add_filter( 'wp_privacy_personal_data_erasers', array( &$this, 'register_privacy_eraser' ) );
 			/* Handle all requests for checkout */
 			//add_action( 'template_redirect', array( &$this, 'handle_checkout_requests' ) );
 			/* Handle all requests for contact form submission */
@@ -355,16 +358,9 @@ if ( ! class_exists( 'Classifieds_Core' ) ):
 
 			$this->use_free = ( ! empty( $options['use_free'] ) );
 			if ( ! $this->use_free ) { //Can't use gateways if it's free.
-
-				$this->use_paypal = ( ! empty( $options['use_paypal'] ) );
-				if ( $this->use_paypal ) { //make sure the api fields have something in them
-					$this->use_paypal = ( ! empty( $options['paypal']['api_username'] ) ) && ( ! empty( $options['paypal']['api_password'] ) ) && ( ! empty( $options['paypal']['api_signature'] ) );
-				}
-
-				$this->use_authorizenet = ( ! empty( $options['use_authorizenet'] ) );
-				if ( $this->use_authorizenet ) { //make sure the api fields have something in them
-					$this->use_authorizenet = ( ! empty( $options['authorizenet']['api_user'] ) ) && ( ! empty( $options['authorizenet']['api_key'] ) );
-				}
+				// Legacy-Gateways sind in der aktuellen Checkout-Architektur deaktiviert.
+				$this->use_paypal = false;
+				$this->use_authorizenet = false;
 
 				$options = $this->get_options( 'payments' );
 
@@ -2443,8 +2439,8 @@ $cost_meta_key     = '_cf_cost';
 
 			$this->imagettftext_cr( $image, 14, 0, 60, 26, $white, $font, $rand );
 
-			//Use transient
-			set_transient( CF_CAPTCHA . $_SERVER['REMOTE_ADDR'], md5( $rand ), 600 );
+			// Use a salted hash of the client IP to avoid storing plaintext IPs in transient keys.
+			set_transient( $this->get_captcha_transient_key(), md5( $rand ), 600 );
 
 			header( "Expires: Mon, 26 Jul 1997 05:00:00 GMT" );
 			header( "Last-Modified: " . gmdate( "D, d M Y H:i:s" ) . " GMT" );
@@ -2456,6 +2452,337 @@ $cost_meta_key     = '_cf_cost';
 			imagepng( $image );
 			imagedestroy( $image );
 			exit;
+		}
+
+		/**
+		 * Build a privacy-friendly transient key for captcha values.
+		 *
+		 * @param string $remote_addr Optional IP override.
+		 * @return string
+		 */
+		public function get_captcha_transient_key( $remote_addr = '' ) {
+			$remote_addr = (string) $remote_addr;
+			if ( '' === $remote_addr ) {
+				$remote_addr = isset( $_SERVER['REMOTE_ADDR'] ) ? (string) $_SERVER['REMOTE_ADDR'] : '';
+			}
+
+			if ( '' === $remote_addr ) {
+				$remote_addr = 'unknown';
+			}
+
+			return CF_CAPTCHA . hash_hmac( 'sha256', $remote_addr, wp_salt( 'nonce' ) );
+		}
+
+		/**
+		 * Register Privacy Policy guide content in WordPress admin.
+		 *
+		 * @return void
+		 */
+		public function register_privacy_policy_content() {
+			if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
+				return;
+			}
+
+			$content =
+				'<p>' . esc_html__( 'PS Kleinanzeigen verarbeitet personenbezogene Daten, um Anzeigen, Kontaktanfragen, Nachrichten und Favoritenfunktionen bereitzustellen.', $this->text_domain ) . '</p>' .
+				'<h3>' . esc_html__( 'Welche Daten verarbeitet werden', $this->text_domain ) . '</h3>' .
+				'<ul>' .
+				'<li>' . esc_html__( 'Anzeigeninhalte inklusive Titel, Beschreibung, Preisangaben, Bilder und Laufzeitdaten.', $this->text_domain ) . '</li>' .
+				'<li>' . esc_html__( 'Kontaktdaten aus dem Anfrageformular (Name, E-Mail-Adresse, optional Telefonnummer und Nachrichtentext).', $this->text_domain ) . '</li>' .
+				'<li>' . esc_html__( 'Interne Nachrichten zwischen Nutzern inklusive Metadaten (Absender, Empfänger, Zeitstempel, Bezug zur Anzeige).', $this->text_domain ) . '</li>' .
+				'<li>' . esc_html__( 'Favoriten (bei eingeloggten Nutzern als Benutzer-Metadaten, bei Gästen im Browser-Cookie).', $this->text_domain ) . '</li>' .
+				'<li>' . esc_html__( 'Abrechnungsnahe Zustandsdaten für Berechtigungen und Credits; Zahlungsabwicklung erfolgt über MarketPress.', $this->text_domain ) . '</li>' .
+				'</ul>' .
+				'<h3>' . esc_html__( 'Zweck der Verarbeitung', $this->text_domain ) . '</h3>' .
+				'<p>' . esc_html__( 'Die Verarbeitung erfolgt zur Veröffentlichung und Verwaltung von Anzeigen, zur Kommunikation zwischen Interessenten und Anbietern sowie zur Steuerung von Credits, Berechtigungen und gebuchten Zusatzfunktionen.', $this->text_domain ) . '</p>' .
+				'<h3>' . esc_html__( 'Empfänger und Übermittlung', $this->text_domain ) . '</h3>' .
+				'<p>' . esc_html__( 'Nachrichten und Kontaktanfragen werden per E-Mail über die in WordPress konfigurierte Mailzustellung versendet. Zahlungsdaten werden nicht direkt durch dieses Plugin verarbeitet, sondern durch die angebundene MarketPress-Umgebung.', $this->text_domain ) . '</p>' .
+				'<h3>' . esc_html__( 'Speicherdauer', $this->text_domain ) . '</h3>' .
+				'<ul>' .
+				'<li>' . esc_html__( 'Anzeigen und zugehörige Metadaten bis zur Löschung durch Nutzer oder Administratoren.', $this->text_domain ) . '</li>' .
+				'<li>' . esc_html__( 'Interne Nachrichten bis zur Löschung im Rahmen der Inhaltsverwaltung.', $this->text_domain ) . '</li>' .
+				'<li>' . esc_html__( 'Captcha-Temporärdaten werden nach kurzer Zeit automatisch gelöscht (Transients).', $this->text_domain ) . '</li>' .
+				'<li>' . esc_html__( 'Favoriten-Cookie bei Gästen mit begrenzter Laufzeit.', $this->text_domain ) . '</li>' .
+				'</ul>' .
+				'<h3>' . esc_html__( 'Textvorschlag für deine Datenschutzerklärung', $this->text_domain ) . '</h3>' .
+				'<p>' . esc_html__( 'Wir nutzen das Plugin PS Kleinanzeigen, um Anzeigen zu verwalten und Kontaktfunktionen zwischen Nutzern bereitzustellen. Dabei verarbeiten wir die im Rahmen von Anzeigen, Kontaktformularen und Nachrichten eingegebenen Daten. Für eingeloggte Nutzer speichern wir Favoriten im Benutzerprofil, bei nicht eingeloggten Nutzern in einem technisch notwendigen Cookie. Zahlungsabwicklung und Bestellverarbeitung erfolgen über MarketPress. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Vertrag/Anbahnung) sowie Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an sicherem und funktionsfähigem Betrieb).', $this->text_domain ) . '</p>';
+
+			wp_add_privacy_policy_content( 'PS Kleinanzeigen', wp_kses_post( wpautop( $content ) ) );
+		}
+
+		/**
+		 * Register personal data exporter callbacks.
+		 *
+		 * @param array $exporters
+		 * @return array
+		 */
+		public function register_privacy_exporter( $exporters ) {
+			$exporters['ps-kleinanzeigen'] = array(
+				'exporter_friendly_name' => __( 'PS Kleinanzeigen', $this->text_domain ),
+				'callback'               => array( $this, 'privacy_export_personal_data' ),
+			);
+
+			return $exporters;
+		}
+
+		/**
+		 * Register personal data eraser callbacks.
+		 *
+		 * @param array $erasers
+		 * @return array
+		 */
+		public function register_privacy_eraser( $erasers ) {
+			$erasers['ps-kleinanzeigen'] = array(
+				'eraser_friendly_name' => __( 'PS Kleinanzeigen', $this->text_domain ),
+				'callback'             => array( $this, 'privacy_erase_personal_data' ),
+			);
+
+			return $erasers;
+		}
+
+		/**
+		 * Export plugin-related personal data for a user.
+		 *
+		 * @param string $email_address
+		 * @param int    $page
+		 * @return array
+		 */
+		public function privacy_export_personal_data( $email_address, $page = 1 ) {
+			unset( $page );
+
+			$user = get_user_by( 'email', sanitize_email( $email_address ) );
+			if ( ! $user || empty( $user->ID ) ) {
+				return array(
+					'data' => array(),
+					'done' => true,
+				);
+			}
+
+			$data = array_merge(
+				$this->privacy_export_favorites_data( (int) $user->ID ),
+				$this->privacy_export_messages_data( (int) $user->ID )
+			);
+
+			return array(
+				'data' => $data,
+				'done' => true,
+			);
+		}
+
+		/**
+		 * Erase or anonymize plugin-related personal data for a user.
+		 *
+		 * @param string $email_address
+		 * @param int    $page
+		 * @return array
+		 */
+		public function privacy_erase_personal_data( $email_address, $page = 1 ) {
+			unset( $page );
+
+			$user = get_user_by( 'email', sanitize_email( $email_address ) );
+			if ( ! $user || empty( $user->ID ) ) {
+				return array(
+					'items_removed'  => false,
+					'items_retained' => false,
+					'messages'       => array(),
+					'done'           => true,
+				);
+			}
+
+			$user_id = (int) $user->ID;
+			$items_removed = false;
+			$messages = array();
+
+			if ( metadata_exists( 'user', $user_id, '_cf_favorites' ) ) {
+				delete_user_meta( $user_id, '_cf_favorites' );
+				$items_removed = true;
+			}
+
+			foreach ( $this->get_privacy_message_ids( $user_id ) as $message_id ) {
+				$post = get_post( $message_id );
+				if ( ! $post || 'cf_message' !== $post->post_type ) {
+					continue;
+				}
+
+				$changed = false;
+				if ( (int) $post->post_author === $user_id ) {
+					wp_update_post( array(
+						'ID'           => $message_id,
+						'post_author'  => 0,
+						'post_title'   => __( 'Nachricht entfernt', $this->text_domain ),
+						'post_content' => __( 'Diese Nachricht wurde im Rahmen einer Datenschutzanfrage anonymisiert.', $this->text_domain ),
+					) );
+					delete_post_meta( $message_id, '_cf_msg_read_' . $user_id );
+					update_post_meta( $message_id, '_cf_privacy_erased_author', 1 );
+					$changed = true;
+				}
+
+				if ( (int) get_post_meta( $message_id, '_cf_msg_recipient', true ) === $user_id ) {
+					update_post_meta( $message_id, '_cf_msg_recipient', 0 );
+					delete_post_meta( $message_id, '_cf_msg_read_' . $user_id );
+					update_post_meta( $message_id, '_cf_privacy_erased_recipient', 1 );
+					$changed = true;
+				}
+
+				$post_author = (int) get_post_field( 'post_author', $message_id );
+				$recipient_id = (int) get_post_meta( $message_id, '_cf_msg_recipient', true );
+				if ( 0 === $post_author && 0 === $recipient_id ) {
+					wp_delete_post( $message_id, true );
+					$changed = true;
+				}
+
+				if ( $changed ) {
+					$items_removed = true;
+				}
+			}
+
+			$messages[] = __( 'Serverseitig gespeicherte Favoriten und interne Nachrichten wurden gelöscht oder anonymisiert. Lokal im Browser gespeicherte Favoriten-Cookies müssen gegebenenfalls zusätzlich im Browser entfernt werden.', $this->text_domain );
+
+			return array(
+				'items_removed'  => $items_removed,
+				'items_retained' => false,
+				'messages'       => $messages,
+				'done'           => true,
+			);
+		}
+
+		/**
+		 * Export favorites for privacy requests.
+		 *
+		 * @param int $user_id
+		 * @return array
+		 */
+		private function privacy_export_favorites_data( $user_id ) {
+			$favorites = get_user_meta( $user_id, '_cf_favorites', true );
+			$favorites = is_array( $favorites ) ? array_values( array_filter( array_map( 'absint', $favorites ) ) ) : array();
+			if ( empty( $favorites ) ) {
+				return array();
+			}
+
+			$data = array();
+			foreach ( $favorites as $post_id ) {
+				if ( 'classifieds' !== get_post_type( $post_id ) ) {
+					continue;
+				}
+
+				$data[] = array(
+					'group_id'    => 'ps-kleinanzeigen-favorites',
+					'group_label' => __( 'Kleinanzeigen-Favoriten', $this->text_domain ),
+					'item_id'     => 'favorite-' . $post_id,
+					'data'        => array(
+						array(
+							'name'  => __( 'Anzeige', $this->text_domain ),
+							'value' => get_the_title( $post_id ),
+						),
+						array(
+							'name'  => __( 'Link', $this->text_domain ),
+							'value' => get_permalink( $post_id ),
+						),
+					),
+				);
+			}
+
+			return $data;
+		}
+
+		/**
+		 * Export internal messages for privacy requests.
+		 *
+		 * @param int $user_id
+		 * @return array
+		 */
+		private function privacy_export_messages_data( $user_id ) {
+			$data = array();
+			foreach ( $this->get_privacy_message_ids( $user_id ) as $message_id ) {
+				$message = get_post( $message_id );
+				if ( ! $message || 'cf_message' !== $message->post_type ) {
+					continue;
+				}
+
+				$recipient_id = (int) get_post_meta( $message_id, '_cf_msg_recipient', true );
+				$post_id = (int) get_post_meta( $message_id, '_cf_msg_post_id', true );
+				$direction = ( (int) $message->post_author === $user_id ) ? __( 'Gesendet', $this->text_domain ) : __( 'Empfangen', $this->text_domain );
+				$recipient = $recipient_id > 0 ? get_userdata( $recipient_id ) : false;
+				$author = (int) $message->post_author > 0 ? get_userdata( (int) $message->post_author ) : false;
+
+				$data[] = array(
+					'group_id'    => 'ps-kleinanzeigen-messages',
+					'group_label' => __( 'Kleinanzeigen-Nachrichten', $this->text_domain ),
+					'item_id'     => 'message-' . $message_id,
+					'data'        => array(
+						array(
+							'name'  => __( 'Richtung', $this->text_domain ),
+							'value' => $direction,
+						),
+						array(
+							'name'  => __( 'Betreff', $this->text_domain ),
+							'value' => $message->post_title,
+						),
+						array(
+							'name'  => __( 'Nachricht', $this->text_domain ),
+							'value' => $message->post_content,
+						),
+						array(
+							'name'  => __( 'Datum', $this->text_domain ),
+							'value' => mysql2date( 'd.m.Y H:i:s', $message->post_date ),
+						),
+						array(
+							'name'  => __( 'Absender', $this->text_domain ),
+							'value' => $author ? $author->display_name : __( 'Anonymisiert', $this->text_domain ),
+						),
+						array(
+							'name'  => __( 'Empfänger', $this->text_domain ),
+							'value' => $recipient ? $recipient->display_name : __( 'Anonymisiert', $this->text_domain ),
+						),
+						array(
+							'name'  => __( 'Bezogene Anzeige', $this->text_domain ),
+							'value' => $post_id > 0 ? get_the_title( $post_id ) : '',
+						),
+					),
+				);
+			}
+
+			return $data;
+		}
+
+		/**
+		 * Get all message IDs linked to a user.
+		 *
+		 * @param int $user_id
+		 * @return array
+		 */
+		private function get_privacy_message_ids( $user_id ) {
+			$sent_ids = get_posts( array(
+				'post_type'              => 'cf_message',
+				'post_status'            => 'publish',
+				'author'                 => $user_id,
+				'posts_per_page'         => -1,
+				'fields'                 => 'ids',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+			) );
+
+			$received_ids = get_posts( array(
+				'post_type'              => 'cf_message',
+				'post_status'            => 'publish',
+				'posts_per_page'         => -1,
+				'fields'                 => 'ids',
+				'no_found_rows'          => true,
+				'update_post_meta_cache' => false,
+				'update_post_term_cache' => false,
+				'meta_query'             => array(
+					array(
+						'key'   => '_cf_msg_recipient',
+						'value' => $user_id,
+					),
+				),
+			) );
+
+			$message_ids = array_unique( array_merge( $sent_ids, $received_ids ) );
+			rsort( $message_ids, SORT_NUMERIC );
+
+			return array_values( array_map( 'absint', $message_ids ) );
 		}
 
 } // end class Classifieds_Core

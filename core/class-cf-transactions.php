@@ -18,8 +18,6 @@ class CF_Transactions{
 	protected $_expires = 0;
 	protected $_billing_type = '';
 	protected $_ordeer_info = '';
-	protected $_paypal = null;
-	protected $_authorizenet = null;
 
 	protected $struc =
 	array(
@@ -30,12 +28,6 @@ class CF_Transactions{
 
 	//order- Information about the last successful order. Use expires and status to decide wheter user can add classifieds.
 	'order' => array('billing_type' => '', 'billing_frequency' => '', 'billing_period' => '','payment_method' => '', 'status' => '', 'expires' => 0, 'order_info' => array() ),
-
-	//paypal - list of successful transaction numbers and subscription ids.
-	'paypal' => array('transactions' => array(), 'profile_id'   => '', 'key' => 'x'),
-
-	//authorizenet - list of successful transaction numbers and subscription ids.
-	'authorizenet' => array('transactions' => array(), 'profile_id' => ''),
 	);
 
 	function __construct($user_id = 0, $blogid=0){
@@ -137,16 +129,6 @@ class CF_Transactions{
 			$this->_billing_type = $this->_transactions['order']['billing_type'];
 			return $this->_billing_type;
 			break;
-
-			case 'paypal' :
-			$this->_paypal = $this->_transactions['paypal'];
-			return $this->_paypal;
-			break;
-
-			case 'authorizenet' :
-			$this->_authorizenet = $this->_transactions['authorizenet'];
-			return $this->_authorizenet;
-			break;
 		}
 	}
 
@@ -186,150 +168,6 @@ class CF_Transactions{
 			$this->_transactions['order']['order_info'] = $value;
 			break;
 
-			//PAYPAL
-			case 'paypal' :
-
-			//trigger_error(print_r($value, true) );
-
-			//Dissect whatever comes in and set the appropriate items.
-
-			if(! empty($value['key']) ) $this->_transactions['paypal']['key'] = $value['key'];
-
-			if(! empty($value['subscr_id']) ) $this->_transactions['paypal']['profile_id'] = $value['subscr_id'];
-
-			if(! empty($value['PROFILEID']) ) $this->_transactions['paypal']['profile_id'] = $value['PROFILEID'];
-
-			if(! empty($value['profile_id']) ) $this->_transactions['paypal']['profile_id'] = $value['profile_id'];
-
-			// Set transaction ID, the different API calls return different array
-			// keys so we need to check all of them
-			if(! empty($value['txn_id']) ) $this->_transactions['paypal']['transactions'][] = $value['txn_id'];
-			elseif(! empty($value['PAYMENTINFO_0_TRANSACTIONID']) ) $this->_transactions['paypal']['transactions'][] = $value['PAYMENTINFO_0_TRANSACTIONID'];
-			elseif(! empty($value['TRANSACTIONID']) ) $this->_transactions['paypal']['transactions'][] = $value['TRANSACTIONID'];
-
-			// Sort out stuff from a paypal IPN
-			if(! empty($value['custom']) ) {
-				parse_str($value['custom'], $custom);
-				if (is_array($custom) ) {
-					if(! empty($custom['billing_type']) ) $this->_transactions['order']['billing_type'] = $custom['billing_type'];
-					if(! empty($custom['billing_period']) ) $this->_transactions['order']['billing_period'] = $custom['billing_period'];
-					if(! empty($custom['billing_frequency']) ) $this->_transactions['order']['billing_frequency'] = $custom['billing_frequency'];
-
-					//recurring calculate the expiration
-					if(! empty($custom['billing_period']) && ! empty($custom['billing_frequency'])) {
-
-						$date = new DateTime;
-						if(! empty($value['subscr_date']) ) $date = $date->setTimestamp(strtotime($value['subscr_date']) );
-
-						$expiration_date = $this->get_expiration_date($this->_transactions['order']['billing_period'], $this->_transactions['order']['billing_frequency'], $date );
-						$this->_transactions['order']['expires'] = $expiration_date->getTimestamp();
-					}
-				}
-			}
-
-			//Set status
-			if(! empty($value['payment_status']) ) $this->_transactions['order']['status'] = ($value['payment_status'] == 'Completed') ? 'success' : $value['payment_status'];
-			elseif(! empty($value['PAYMENTINFO_0_ACK']) ) $this->_transactions['order']['status'] = ($value['PAYMENTINFO_0_ACK'] == 'Success') ? 'success' : $value['PAYMENTINFO_0_ACK'];
-
-			//trigger_error(print_r($this, true) );
-
-			if($this->_transactions['order']['status'] == 'success') {
-				$this->_transactions['order']['order_info'] = $value;
-				$this->_transactions['order']['payment_method'] = 'paypal';
-
-			}
-
-			if(! empty($value['txn_type']) && in_array( $value['txn_type'], array("subscr_cancel", "subscr_failed", "subscr_eot") ) ) {
-				if  ( $value['subscr_id'] == $this->_transactions['paypal']['profile_id'] ) $this->_transactions['order']['status'] = $value['txn_type'];
-			}
-
-			if($this->_transactions['order']['status'] == 'success') {
-
-				$member_role = $this->get_options('general');
-				$member_role = $member_role['member_role'];
-				$user = get_userdata($this->user_id);
-				if( !user_can($user, 'administrator') ){
-					$user->set_role($member_role);
-				}
-
-			}
-
-			break;
-
-			//AUTHORIZENET
-			case 'authorizenet' :
-
-			if(is_array($value) ){
-				$this->_transactions['order']['status'] = (! empty($value['x_response_code']) && $value['x_response_code'] == '1' ) ? 'success' : 'failed';
-				if($this->_transactions['order']['status'] == 'success') {
-					$this->_transactions['order']['order_info'] = $value;
-					$this->_transactions['order']['payment_method'] = 'authorizenet';
-					if(! empty($value['x_trans_id']) ) $this->_transactions['authorizenet']['transactions'][] = $value['x_trans_id'];
-
-					if($this->_transactions['order']['billing_type'] == 'recurring'){
-						$expiration_date = $this->get_expiration_date($this->_transactions['order']['billing_period'], $this->_transactions['order']['billing_frequency'] );
-						$this->_transactions['order']['expires'] = $expiration_date->getTimestamp();
-
-						//						print_r($this->_transactions['order']['expires']);
-					}
-
-				}
-			}
-
-
-			//As XML object
-			if( is_a($value, 'AuthnetXML') !== false) { //First is it from AuthNet XML?
-				//Dissect whatever comes in and set the appropriate items.
-
-				if((string)$value->transactionResponse->responseCode ){ //AIM
-
-					$this->_transactions['order']['status'] = ($value->isSuccessful() && (string)$value->transactionResponse->responseCode == '1' ) ? 'success' : 'failed';
-
-					if($this->_transactions['order']['status'] == 'success') {
-						$this->_transactions['order']['order_info'] = (string)$value;
-						$this->_transactions['order']['payment_method'] = 'authorizenet';
-						$this->_transactions['authorizenet']['transactions'][] = (string)$value->transactionResponse->transId;
-						$this->_transactions['authorizenet']['key'] = (string)$value->refId; //Invoice number
-
-					}
-
-					foreach($value->transactionResponse->userFields->userField as $userField){
-						$this->_transactions['order'][(string)$userField->name] = (string)$userField->value;
-					}
-
-					if($this->_transactions['order']['billing_type'] == 'recurring'){
-						//This is the first charge on the subscription
-						//expiration date calculated from today
-
-						$expiration_date = $this->get_expiration_date($this->_transactions['order']['billing_period'], $this->_transactions['order']['billing_frequency'] );
-						$this->_transactions['order']['expires'] = $expiration_date->getTimestamp();
-
-					}
-				} elseif((string)$value->subscriptionId ){ //ARB
-					$this->_transactions['order']['status'] = ($value->isSuccessful() && (string)$value->subscriptionId) ? 'success' : 'failed';
-
-					if($this->_transactions['order']['status'] == 'success') {
-						$this->_transactions['authorizenet']['profile_id'] = (string)$value->subscriptionId; //Subscription ID
-					}
-
-				}
-			}
-
-			if($this->_transactions['order']['status'] == 'success') {
-
-				$member_role = $this->get_options('general');
-				$member_role = $member_role['member_role'];
-				$user = get_userdata($this->user_id);
-				if( !user_can($user, 'administrator') ){
-					$user->set_role($member_role);
-				}
-
-			}
-
-			//			print_r($value.'');
-
-			break;
-
 		}
 		return $this->update_transactions($this->_transactions);
 	}
@@ -357,8 +195,6 @@ class CF_Transactions{
 		'billing_type',
 		'billing_period',
 		'billing_frequency',
-		'paypal',
-		'authorizenet',
 		)
 		) );
 	}

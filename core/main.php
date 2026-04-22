@@ -340,6 +340,82 @@ if (!class_exists('Classifieds_Core_Main')):
             $accent_raw   = isset( $fe_opts['single_accent_color'] ) ? $fe_opts['single_accent_color'] : '';
             $accent_color = preg_match( '/^#[0-9a-f]{6}$/i', $accent_raw ) ? $accent_raw : '#0f6cbd';
             wp_add_inline_style( 'style-classifieds', '.cf-single-page{--cf-accent:' . esc_attr( $accent_color ) . ';}' );
+
+            $this->enqueue_frontend_runtime_assets();
+        }
+
+        /**
+         * Enqueue interactive frontend assets only on relevant Classifieds screens.
+         *
+         * @return void
+         */
+        function enqueue_frontend_runtime_assets() {
+            $script_path = $this->plugin_dir . 'ui-front/js/ui-front.js';
+            $script_ver = file_exists( $script_path ) ? filemtime( $script_path ) : $this->plugin_version;
+
+            $needs_frontend_script = is_page( $this->my_classifieds_page_id )
+                || is_page( $this->add_classified_page_id )
+                || is_page( $this->edit_classified_page_id )
+                || is_singular( 'classifieds' )
+                || is_post_type_archive( 'classifieds' )
+                || is_tax( array( 'kleinenanzeigen-cat', 'kleinanzeigen-region' ) );
+
+            if ( $needs_frontend_script ) {
+                wp_enqueue_script( 'cf-frontend', $this->plugin_url . 'ui-front/js/ui-front.js', array( 'jquery' ), $script_ver, true );
+                $this->localize_frontend_runtime_script();
+            }
+
+            if ( is_page( $this->add_classified_page_id ) || is_page( $this->edit_classified_page_id ) ) {
+                $tagsinput_path = $this->plugin_dir . 'ui-front/js/cf-tagsinput.js';
+                $tagsinput_ver = file_exists( $tagsinput_path ) ? filemtime( $tagsinput_path ) : $this->plugin_version;
+                wp_enqueue_script( 'cf-tagsinput', $this->plugin_url . 'ui-front/js/cf-tagsinput.js', array( 'jquery' ), $tagsinput_ver, true );
+            }
+        }
+
+        /**
+         * Localize runtime config for ui-front.js once per request.
+         *
+         * @return void
+         */
+        function localize_frontend_runtime_script() {
+            static $localized = false;
+            if ( $localized ) {
+                return;
+            }
+
+            $frontend_options = (array) $this->get_options( 'frontend' );
+            $auto_restore_default = ! isset( $frontend_options['archive_auto_restore'] ) || 1 === (int) $frontend_options['archive_auto_restore'];
+
+            $config = array(
+                'ajaxUrl'            => admin_url( 'admin-ajax.php' ),
+                'nonce'              => wp_create_nonce( 'cf_frontend_actions' ),
+                'messageNonce'       => wp_create_nonce( 'cf_send_message' ),
+                'dashboardNonce'     => wp_create_nonce( 'cf_frontend_actions' ),
+                'textDomain'         => $this->text_domain,
+                'autoRestoreDefault' => $auto_restore_default,
+                'i18n'               => array(
+                    'loading'            => __( 'Wird geladen ...', $this->text_domain ),
+                    'loadError'          => __( 'Die Schnellansicht konnte gerade nicht geladen werden.', $this->text_domain ),
+                    'copyDefault'        => __( 'Link teilen', $this->text_domain ),
+                    'copySuccess'        => __( 'Link kopiert', $this->text_domain ),
+                    'saveFilterPrompt'   => __( 'Wie willst du diesen Filter nennen?', $this->text_domain ),
+                    'saveFilterEmpty'    => __( 'Gib erst einen Namen fuer den Filter ein.', $this->text_domain ),
+                    'saveFilterDone'     => __( 'Filter wurde gemerkt.', $this->text_domain ),
+                    'loadFilterEmpty'    => __( 'Waehle erst einen gespeicherten Filter aus.', $this->text_domain ),
+                    'deleteFilterAsk'    => __( 'Willst du diesen gespeicherten Filter wirklich loeschen?', $this->text_domain ),
+                    'deleteFilterDone'   => __( 'Filter wurde geloescht.', $this->text_domain ),
+                    'savedFilterDefault' => __( 'Gespeicherten Filter laden', $this->text_domain ),
+                ),
+                'strings'            => array(
+                    'sending'    => __( 'Wird gesendet...', $this->text_domain ),
+                    'sent'       => __( 'Nachricht gesendet!', $this->text_domain ),
+                    'error'      => __( 'Ups, da ist was schiefgelaufen.', $this->text_domain ),
+                    'noMessages' => __( 'Noch keine Nachrichten.', $this->text_domain ),
+                ),
+            );
+
+            wp_localize_script( 'cf-frontend', 'cfFrontend', $config );
+            $localized = true;
         }
 
         function on_author_link($link = '')
