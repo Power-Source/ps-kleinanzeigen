@@ -82,7 +82,7 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 
 <?php require CF_PLUGIN_DIR . 'ui-front/general/partials/single-footer-navigation.php'; ?>
 
-<?php if ( $single_show_sticky_actions ) : ?>
+<?php if ( $show_sticky_mobile_actions ) : ?>
 <div class="cf-sticky-mobile-actions">
 	<?php if ( empty( $options['disable_contact_form'] ) ) : ?>
 	<button type="button" class="button cf-btn-b2c-primary cf-cta-contact" onclick="classifieds.toggle_contact_form(); return false;"><?php _e( 'Kontakt', $this->text_domain ); ?></button>
@@ -91,6 +91,7 @@ require CF_PLUGIN_DIR . 'ui-front/general/partials/single-bootstrap.php';
 		<span class="cf-favorite-label-default"><?php _e( 'Merken', $this->text_domain ); ?></span>
 		<span class="cf-favorite-label-active"><?php _e( 'Gemerkt', $this->text_domain ); ?></span>
 	</button>
+	<button type="button" class="button cf-btn-b2c-ghost cf-cta-share" data-copy-url="<?php echo esc_url( get_permalink() ); ?>"><?php _e( 'Teilen', $this->text_domain ); ?></button>
 </div>
 <?php endif; ?>
 

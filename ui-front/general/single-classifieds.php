@@ -33,7 +33,8 @@ $region_name = ( ! is_wp_error( $region_terms ) && ! empty( $region_terms ) ) ? 
 $single_show_gallery = ! isset( $frontend_options['single_show_gallery'] ) || 1 === (int) $frontend_options['single_show_gallery'];
 $single_show_trust_block = ! isset( $frontend_options['single_show_trust_block'] ) || 1 === (int) $frontend_options['single_show_trust_block'];
 $single_show_seller_card = ! isset( $frontend_options['single_show_seller_card'] ) || 1 === (int) $frontend_options['single_show_seller_card'];
-$single_show_sticky_actions = ! isset( $frontend_options['single_show_sticky_actions'] ) || 1 === (int) $frontend_options['single_show_sticky_actions'];
+$single_show_sticky_actions = isset( $frontend_options['single_show_sticky_actions'] ) && 1 === (int) $frontend_options['single_show_sticky_actions'];
+$show_sticky_mobile_actions = $single_show_sticky_actions && is_user_logged_in();
 $single_show_reserved_badge = ! isset( $frontend_options['single_show_reserved_badge'] ) || 1 === (int) $frontend_options['single_show_reserved_badge'];
 $is_reserved = method_exists( $this, 'is_reserved_post' ) ? $this->is_reserved_post( $post->ID ) : ( '1' === (string) get_post_meta( $post->ID, '_cf_reserved', true ) );
 $is_featured = method_exists( $this, 'is_featured' ) ? $this->is_featured( $post->ID ) : ( '1' === (string) get_post_meta( $post->ID, '_cf_is_featured', true ) );
@@ -325,7 +326,7 @@ if ( is_object( $Classifieds_Core ) && method_exists( $Classifieds_Core, 'get_ex
 
 <?php require CF_PLUGIN_DIR . 'ui-front/general/partials/single-footer-navigation.php'; ?>
 
-<?php if ( $single_show_sticky_actions ) : ?>
+<?php if ( $show_sticky_mobile_actions ) : ?>
 <div class="cf-sticky-mobile-actions">
 	<?php if ( empty( $options['disable_contact_form'] ) ) : ?>
 	<button type="button" class="button button-primary cf-cta-contact" onclick="classifieds.toggle_contact_form(); return false;"><?php _e( 'Kontakt', $this->text_domain ); ?></button>

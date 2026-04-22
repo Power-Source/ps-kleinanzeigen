@@ -28,7 +28,8 @@ $region_name = ( ! is_wp_error( $region_terms ) && ! empty( $region_terms ) ) ? 
 $single_show_gallery = ! isset( $frontend_options['single_show_gallery'] ) || 1 === (int) $frontend_options['single_show_gallery'];
 $single_show_trust_block = ! isset( $frontend_options['single_show_trust_block'] ) || 1 === (int) $frontend_options['single_show_trust_block'];
 $single_show_seller_card = ! isset( $frontend_options['single_show_seller_card'] ) || 1 === (int) $frontend_options['single_show_seller_card'];
-$single_show_sticky_actions = ! isset( $frontend_options['single_show_sticky_actions'] ) || 1 === (int) $frontend_options['single_show_sticky_actions'];
+$single_show_sticky_actions = isset( $frontend_options['single_show_sticky_actions'] ) && 1 === (int) $frontend_options['single_show_sticky_actions'];
+$show_sticky_mobile_actions = $single_show_sticky_actions && is_user_logged_in();
 $single_show_reserved_badge = ! isset( $frontend_options['single_show_reserved_badge'] ) || 1 === (int) $frontend_options['single_show_reserved_badge'];
 $template_preset = isset( $frontend_options['frontend_preset'] ) ? sanitize_key( (string) $frontend_options['frontend_preset'] ) : '';
 if ( ! in_array( $template_preset, array( 'b2c', 'premium', 'community' ), true ) ) {
