@@ -709,7 +709,10 @@ js_translate.image_chosen = 'Bild ausgewaehlt';
 		if(newVal !== '') {
 			$button.text(js_translate.image_chosen);
 			if($fakeFile.length === 0) {
-				$button.after('<span class="file-holder">' + newVal + '</span>');
+				$button.after($('<span/>', {
+					'class': 'file-holder',
+					text: newVal
+				}));
 			} else {
 				$fakeFile.text(newVal);
 			}
