@@ -18,6 +18,10 @@ class PS_Native_Taxonomies {
 	 */
 	public static function init() {
 		add_action( 'init', array( __CLASS__, 'register_taxonomies' ), 1 );
+		add_action( 'kleinanzeigen-region_add_form_fields', array( __CLASS__, 'render_region_location_add_fields' ) );
+		add_action( 'kleinanzeigen-region_edit_form_fields', array( __CLASS__, 'render_region_location_edit_fields' ), 10, 2 );
+		add_action( 'created_kleinanzeigen-region', array( __CLASS__, 'save_region_location_fields' ), 10, 1 );
+		add_action( 'edited_kleinanzeigen-region', array( __CLASS__, 'save_region_location_fields' ), 10, 1 );
 	}
 	
 	/**
@@ -128,6 +132,76 @@ class PS_Native_Taxonomies {
 	public static function taxonomy_exists( $taxonomy ) {
 		$taxonomies = self::get_taxonomies();
 		return isset( $taxonomies[ $taxonomy ] );
+	}
+
+	/**
+	 * Add fields for PLZ/Ort on the "new region" form.
+	 *
+	 * @return void
+	 */
+	public static function render_region_location_add_fields() {
+		?>
+		<div class="form-field term-cf-region-postcode-wrap">
+			<label for="cf_region_postcode"><?php esc_html_e( 'PLZ', 'ps-kleinanzeigen' ); ?></label>
+			<input type="text" name="cf_region_postcode" id="cf_region_postcode" value="" maxlength="12" />
+			<p><?php esc_html_e( 'Optional: Postleitzahl fuer diese Region.', 'ps-kleinanzeigen' ); ?></p>
+		</div>
+		<div class="form-field term-cf-region-city-wrap">
+			<label for="cf_region_city"><?php esc_html_e( 'Ort', 'ps-kleinanzeigen' ); ?></label>
+			<input type="text" name="cf_region_city" id="cf_region_city" value="" maxlength="120" />
+			<p><?php esc_html_e( 'Optional: Ortsname fuer die Karten-Geokodierung.', 'ps-kleinanzeigen' ); ?></p>
+		</div>
+		<?php
+	}
+
+	/**
+	 * Add fields for PLZ/Ort on the "edit region" form.
+	 *
+	 * @param WP_Term $term
+	 * @return void
+	 */
+	public static function render_region_location_edit_fields( $term ) {
+		$postcode = (string) get_term_meta( $term->term_id, '_cf_region_postcode', true );
+		$city = (string) get_term_meta( $term->term_id, '_cf_region_city', true );
+		?>
+		<tr class="form-field term-cf-region-postcode-wrap">
+			<th scope="row"><label for="cf_region_postcode"><?php esc_html_e( 'PLZ', 'ps-kleinanzeigen' ); ?></label></th>
+			<td>
+				<input type="text" name="cf_region_postcode" id="cf_region_postcode" value="<?php echo esc_attr( $postcode ); ?>" maxlength="12" />
+				<p class="description"><?php esc_html_e( 'Optional: Postleitzahl fuer diese Region.', 'ps-kleinanzeigen' ); ?></p>
+			</td>
+		</tr>
+		<tr class="form-field term-cf-region-city-wrap">
+			<th scope="row"><label for="cf_region_city"><?php esc_html_e( 'Ort', 'ps-kleinanzeigen' ); ?></label></th>
+			<td>
+				<input type="text" name="cf_region_city" id="cf_region_city" value="<?php echo esc_attr( $city ); ?>" maxlength="120" />
+				<p class="description"><?php esc_html_e( 'Optional: Ortsname fuer die Karten-Geokodierung.', 'ps-kleinanzeigen' ); ?></p>
+			</td>
+		</tr>
+		<?php
+	}
+
+	/**
+	 * Persist PLZ/Ort fields for a region term.
+	 *
+	 * @param int $term_id
+	 * @return void
+	 */
+	public static function save_region_location_fields( $term_id ) {
+		$postcode = isset( $_POST['cf_region_postcode'] ) ? sanitize_text_field( wp_unslash( $_POST['cf_region_postcode'] ) ) : '';
+		$city = isset( $_POST['cf_region_city'] ) ? sanitize_text_field( wp_unslash( $_POST['cf_region_city'] ) ) : '';
+
+		if ( '' !== $postcode ) {
+			update_term_meta( $term_id, '_cf_region_postcode', $postcode );
+		} else {
+			delete_term_meta( $term_id, '_cf_region_postcode' );
+		}
+
+		if ( '' !== $city ) {
+			update_term_meta( $term_id, '_cf_region_city', $city );
+		} else {
+			delete_term_meta( $term_id, '_cf_region_city' );
+		}
 	}
 }
 

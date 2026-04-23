@@ -362,9 +362,15 @@ class CF_Shortcode_Service {
 			$term_id = (int) $term->term_id;
 			$lat = get_term_meta( $term_id, '_cf_region_lat', true );
 			$lng = get_term_meta( $term_id, '_cf_region_lng', true );
+			$postcode = trim( (string) get_term_meta( $term_id, '_cf_region_postcode', true ) );
+			$city = trim( (string) get_term_meta( $term_id, '_cf_region_city', true ) );
 
 			if ( ( '' === (string) $lat || '' === (string) $lng ) && 1 === $auto_geocode ) {
-				$address = trim( $term->name . ( '' !== $geocode_hint ? ', ' . $geocode_hint : '' ) );
+				$main_location = trim( $postcode . ' ' . $city );
+				if ( '' === $main_location ) {
+					$main_location = trim( (string) $term->name );
+				}
+				$address = trim( $main_location . ( '' !== $geocode_hint ? ', ' . $geocode_hint : '' ) );
 				if ( '' !== $address ) {
 					$result = $model->geocode_address( $address );
 					$location = ( is_object( $result ) && isset( $result->geometry ) && isset( $result->geometry->location ) ) ? $result->geometry->location : null;

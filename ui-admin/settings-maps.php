@@ -33,7 +33,7 @@ $maps_available = class_exists( 'AgmMapModel' );
 		<div class="postbox">
 			<h3 class="hndle"><span><?php _e( 'Regionen-Karte', $this->text_domain ); ?></span></h3>
 			<div class="inside">
-				<p><?php _e( 'Erzeugt eine Marker-Karte auf Basis der Taxonomie "Regionen" mit Anzeigenanzahl und Vorschau pro Marker.', $this->text_domain ); ?></p>
+				<p><?php _e( 'Erzeugt eine Marker-Karte auf Basis der Taxonomie "Regionen" mit Anzeigenanzahl und Vorschau pro Marker. Fuer praezise Standorte kannst Du je Region PLZ und Ort hinterlegen.', $this->text_domain ); ?></p>
 				<table class="form-table">
 					<tr>
 						<th><?php _e( 'Regionen-Karte aktivieren', $this->text_domain ); ?></th>
@@ -75,7 +75,7 @@ $maps_available = class_exists( 'AgmMapModel' );
 							<input type="hidden" name="maps_auto_geocode_regions" value="0" />
 							<label>
 								<input type="checkbox" name="maps_auto_geocode_regions" value="1" <?php checked( 1 === $maps_auto_geocode_regions ); ?> />
-								<span class="description"><?php _e( 'Wenn eine Region keine Koordinaten hat, wird beim Rendern versucht, sie ueber PS Maps zu geokodieren und als Term-Meta zu speichern.', $this->text_domain ); ?></span>
+								<span class="description"><?php _e( 'Wenn eine Region keine Koordinaten hat, wird beim Rendern PLZ+Ort (oder ersatzweise der Regionsname) ueber PS Maps geokodiert und als Term-Meta gespeichert.', $this->text_domain ); ?></span>
 							</label>
 						</td>
 					</tr>

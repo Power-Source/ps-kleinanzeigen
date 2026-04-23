@@ -4,7 +4,7 @@ Tags: post types, taxonomies, custom fields, kleinanzeigen, ads, paypal, payment
 Requires at least: 4.9
 Tested up to: 5.8.0
 ClassicPress: 2.7.0
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 
 Füge Kleinanzeigen zu Deinem Blog, Netzwerk oder Deiner BuddyPress-Seite hinzu. Erstelle und verwalte Anzeigen, lade Bilder hoch, sende E-Mails, aktiviere das Kreditsystem und berechne Deinen Benutzern die Platzierung von Anzeigen in Deinem Netzwerk oder auf der BuddyPress-Seite.
 
