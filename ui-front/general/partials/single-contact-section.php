@@ -27,7 +27,7 @@ $pm_subject = sprintf( __( 'Anfrage zu: %s (#%d)', $this->text_domain ), $ad_tit
 		<div class="cf-contact-listing-meta">
 			<p><strong><?php _e( 'Anzeige:', $this->text_domain ); ?></strong> <a href="<?php echo esc_url( get_permalink( $post_id ) ); ?>"><?php echo esc_html( $ad_title ); ?></a></p>
 			<p><strong><?php _e( 'Status:', $this->text_domain ); ?></strong> <?php echo esc_html( $listing_state_label ); ?></p>
-			<p><strong><?php _e( 'Nachrichten:', $this->text_domain ); ?></strong> <a href="<?php echo esc_url( add_query_arg( 'tab', 'messages', get_permalink( $this->my_classifieds_page_id ) ) ); ?>"><?php _e( 'Zur Uebersicht', $this->text_domain ); ?></a></p>
+			<p><strong><?php _e( 'Nachrichten:', $this->text_domain ); ?></strong> <a href="<?php echo esc_url( add_query_arg( 'tab', 'messages', get_permalink( $this->my_classifieds_page_id ) ) ); ?>"><?php _e( 'Zur Übersicht', $this->text_domain ); ?></a></p>
 		</div>
 
 		<?php if ( $is_own_post ) : ?>

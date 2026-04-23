@@ -6,7 +6,7 @@
 
 <div class="wrap">
 	<h2>
-		<?php _e( 'Anzeigen-Uebersicht', $this->text_domain ); ?>
+		<?php _e( 'Anzeigen-Übersicht', $this->text_domain ); ?>
 		<a class="button add-new-h2" href="post-new.php?post_type=<?php echo $this->post_type; ?>"><?php _e( 'Neue Anzeige erstellen', $this->text_domain ); ?></a>
 	</h2>
 

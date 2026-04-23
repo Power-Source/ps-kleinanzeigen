@@ -1,6 +1,6 @@
 # PS Kleinanzeigen - Hook-Referenz
 
-Diese Referenz ist als API-Uebersicht gedacht.
+Diese Referenz ist als API-Übersicht gedacht.
 
 ## 1. Eigene Extension-Hooks (vom Plugin emittiert)
 

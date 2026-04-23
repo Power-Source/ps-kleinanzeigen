@@ -14,7 +14,8 @@ $maps_single_region_map_label = isset( $options['maps_single_region_map_label'] 
 	: __( 'Region auf der Karte', $this->text_domain );
 $maps_default_zoom = isset( $options['maps_default_zoom'] ) ? (int) $options['maps_default_zoom'] : 6;
 $maps_default_zoom = max( 2, min( 18, $maps_default_zoom ) );
-$maps_available = class_exists( 'AgmMapModel' ) && class_exists( 'AgmMarkerReplacer' );
+// AgmMarkerReplacer wird in ps-maps nur im Frontend geladen (if !is_admin()).
+$maps_available = class_exists( 'AgmMapModel' );
 ?>
 
 <div class="wrap">

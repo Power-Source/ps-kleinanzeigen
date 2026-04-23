@@ -6,6 +6,8 @@
 - [SCHNITTSTELLEN](./SCHNITTSTELLEN.md)
 - [HOOK-REFERENZ](./HOOK-REFERENZ.md)
 - [HOOK-BOILERPLATES](./HOOK-BOILERPLATES.php)
+- [WIKI EINSTELLUNGEN INDEX](./WIKI-EINSTELLUNGEN-INDEX.md)
+- [WIKI EINSTELLUNGEN AUDIT](./WIKI-EINSTELLUNGEN-AUDIT.md)
 
 **Benutzer können Anzeigen erstellen und verwalten, Bilder hochladen, E-Mails zu ihren Angeboten erhalten und Guthaben kaufen.**
 

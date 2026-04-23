@@ -102,8 +102,8 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 
 		add_submenu_page(
 		'edit.php?post_type=classifieds',
-		__( 'Uebersicht', $this->text_domain ),
-		__( 'Uebersicht', $this->text_domain ),
+		__( 'Übersicht', $this->text_domain ),
+		__( 'Übersicht', $this->text_domain ),
 		'read',
 		$this->menu_slug,
 		array( &$this, 'handle_admin_requests' ) );
@@ -242,7 +242,9 @@ class Classifieds_Core_Admin extends Classifieds_Core {
 	* @return void
 	**/
 	function handle_admin_requests() {
-		$maps_available = class_exists( 'AgmMapModel' ) && class_exists( 'AgmMarkerReplacer' );
+		// AgmMarkerReplacer wird in ps-maps nur im Frontend geladen (if !is_admin()).
+		// AgmMapModel ist immer vorhanden – reicht als Erkennungsmerkmal.
+		$maps_available = class_exists( 'AgmMapModel' );
 		$valid_tabs = array(
 		'general',
 		'frontend',

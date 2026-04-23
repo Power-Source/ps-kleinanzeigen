@@ -116,7 +116,7 @@ $tarif_status_padding_value = isset( $options['tarif_status_padding'] ) ? absint
 		<div class="postbox">
 			<h3 class="hndle"><span><?php _e( 'Archiv', $this->text_domain ); ?></span></h3>
 			<div class="inside">
-				<p><?php _e( 'Optionen fuer die Uebersichtsseite mit allen Anzeigen.', $this->text_domain ); ?></p>
+				<p><?php _e( 'Optionen fuer die Übersichtsseite mit allen Anzeigen.', $this->text_domain ); ?></p>
 				<table class="form-table">
 					<tr>
 						<th><label for="archive_intro"><?php _e( 'Info-Text ueber den Anzeigen', $this->text_domain ); ?></label></th>
